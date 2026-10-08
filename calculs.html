@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+
+<html lang="fr"><head>
+<script id="portal-access-guard">
+(function(){
+  const TOKEN_KEY="braconnier_portal_token_v3";
+  const AUTH_API="https://braconnier-auth.sebastien-025.workers.dev";
+  document.documentElement.style.visibility="hidden";
+  const token=sessionStorage.getItem(TOKEN_KEY);
+  if(!token){ location.replace(new URL("/base/index.html",location.origin).href); return; }
+  fetch(AUTH_API+"/auth/check",{headers:{Authorization:"Bearer "+token},cache:"no-store"})
+    .then(r=>{if(!r.ok)throw new Error("unauthorized"); document.documentElement.style.visibility="";})
+    .catch(()=>{sessionStorage.removeItem(TOKEN_KEY);location.replace(new URL("/base/index.html",location.origin).href);});
+})();
+</script>
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Calculs — Ets Braconnier</title><script>
+(() => {
+ const tokenKey="braconnier_portal_token_v3",logoutKey="braconnier_portal_logout";
+ const home=new URL("index.html",window.location.href).href;
+ window.portalLogout=function(){
+  sessionStorage.removeItem(tokenKey);
+  try{localStorage.setItem(logoutKey,Date.now()+":"+Math.random())}catch{}
+  window.location.replace(home);
+ };
+ window.addEventListener("storage",event=>{
+  if(event.key===logoutKey){sessionStorage.removeItem(tokenKey);window.location.replace(home)}
+ });
+ window.addEventListener("pageshow",event=>{
+  if(event.persisted&&!sessionStorage.getItem(tokenKey))window.location.replace(home);
+ });
+})();
+
+</script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f5f6;color:#29343d;font-family:Arial,Helvetica,sans-serif}.wrap{max-width:1600px;margin:auto;padding:18px}header{background:#29343d;color:white;border-radius:14px;padding:20px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:12px}.logo{background:#f47b00;width:44px;height:44px;border-radius:10px;display:grid;place-items:center;font-size:24px;font-weight:bold}h1{margin:0;font-size:23px}.sub{font-size:12px;margin-top:5px;color:#d5dde1}nav{display:flex;gap:8px;flex-wrap:wrap}nav a,nav button{background:#f47b00;color:white;border:0;border-radius:7px;padding:10px 12px;font:700 12px Arial;text-decoration:none;cursor:pointer}.layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:16px;margin-top:18px}aside,.viewer{background:white;border:1px solid #dde2e6;border-radius:12px;padding:15px}aside{max-height:calc(100vh - 150px);overflow:auto}input{width:100%;padding:11px;border:1px solid #ccd3d8;border-radius:7px;font:14px Arial}h2{font-size:13px;margin:20px 0 8px;color:#68727c}.choice{display:block;width:100%;text-align:left;padding:11px;margin:3px 0;border:0;border-radius:7px;background:transparent;color:#29343d;cursor:pointer;font:14px Arial}.choice:hover{background:#fff4e8}.choice[aria-pressed=true]{background:#29343d;color:white}.viewer-head{display:flex;gap:12px;justify-content:space-between;align-items:center;margin-bottom:12px}.viewer-head strong{font-size:18px}.viewer-head a{font-size:12px;color:#2d6b5e}iframe{display:block;width:100%;height:calc(100vh - 220px);min-height:620px;border:0;border-top:1px solid #eee}#status{padding:12px;color:#68727c}[hidden]{display:none!important}:focus-visible{outline:3px solid #f47b00;outline-offset:2px}@media(max-width:750px){.wrap{padding:10px}.layout{grid-template-columns:1fr}aside{max-height:260px}iframe{height:75vh;min-height:550px}.viewer-head{flex-wrap:wrap}}
+.group{margin-top:12px}.group-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 16px;border:1px solid #e2e6e9;border-radius:10px;background:#f1f3f4;color:#29343d;font:700 14px Arial;text-align:left;cursor:pointer;transition:background .16s ease,border-color .16s ease,transform .16s ease}.group-toggle:hover{background:#fff4e8;border-color:#f4c697}.group-toggle:active{transform:translateY(1px)}.group-toggle::after{content:'+';display:grid;place-items:center;flex:0 0 24px;width:24px;height:24px;border-radius:6px;background:#29343d;color:#fff;font:700 18px/1 Arial}.group-toggle[aria-expanded="true"]{background:#29343d;color:#fff;border-color:#29343d}.group-toggle[aria-expanded="true"]::after{content:'−';background:#f47b00;color:#fff}.group-content{padding:7px 4px 10px}.group-content[hidden]{display:none!important}
+</style>
+<style id="unified-portal-header-style">
+.unified-header{background:#29343d!important;color:#fff!important;border-radius:13px!important;padding:14px 16px!important;min-height:70px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;position:relative!important;top:auto!important;box-shadow:0 3px 12px rgba(20,27,32,.08)!important;z-index:1000!important}
+.unified-brand{display:flex!important;align-items:center!important;gap:11px!important;min-width:0!important;flex:1 1 auto!important}.unified-logo{width:42px!important;height:42px!important;min-width:42px!important;border-radius:9px!important;background:#f47b00!important;color:#fff!important;display:grid!important;place-items:center!important;font-weight:900!important;font-size:20px!important}.unified-brand h1{font-family:Arial,Helvetica,sans-serif!important;font-size:19px!important;line-height:1.1!important;margin:0!important;color:#fff!important}.unified-brand p{font-family:Arial,Helvetica,sans-serif!important;font-size:10px!important;line-height:1.35!important;color:#d4dce1!important;margin:4px 0 0!important}
+.unified-tools{display:flex!important;align-items:center!important;gap:7px!important;flex:0 0 auto!important}.unified-menu-wrap{position:relative!important}.unified-menu-btn,.unified-logout{height:36px!important;border:0!important;border-radius:8px!important;padding:0 13px!important;color:#fff!important;font:800 10px Arial,Helvetica,sans-serif!important;cursor:pointer!important;display:inline-flex!important;align-items:center!important;gap:7px!important}.unified-menu-btn{background:#f47b00!important}.unified-menu-btn:hover{background:#dc6f00!important}.unified-logout{background:#46515a!important}.unified-logout:hover{background:#56636d!important}.unified-menu-icon{font-size:15px!important;line-height:1!important}
+.unified-menu{display:none!important;position:absolute!important;right:0!important;top:44px!important;width:255px!important;background:#fff!important;border:1px solid #dfe4e8!important;border-radius:12px!important;padding:7px!important;box-shadow:0 18px 45px rgba(20,27,32,.2)!important;z-index:99999!important}.unified-menu.open{display:block!important}.unified-menu a{box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:space-between!important;width:100%!important;padding:10px 11px!important;border-radius:8px!important;color:#29343d!important;text-decoration:none!important;font:700 11px Arial,Helvetica,sans-serif!important;background:transparent!important}.unified-menu a:hover{background:#f4f6f7!important}.unified-menu a.active{background:#fff1e4!important;color:#c86200!important}.unified-menu a.active:after{content:'•';font-size:17px;color:#f47b00}.unified-page-actions{display:flex!important;gap:6px!important;align-items:center!important;margin-left:auto!important}.unified-page-actions button{height:36px!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:8px!important;color:#fff!important;font:800 10px Arial,Helvetica,sans-serif!important;padding:0 11px!important;cursor:pointer!important;background:#3d4851!important}.unified-page-actions button:hover{background:#4a5660!important}
+@media(max-width:760px){.unified-header{border-radius:9px!important;padding:11px 12px!important;gap:9px!important;flex-wrap:wrap!important}.unified-brand{min-width:calc(100% - 120px)!important}.unified-brand h1{font-size:17px!important}.unified-brand p{display:none!important}.unified-tools{margin-left:auto!important}.unified-page-actions{order:3!important;width:100%!important;margin-left:0!important;overflow-x:auto!important}.unified-page-actions button{white-space:nowrap!important}.unified-logout{width:36px!important;padding:0!important;justify-content:center!important;font-size:0!important}.unified-logout:before{content:'↪';font-size:17px!important}.unified-menu{position:fixed!important;left:10px!important;right:10px!important;top:78px!important;width:auto!important;max-height:calc(100vh - 95px)!important;overflow:auto!important}}
+</style>
+</head><body><div class="wrap"><header class="unified-header"><div class="unified-brand"><div class="unified-logo">B</div><div><h1>Calculs</h1><p>Ets Braconnier · calculateurs professionnels</p></div></div><div class="unified-tools"><div class="unified-menu-wrap"><button aria-controls="unifiedMenu" aria-expanded="false" class="unified-menu-btn" id="unifiedMenuBtn" type="button"><span class="unified-menu-icon">☰</span> Menu</button><nav aria-label="Navigation principale" class="unified-menu" id="unifiedMenu"><a href="index.html">Accueil</a><a class="active" href="calculs.html">Calculs</a><a href="netstore.html">NetStore</a><a href="fournisseurs.html">Base fournisseurs</a><a href="inventaire.html">Inventaire</a><a href="commandes.html">Commandes</a><a href="notes.html">Notes</a><a href="electricite.html">Électricité</a></nav></div><button class="unified-logout" onclick="portalLogout()" type="button">Déconnexion</button></div></header>
+<p id="status" role="status">Vérification de la session…</p><main class="layout" hidden="" id="workspace"><aside aria-label="Choisir un calculateur"><input aria-label="Rechercher un calculateur" id="search" placeholder="Rechercher un calculateur…" type="search"/><div id="choices"></div></aside><section class="viewer"><div class="viewer-head"><strong id="currentTitle"></strong><a id="openTool" rel="noopener" target="_blank">Ouvrir en plein onglet ↗</a></div><div id="frames"></div></section></main></div>
+<script>
+const tools=[{"file":"calculateurs/charges-admissibles/ch-ad-hourdis.html","label":"Charge Admissible Hourdis","group":"Charges admissibles"},{"file":"calculateurs/charges-admissibles/ch-ad-linteaux.html","label":"Charge admissible Linteaux","group":"Charges admissibles"},{"file":"calculateurs/charges-admissibles/ch-ad-plancher-bois.html","label":"Charge Admissible Plancher Bois","group":"Charges admissibles"},{"file":"calculateurs/charges-admissibles/ch-ad-poutrains-entrevous.html","label":"Charge Admissible Poutrains & Entrevous","group":"Charges admissibles"},{"file":"calculateurs/charges-admissibles/ch-ad-heb.html","label":"Charge admissible Poutrelles HEB","group":"Charges admissibles"},{"file":"calculateurs/charges-admissibles/ch-ad-pre-linteaux.html","label":"Charge admissible Prélinteaux","group":"Charges admissibles"},{"file":"calculateurs/poids/poids-agreats.html","label":"poids des Agrégats","group":"Poids des matériaux"},{"file":"calculateurs/poids/poids-blocs.html","label":"Poids des blocs","group":"Poids des matériaux"},{"file":"calculateurs/poids/poids-bordures-beton.html","label":"Poids des bordures Béton","group":"Poids des matériaux"},{"file":"calculateurs/poids/poids-plaques.html","label":"Poids des plaques","group":"Poids des matériaux"},{"file":"calculateurs/poids/poids-linteaux-pre-linteaux.html","label":"Poids Linteaux & Prélinteaux","group":"Poids des matériaux"},{"file":"calculateurs/blocs.html","label":"Blocs & Liants","group":"Quantités de matériaux"},{"file":"calculateurs/blocs-cellulaires.html","label":"Blocs cellulaires","group":"Quantités de matériaux"},{"file":"calculateurs/brique.html","label":"Briques & Liants","group":"Quantités de matériaux"},{"file":"calculateurs/carrelage.html","label":"Carrelages & Joints","group":"Quantités de matériaux"},{"file":"calculateurs/chape.html","label":"Chape","group":"Quantités de matériaux"},{"file":"calculateurs/cubage-beton.html","label":"Cubage du béton","group":"Quantités de matériaux"},{"file":"calculateurs/egaline.html","label":"Égaline","group":"Quantités de matériaux"},{"file":"calculateurs/escalier.html","label":"Escaliers","group":"Calculs techniques"},{"file":"calculateurs/facade-cimentee.html","label":"Façades Cimentées","group":"Quantités de matériaux"},{"file":"calculateurs/facade-isolante.html","label":"Façades isolantes","group":"Quantités de matériaux"},{"file":"calculateurs/calculateur-foisonnement.html","label":"foisonnement","group":"Calculs techniques"},{"file":"calculateurs/generateur_plan_encadrements_fenetres_portes_v8.html","label":"Générateur de plans – Encadrements de fenêtres & portes","group":"Calculs techniques"},{"file":"calculateurs/hourdis.html","label":"Hourdis","group":"Quantités de matériaux"},{"file":"calculateurs/isolant.html","label":"Isolants","group":"Quantités de matériaux"},{"file":"calculateurs/mortex.html","label":"Mortex","group":"Quantités de matériaux"},{"file":"calculateurs/paves_autobloquants.html","label":"pavés","group":"Quantités de matériaux"},{"file":"calculateurs/plots.html","label":"Plots pour Terrasse","group":"Quantités de matériaux"},{"file":"calculateurs/stepocs.html","label":"Stepoc","group":"Quantités de matériaux"},{"file":"calculateurs/cloisons.html","label":"Structures & Habillages","group":"Quantités de matériaux"},{"file":"calculateurs/tapis-de-pierre.html","label":"Tapis de pierre","group":"Quantités de matériaux"}];
+const choices=document.getElementById('choices'),frames=document.getElementById('frames');
+let selected=null;
+function selectTool(tool){
+ selected=tool;
+ for(const frame of frames.children)frame.hidden=frame.dataset.file!==tool.file;
+ let frame=Array.from(frames.children).find(f=>f.dataset.file===tool.file);
+ if(!frame){frame=document.createElement('iframe');frame.src=tool.file;frame.title=tool.label;frame.dataset.file=tool.file;frames.append(frame)}
+ document.getElementById('currentTitle').textContent=tool.label;
+ document.getElementById('openTool').href=tool.file;
+ for(const button of choices.querySelectorAll('button'))button.setAttribute('aria-pressed',String(button.dataset.file===tool.file));
+}
+function renderChoices(){
+ const normalize=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+ const q=normalize(document.getElementById('search').value);choices.replaceChildren();
+ for(const group of ['Quantités de matériaux','Calculs techniques','Charges admissibles','Poids des matériaux']){
+  const list=tools.filter(t=>t.group===group&&normalize(t.label+' '+group).includes(q));
+  if(!list.length)continue;
+
+  const wrapper=document.createElement('div');wrapper.className='group';
+  const toggle=document.createElement('button');toggle.type='button';toggle.className='group-toggle';toggle.textContent=group;
+  const content=document.createElement('div');content.className='group-content';
+  const contentId='group-'+normalize(group).replace(/[^a-z0-9]+/g,'-');content.id=contentId;
+
+  // Tous les volets sont fermés par défaut. Pendant une recherche, les groupes correspondants s'ouvrent automatiquement.
+  const open=Boolean(q);toggle.setAttribute('aria-expanded',String(open));toggle.setAttribute('aria-controls',contentId);content.hidden=!open;
+  toggle.onclick=()=>{const isOpen=toggle.getAttribute('aria-expanded')==='true';toggle.setAttribute('aria-expanded',String(!isOpen));content.hidden=isOpen};
+
+  for(const tool of list){
+   const b=document.createElement('button');b.type='button';b.className='choice';b.textContent=tool.label;b.dataset.file=tool.file;
+   b.setAttribute('aria-pressed',String(selected===tool));b.onclick=()=>selectTool(tool);content.append(b)
+  }
+  wrapper.append(toggle,content);choices.append(wrapper)
+ }
+ if(!choices.children.length)choices.textContent='Aucun calculateur trouvé.';
+}
+document.getElementById('search').addEventListener('input',renderChoices);
+(async()=>{const token=sessionStorage.getItem('braconnier_portal_token_v3');if(!token){location.replace('index.html');return}try{const r=await fetch('https://braconnier-auth.sebastien-025.workers.dev/auth/check',{headers:{Authorization:'Bearer '+token}});if(!r.ok){portalLogout();return}document.getElementById('status').hidden=true;document.getElementById('workspace').hidden=false;renderChoices();selectTool(tools.find(t=>t.file==='calculateurs/cubage-beton.html')||tools[0])}catch{document.getElementById('status').textContent='Connexion indisponible. Rechargez la page pour réessayer.'}})();
+</script><script id="unified-menu-script">(function(){const b=document.getElementById('unifiedMenuBtn'),m=document.getElementById('unifiedMenu');if(!b||!m)return;function close(){m.classList.remove('open');b.setAttribute('aria-expanded','false')}b.addEventListener('click',function(e){e.stopPropagation();const o=m.classList.toggle('open');b.setAttribute('aria-expanded',o?'true':'false')});m.addEventListener('click',e=>e.stopPropagation());document.addEventListener('click',close);document.addEventListener('keydown',e=>{if(e.key==='Escape')close()})})();</script></body></html>

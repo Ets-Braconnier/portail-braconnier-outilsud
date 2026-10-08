@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+
+<html lang="fr"><head>
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Commandes fournisseurs — Outilsud</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box}:root{--orange:#f47b00;--navy:#29343d;--blue:#2563eb;--green:#16824b;--red:#c9362b;--ink:#222a31;--muted:#68727c;--line:#dde2e6;--bg:#f4f6f7}body{margin:0;background:var(--bg);font-family:Arial,Helvetica,sans-serif;color:var(--ink)}button,input,select{font:inherit}.wrap{max-width:1500px;margin:auto;padding:14px}.header{background:var(--navy);color:#fff;border-radius:13px;padding:15px 17px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:11px}.logo{width:42px;height:42px;border-radius:9px;background:var(--orange);display:grid;place-items:center;font-weight:900;font-size:20px}.brand h1{font-size:20px;margin:0}.brand p{font-size:10px;color:#d4dce1;margin:4px 0 0}.nav{display:flex;gap:6px;flex-wrap:wrap}.nav a,.nav button{border:0;border-radius:7px;padding:9px 11px;background:var(--orange);color:#fff;text-decoration:none;font-size:10px;font-weight:800;cursor:pointer}.panel{background:#fff;border:1px solid var(--line);border-radius:11px;padding:13px;margin-top:10px}.setup{display:grid;grid-template-columns:minmax(260px,1fr) minmax(220px,.6fr);gap:10px}.label{display:block;font-size:10px;font-weight:800;color:var(--muted);margin:0 0 5px}.control{width:100%;height:42px;border:1px solid #ccd4da;border-radius:8px;padding:0 11px;background:#fff;outline:none}.control:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(244,123,0,.1)}.status{font-size:10px;color:var(--muted);margin-top:7px}.supplier-picker{position:relative}.supplier-results{position:absolute;z-index:1000;left:0;right:0;top:47px;background:#fff;border:1px solid #ccd4da;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:300px;overflow:auto;display:none}.supplier-results.show{display:block}.supplier-option{padding:10px 11px;border-bottom:1px solid #edf0f2;cursor:pointer;font-size:11px}.supplier-option:last-child{border-bottom:0}.supplier-option:hover,.supplier-option.active{background:#fff5eb}.supplier-option strong{display:block}.supplier-option span{font-size:9px;color:var(--muted);margin-top:3px;display:block}.searchrow{display:grid;grid-template-columns:1fr auto;gap:7px}.scan{height:42px;border:0;border-radius:8px;background:var(--blue);color:#fff;padding:0 15px;font-size:11px;font-weight:900;cursor:pointer}.hint{font-size:9px;color:var(--muted);margin-top:6px}.results{margin-top:8px;display:grid;gap:5px}.result{border:1px solid var(--line);border-radius:8px;padding:8px;display:flex;justify-content:space-between;gap:10px;align-items:center;cursor:pointer}.result:hover{background:#fafbfc;border-color:#cbd3d9}.result strong{font-size:11px}.meta{font-size:9px;color:var(--muted);display:flex;gap:9px;flex-wrap:wrap;margin-top:4px}.addline{display:flex;gap:5px;align-items:center}.qty{width:78px;height:34px;border:1px solid #ccd4da;border-radius:7px;text-align:center;font-weight:800}.add{height:34px;border:0;border-radius:7px;background:var(--green);color:#fff;font-size:10px;font-weight:900;padding:0 12px;cursor:pointer}.orderhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.orderhead h2{font-size:15px;margin:0}.actions{display:flex;gap:6px;flex-wrap:wrap}.actions button{height:33px;border:0;border-radius:7px;color:#fff;font-size:10px;font-weight:900;padding:0 11px;cursor:pointer}.excel{background:#217346}.clear{background:var(--red)}.tablewrap{overflow:auto;margin-top:9px;border:1px solid var(--line);border-radius:8px}.table{width:100%;border-collapse:collapse;min-width:1000px}.table th,.table td{padding:8px;border-bottom:1px solid #edf0f2;text-align:left;font-size:10px}.table th{background:#eef2f3;position:sticky;top:0}.table .q{font-size:13px;font-weight:900}.del{border:0;background:#fbe8e6;color:#a72c24;border-radius:5px;padding:5px 7px;cursor:pointer;font-size:9px;font-weight:800}.empty{text-align:center!important;color:var(--muted);padding:25px!important}.kpis{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.kpi{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:10px}.kpi b{font-size:14px;margin-right:4px}#scannerModal{display:none;position:fixed;inset:0;background:#101417;z-index:10000;color:#fff}.scanner-shell{height:100%;display:flex;flex-direction:column}.scanner-top{display:flex;justify-content:space-between;align-items:center;padding:12px}.scanner-top button{border:0;border-radius:7px;background:#fff;color:#111;padding:9px 12px;font-weight:800}.video-wrap{position:relative;flex:1;min-height:0;display:grid;place-items:center;overflow:hidden}.video-wrap video{width:100%;height:100%;object-fit:cover}.scan-frame{position:absolute;width:min(82vw,480px);height:180px;border:3px solid var(--orange);border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.35)}.scanner-msg{padding:12px;text-align:center;font-size:12px}.toast{position:fixed;right:14px;bottom:14px;background:#182027;color:#fff;padding:10px 13px;border-radius:8px;font-size:10px;opacity:0;pointer-events:none;transition:.2s;z-index:12000}.toast.show{opacity:1}@media(max-width:700px){.wrap{padding:8px}.setup{grid-template-columns:1fr}.result{align-items:flex-start;flex-direction:column}.addline{width:100%}.qty{flex:1}.header{border-radius:9px}.searchrow{grid-template-columns:1fr auto}.nav .hide-mobile{display:none}}
+
+.orders-toolbar{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.orders-toolbar button{border:0;border-radius:8px;height:38px;padding:0 13px;font-size:10px;font-weight:900;cursor:pointer}.new-order{background:#f47b00;color:#fff}.my-orders{background:#29343d;color:#fff}.validate-order{background:#16824b;color:#fff}.save-state{font-size:10px;color:#68727c;margin-left:auto;align-self:center}.orders-list{display:none}.orders-list.show{display:block}.order-card{display:grid;grid-template-columns:1.2fr .7fr .6fr auto;gap:10px;align-items:center;padding:10px;border:1px solid #dde2e6;border-radius:9px;margin-top:7px}.order-card strong{font-size:11px}.order-card small{display:block;color:#68727c;margin-top:3px}.badge{display:inline-block;padding:5px 8px;border-radius:999px;font-size:9px;font-weight:900}.badge.en_cours{background:#fff1e4;color:#b65b00}.badge.prete{background:#e8f2ff;color:#1e5db8}.badge.commandee{background:#e6f5ed;color:#167244}.order-card .card-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.order-card button{border:0;border-radius:6px;padding:7px 9px;font-size:9px;font-weight:800;cursor:pointer}.open-order{background:#29343d;color:#fff}.export-order{background:#217346;color:#fff}.ordered-order{background:#2563eb;color:#fff}.delete-order{background:#fbe8e6;color:#a72c24}@media(max-width:760px){.order-card{grid-template-columns:1fr}.order-card .card-actions{justify-content:flex-start}.save-state{width:100%;margin-left:0}}
+</style>
+<style id="unified-portal-header-style">
+.unified-header{background:#29343d!important;color:#fff!important;border-radius:13px!important;padding:14px 16px!important;min-height:70px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;position:relative!important;top:auto!important;box-shadow:0 3px 12px rgba(20,27,32,.08)!important;z-index:1000!important}
+.unified-brand{display:flex!important;align-items:center!important;gap:11px!important;min-width:0!important;flex:1 1 auto!important}.unified-logo{width:42px!important;height:42px!important;min-width:42px!important;border-radius:9px!important;background:#f47b00!important;color:#fff!important;display:grid!important;place-items:center!important;font-weight:900!important;font-size:20px!important}.unified-brand h1{font-family:Arial,Helvetica,sans-serif!important;font-size:19px!important;line-height:1.1!important;margin:0!important;color:#fff!important}.unified-brand p{font-family:Arial,Helvetica,sans-serif!important;font-size:10px!important;line-height:1.35!important;color:#d4dce1!important;margin:4px 0 0!important}
+.unified-tools{display:flex!important;align-items:center!important;gap:7px!important;flex:0 0 auto!important}.unified-menu-wrap{position:relative!important}.unified-menu-btn,.unified-logout{height:36px!important;border:0!important;border-radius:8px!important;padding:0 13px!important;color:#fff!important;font:800 10px Arial,Helvetica,sans-serif!important;cursor:pointer!important;display:inline-flex!important;align-items:center!important;gap:7px!important}.unified-menu-btn{background:#f47b00!important}.unified-menu-btn:hover{background:#dc6f00!important}.unified-logout{background:#46515a!important}.unified-logout:hover{background:#56636d!important}.unified-menu-icon{font-size:15px!important;line-height:1!important}
+.unified-menu{display:none!important;position:absolute!important;right:0!important;top:44px!important;width:255px!important;background:#fff!important;border:1px solid #dfe4e8!important;border-radius:12px!important;padding:7px!important;box-shadow:0 18px 45px rgba(20,27,32,.2)!important;z-index:99999!important}.unified-menu.open{display:block!important}.unified-menu a{box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:space-between!important;width:100%!important;padding:10px 11px!important;border-radius:8px!important;color:#29343d!important;text-decoration:none!important;font:700 11px Arial,Helvetica,sans-serif!important;background:transparent!important}.unified-menu a:hover{background:#f4f6f7!important}.unified-menu a.active{background:#fff1e4!important;color:#c86200!important}.unified-menu a.active:after{content:'•';font-size:17px;color:#f47b00}.unified-page-actions{display:flex!important;gap:6px!important;align-items:center!important;margin-left:auto!important}.unified-page-actions button{height:36px!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:8px!important;color:#fff!important;font:800 10px Arial,Helvetica,sans-serif!important;padding:0 11px!important;cursor:pointer!important;background:#3d4851!important}.unified-page-actions button:hover{background:#4a5660!important}
+@media(max-width:760px){.unified-header{border-radius:9px!important;padding:11px 12px!important;gap:9px!important;flex-wrap:wrap!important}.unified-brand{min-width:calc(100% - 120px)!important}.unified-brand h1{font-size:17px!important}.unified-brand p{display:none!important}.unified-tools{margin-left:auto!important}.unified-page-actions{order:3!important;width:100%!important;margin-left:0!important;overflow-x:auto!important}.unified-page-actions button{white-space:nowrap!important}.unified-logout{width:36px!important;padding:0!important;justify-content:center!important;font-size:0!important}.unified-logout:before{content:'↪';font-size:17px!important}.unified-menu{position:fixed!important;left:10px!important;right:10px!important;top:78px!important;width:auto!important;max-height:calc(100vh - 95px)!important;overflow:auto!important}}
+</style>
+<style id="brand-theme">
+:root{--orange:#f47b00!important}
+body{background:#f7f7f7!important}
+.unified-header{background:#fff!important;color:#29343d!important;border:1px solid #e5e7eb!important;border-top:4px solid #f47b00!important;box-shadow:0 4px 16px rgba(20,27,32,.07)!important}
+.unified-brand h1{color:#29343d!important}.unified-brand p{color:#6b7280!important}
+.unified-menu-btn{background:#f47b00!important}.unified-logout{background:#f1f3f5!important;color:#29343d!important;border:1px solid #dde2e6!important}
+</style>
+<script id="outilsud-api-scope">
+(()=>{const _fetch=window.fetch.bind(window);window.fetch=(input,init={})=>{const u=typeof input==='string'?input:(input&&input.url)||'';if(u.startsWith('https://braconnier-api.sebastien-025.workers.dev')){const h=new Headers(init.headers||(typeof input!=='string'&&input.headers)||{});h.set('X-Enseigne','outilsud');return _fetch(input,{...init,headers:h});}return _fetch(input,init);};})();
+</script>
+<style id="brand-theme">
+:root{--orange:#284f9e!important;--blue:#284f9e!important}
+body{background:#f7f8fb!important}
+.unified-header{background:#fff!important;color:#29343d!important;border:1px solid #e2e6ef!important;border-top:4px solid #284f9e!important;box-shadow:0 4px 16px rgba(20,27,32,.07)!important}
+.unified-logo{background:#284f9e!important}.unified-brand h1{color:#29343d!important}.unified-brand p{color:#6b7280!important}
+.unified-menu-btn{background:#284f9e!important}.unified-menu-btn:hover{background:#203f7e!important}.unified-logout{background:#f1f3f5!important;color:#29343d!important;border:1px solid #dde2e6!important}
+.unified-menu a.active{background:#eef3ff!important;color:#284f9e!important}.unified-menu a.active:after{color:#284f9e!important}
+.control:focus{border-color:#284f9e!important;box-shadow:0 0 0 3px rgba(40,79,158,.1)!important}.supplier-option:hover,.supplier-option.active{background:#eef3ff!important}
+.new-order{background:#284f9e!important}.scan-frame{border-color:#284f9e!important}
+</style>
+</head><body>
+<div class="wrap">
+<header class="unified-header"><div class="unified-brand"><div class="unified-logo">O</div><div><h1>Commandes fournisseurs</h1><p>Outilsud · scanner, rechercher et préparer les commandes</p></div></div><div class="unified-tools"><div class="unified-menu-wrap"><button aria-controls="unifiedMenu" aria-expanded="false" class="unified-menu-btn" id="unifiedMenuBtn" type="button"><span class="unified-menu-icon">☰</span> Menu</button><nav aria-label="Navigation principale" class="unified-menu" id="unifiedMenu"><a href="index.html">Accueil</a><a href="calculs.html">Calculs</a><a href="fournisseurs-outilsud.html">Base fournisseurs</a><a href="inventaire-outilsud.html">Inventaire</a><a class="active" href="commandes-outilsud.html">Commandes</a><a href="notes.html">Notes</a></nav></div><button class="unified-logout" onclick="portalLogout()" type="button">Déconnexion</button></div></header>
+<div class="panel setup"><div><label class="label" for="supplierSearch">FOURNISSEUR À COMMANDER</label><div class="supplier-picker"><input autocomplete="off" class="control" id="supplierSearch" placeholder="Rechercher un fournisseur…" type="search"/><div class="supplier-results" id="supplierResults"></div></div><div class="status" id="supplierState">Connexion à la base fournisseurs…</div></div><div><label class="label" for="orderRef">RÉFÉRENCE / NOTE DE COMMANDE (OPTIONNEL)</label><input class="control" id="orderRef" placeholder="Ex. stock septembre, chantier Dupont…"/></div></div>
+<div class="kpis"><div class="kpi"><b id="articleKpi">0</b> articles dans la commande</div><div class="kpi"><b id="qtyKpi">0</b> unités à commander</div><div class="kpi"><b id="catalogKpi">0</b> articles disponibles chez ce fournisseur</div></div><div class="orders-toolbar"><button class="new-order" id="newOrderBtn">＋ Nouvelle commande</button><button class="my-orders" id="myOrdersBtn">📋 Mes commandes</button><button class="validate-order" id="validateBtn" disabled>✓ Valider la commande</button><span class="save-state" id="saveState">Nouvelle commande</span></div>
+<section class="panel orders-list" id="ordersPanel"><div class="orderhead"><h2>Mes commandes enregistrées</h2><div class="status">En cours · Prêtes à commander · Commandées</div></div><div id="ordersList"><div class="empty">Chargement…</div></div></section>
+<section class="panel"><label class="label" for="searchInput">SCANNER OU RECHERCHER UN ARTICLE</label><div class="searchrow"><input autocomplete="off" class="control" id="searchInput" inputmode="search" placeholder="EAN, n° article, réf. fournisseur ou dénomination…" type="search"/><button class="scan" disabled="" id="scanBtn" type="button">📷 Scanner</button></div><div class="hint">Lecteur USB/Bluetooth : cliquez dans le champ puis scannez. Sur téléphone, utilisez 📷 Scanner. La recherche est limitée au fournisseur sélectionné.</div><div class="results" id="results"></div></section>
+<section class="panel"><div class="orderhead"><h2>Commande · <span id="orderSupplier">aucun fournisseur sélectionné</span></h2><div class="actions"><button class="excel" disabled="" id="exportBtn">Exporter Excel</button><button class="clear" disabled="" id="clearBtn">Vider la commande</button></div></div><div class="tablewrap"><table class="table"><thead><tr><th>EAN</th><th>N° article</th><th>N° article fournisseur</th><th>Dénomination</th><th>Unité</th><th>Emballage</th><th>Fournisseur</th><th>Quantité</th><th></th></tr></thead><tbody id="orderBody"><tr><td class="empty" colspan="9">Choisissez un fournisseur pour commencer.</td></tr></tbody></table></div></section>
+</div>
+<div id="scannerModal"><div class="scanner-shell"><div class="scanner-top"><b>Scanner le code-barres</b><button id="closeScanner">Fermer ✕</button></div><div class="video-wrap"><div id="commandBarcodeReader" style="width:100%;height:100%;"></div></div><div class="scanner-msg" id="scannerMsg">Placez le code-barres dans le cadre.</div>
+<div id="scanConfirm" style="display:none;background:#fff;color:#222;padding:12px;border-radius:12px 12px 0 0;">
+  <div id="scanArticleName" style="font-weight:900;margin-bottom:8px;"></div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <label for="scanQty" style="font-size:12px;font-weight:800;">Quantité</label>
+    <input id="scanQty" type="number" min="0.001" step="any" inputmode="decimal" value="1" style="width:90px;height:42px;border:1px solid #ccd4da;border-radius:8px;text-align:center;font-weight:900;">
+    <button id="scanOk" type="button" style="height:42px;border:0;border-radius:8px;background:#16824b;color:#fff;padding:0 18px;font-weight:900;">OK</button>
+    <button id="scanCancel" type="button" style="height:42px;border:0;border-radius:8px;background:#68727c;color:#fff;padding:0 12px;font-weight:800;">Annuler</button>
+  </div>
+</div></div></div><div class="toast" id="toast"></div>
+<script>
+const API_BASE="https://braconnier-api.sebastien-025.workers.dev",TOKEN_KEY="braconnier_portal_token_v3",LOGOUT_KEY="braconnier_portal_logout";
+// Les accès normaux à l'API utilisent automatiquement la session du portail.
+// X-Admin-Password reste envoyé uniquement par les fonctions d'administration qui le demandent explicitement.
+const nativeFetchForPrivateApi=window.fetch.bind(window);
+window.fetch=function(input,init={}){
+  const target=typeof input==="string"?input:(input&&input.url)||"";
+  if(target.startsWith(API_BASE)){
+    const headers=new Headers(init.headers||(typeof input!=="string"&&input.headers)||{});
+    if(!headers.has("Authorization")){
+      const token=sessionStorage.getItem("braconnier_portal_token_v3")||"";
+      if(token)headers.set("Authorization","Bearer "+token);
+    }
+    init={...init,headers};
+  }
+  return nativeFetchForPrivateApi(input,init);
+};
+
+const $=id=>document.getElementById(id);let suppliers=[],selectedSupplier=null,catalog=[],order=new Map(),scannerStream=null,scannerLoop=null,scannerBusy=false,lastScannedCode="",lastScannedAt=0,pendingScanArticle=null,currentOrderId=null,currentStatus="en_cours",saveTimer=null,saving=false;
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function norm(v){return String(v??"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim()}
+function cleanScanValue(v){return String(v||"").trim().replace(/^(?:in\s*)?#\s*/i,"").replace(/^#\s*/,"").trim()}
+function safeNum(v){const n=Number(v);return Number.isFinite(n)?n:0}
+function articleKey(a){return String(a.ean||"").trim()||("A:"+String(a.numero_article||"")+"|F:"+String(a.num_fournisseur||""))}
+function toast(t){$("toast").textContent=t;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),1800)}
+function portalLogout(){sessionStorage.removeItem(TOKEN_KEY);try{localStorage.setItem(LOGOUT_KEY,Date.now()+":"+Math.random())}catch{}location.replace("index.html")}
+async function apiJson(path,options){const r=await fetch(API_BASE+path,options),j=await r.json().catch(()=>({}));if(!r.ok||j.ok===false)throw new Error(j.erreur||("HTTP "+r.status));return j}
+function supplierName(f){return f.nom||f.nom_actuel||f.fournisseur_source||("Fournisseur "+f.id)}
+function renderSupplierResults(q=""){const box=$("supplierResults"),n=norm(q);const list=suppliers.filter(f=>!n||norm(supplierName(f)).includes(n)).sort((a,b)=>supplierName(a).localeCompare(supplierName(b),"fr")).slice(0,50);box.innerHTML=list.length?list.map(f=>`<div class="supplier-option" data-supplier-id="${esc(f.id)}"><strong>${esc(supplierName(f))}</strong><span>${esc(f.nb_articles||0)} article(s)</span></div>`).join(""):'<div class="supplier-option"><strong>Aucun fournisseur trouvé</strong></div>';box.classList.add("show");box.querySelectorAll("[data-supplier-id]").forEach(el=>el.onclick=()=>chooseSupplier(el.dataset.supplierId,true))}
+async function loadSuppliers(){try{const j=await apiJson("/fournisseurs");suppliers=(j.fournisseurs||[]);$("supplierSearch").placeholder="Rechercher parmi "+suppliers.length+" fournisseurs…";const avecArticles=suppliers.filter(f=>Number(f.nb_articles||0)>0).length;const sansArticles=suppliers.length-avecArticles;$("supplierState").textContent=suppliers.length+" fournisseur(s) disponibles · "+avecArticles+" avec articles · "+sansArticles+" sans article."}catch(e){$("supplierState").textContent="Impossible de charger les fournisseurs : "+e.message}}
+async function chooseSupplier(id,resetOrder=false){const f=suppliers.find(x=>String(x.id)===String(id));if(!f)return;if(resetOrder&&currentOrderId&&!confirm("Changer de fournisseur pour cette commande ?"))return;selectedSupplier=f;$("supplierSearch").value=supplierName(f);$("supplierResults").classList.remove("show");catalog=[];$("results").innerHTML="";$("searchInput").value="";$("searchInput").disabled=false;$("scanBtn").disabled=false;$("orderSupplier").textContent=supplierName(f);if(resetOrder){currentOrderId=null;currentStatus="en_cours";order=new Map();$("orderRef").value="";renderOrder()}$("supplierState").textContent="Chargement des articles…";try{const j=await apiJson("/articles?fournisseur_id="+encodeURIComponent(f.id));catalog=(j.articles||[]).map(a=>({...a,fournisseur_id:f.id,fournisseur:supplierName(f),ean:String(a.ean||"").trim()}));$("supplierState").textContent=catalog.length+" article(s) chargés pour "+supplierName(f)+".";$("catalogKpi").textContent=catalog.length;$("searchInput").focus();if(resetOrder)scheduleSave()}catch(e){$("supplierState").textContent="Impossible de charger les articles : "+e.message;$("catalogKpi").textContent="0"}}
+function score(a,q){const n=norm(q),e=norm(a.ean),na=norm(a.numero_article),nf=norm(a.num_fournisseur),d=norm(a.denomination);if(!n)return 0;if(e===n)return 100;if(na===n)return 98;if(nf===n)return 96;if(e.includes(n))return 88;if(na.includes(n))return 86;if(nf.includes(n))return 84;if(d.includes(n))return 72;const w=n.split(/\s+/).filter(Boolean);return w.length&&w.every(x=>(d+" "+na+" "+nf+" "+e).includes(x))?60:0}
+function searchCatalog(q){q=cleanScanValue(q);return catalog.map(a=>({a,s:score(a,q)})).filter(x=>x.s>0).sort((x,y)=>y.s-x.s||String(x.a.denomination).localeCompare(String(y.a.denomination),"fr")).slice(0,25).map(x=>x.a)}
+function renderResults(list){const box=$("results");if(!$("searchInput").value.trim()){box.innerHTML="";return}if(!list.length){box.innerHTML='<div class="result"><strong>Aucun article trouvé chez ce fournisseur.</strong></div>';return}box.innerHTML=list.map((a,i)=>`<div class="result" data-i="${i}"><div><strong>${esc(a.denomination||a.numero_article||a.ean||"Article")}</strong><div class="meta"><span>EAN : ${esc(a.ean||"—")}</span><span>Article : ${esc(a.numero_article||"—")}</span><span>Réf. fournisseur : ${esc(a.num_fournisseur||"—")}</span><span>Unité : ${esc(a.unite||"—")}</span></div></div><div class="addline"><input class="qty" data-qty="${i}" type="number" min="0.001" step="any" inputmode="decimal" value="1"><button class="add" data-add="${i}">Ajouter</button></div></div>`).join("");box.querySelectorAll("[data-add]").forEach(b=>b.onclick=e=>{e.stopPropagation();const i=Number(b.dataset.add),v=box.querySelector(`[data-qty="${i}"]`)?.value;addArticle(list[i],v)});box.querySelectorAll(".result[data-i]").forEach(el=>el.onclick=e=>{if(e.target.closest(".addline"))return;addArticle(list[Number(el.dataset.i)],1)})}
+function lookup(scan=false){if(!selectedSupplier){$("results").innerHTML='<div class="result"><strong>Choisissez d’abord un fournisseur.</strong></div>';return}const raw=$("searchInput").value,clean=cleanScanValue(raw);if(scan)$("searchInput").value=clean;const list=searchCatalog(clean);if(scan){const exact=list.find(a=>norm(a.ean)===norm(clean))||list.find(a=>norm(a.numero_article)===norm(clean))||list.find(a=>norm(a.num_fournisseur)===norm(clean));if(exact){addArticle(exact,1);return}}renderResults(list)}
+function addArticle(a,qty){qty=Number(String(qty).replace(",","."));if(!Number.isFinite(qty)||qty<=0){toast("Quantité invalide.");return}const key=articleKey(a),old=order.get(key);order.set(key,{key,ean:a.ean||"",numero_article:a.numero_article||"",num_fournisseur:a.num_fournisseur||"",denomination:a.denomination||"",unite:a.unite||"",emballage:a.emballage||"",groupe_principal:a.groupe_principal||a.groupe||"",sous_groupe:a.sous_groupe||"",fournisseur:a.fournisseur||"",fournisseur_id:a.fournisseur_id,quantite:(old?safeNum(old.quantite):0)+qty});currentStatus="en_cours";renderOrder();scheduleSave();$("searchInput").value="";$("results").innerHTML="";$("searchInput").focus();toast(old?"Quantité ajoutée à la ligne.":"Article ajouté à la commande.");}
+function renderOrder(){const rows=[...order.values()];$("articleKpi").textContent=rows.length;$("qtyKpi").textContent=rows.reduce((s,x)=>s+safeNum(x.quantite),0);$("exportBtn").disabled=!rows.length;$("clearBtn").disabled=!rows.length;$("validateBtn").disabled=!rows.length||!selectedSupplier;$("orderBody").innerHTML=rows.length?rows.map(x=>`<tr><td>${esc(x.ean)}</td><td>${esc(x.numero_article)}</td><td>${esc(x.num_fournisseur)}</td><td>${esc(x.denomination)}</td><td>${esc(x.unite)}</td><td>${esc(x.emballage)}</td><td>${esc(x.fournisseur)}</td><td class="q"><input class="qty" data-edit="${esc(x.key)}" type="number" min="0.001" step="any" value="${esc(x.quantite)}"></td><td><button class="del" data-del="${esc(x.key)}">Supprimer</button></td></tr>`).join(""):`<tr><td colspan="9" class="empty">${selectedSupplier?"La commande est vide.":"Choisissez un fournisseur pour commencer."}</td></tr>`;$("orderBody").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{order.delete(b.dataset.del);renderOrder();scheduleSave()});$("orderBody").querySelectorAll("[data-edit]").forEach(inp=>inp.onchange=()=>{const x=order.get(inp.dataset.edit),v=Number(String(inp.value).replace(",","."));if(x&&Number.isFinite(v)&&v>0){x.quantite=v;order.set(x.key,x);renderOrder();scheduleSave()}else renderOrder()})}
+function payload(status=currentStatus){return{id:currentOrderId,fournisseur_id:selectedSupplier?.id,fournisseur:selectedSupplier?supplierName(selectedSupplier):"",reference:$("orderRef").value.trim(),statut:status,lignes:[...order.values()]}}
+function scheduleSave(){if(!selectedSupplier)return;clearTimeout(saveTimer);$("saveState").textContent="Modifications à enregistrer…";saveTimer=setTimeout(()=>saveCurrent(),650)}
+async function saveCurrent(status=currentStatus){if(!selectedSupplier||saving)return null;saving=true;$("saveState").textContent="Enregistrement…";try{const j=await apiJson("/commandes/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload(status))});currentOrderId=j.id;currentStatus=j.statut;$("saveState").textContent="✓ Enregistrée · commande #"+j.id;return j}catch(e){$("saveState").textContent="⚠ Non enregistrée : "+e.message;throw e}finally{saving=false}}
+async function newOrder(){if(saveTimer){clearTimeout(saveTimer);saveTimer=null}if(selectedSupplier&&(order.size||$("orderRef").value.trim())){try{await saveCurrent()}catch{if(!confirm("La sauvegarde a échoué. Commencer quand même une nouvelle commande ?"))return}}currentOrderId=null;currentStatus="en_cours";selectedSupplier=null;catalog=[];order=new Map();$("supplierSearch").value="";$("orderRef").value="";$("orderSupplier").textContent="aucun fournisseur sélectionné";$("catalogKpi").textContent="0";$("searchInput").value="";$("searchInput").disabled=false;$("scanBtn").disabled=true;$("saveState").textContent="Nouvelle commande";renderOrder();$("supplierSearch").focus()}
+async function validateCurrent(){if(!order.size||!selectedSupplier)return;if(!confirm("Valider cette commande comme prête à commander ?"))return;currentStatus="prete";try{await saveCurrent("prete");toast("Commande validée et enregistrée.");await loadOrders();await newOrder()}catch(e){toast("Erreur : "+e.message)}}
+function statusLabel(s){return s==="prete"?"Prête à commander":s==="commandee"?"Commandée":"En cours"}
+function fmtDate(v){if(!v)return"—";const d=new Date(v.replace(" ","T")+"Z");return isNaN(d)?v:d.toLocaleString("fr-BE",{dateStyle:"short",timeStyle:"short"})}
+async function loadOrders(){const box=$("ordersList");box.innerHTML='<div class="empty">Chargement…</div>';try{const j=await apiJson("/commandes");const rows=j.commandes||[];box.innerHTML=rows.length?rows.map(c=>`<div class="order-card"><div><strong>#${c.id} · ${esc(c.fournisseur)}</strong><small>${esc(c.reference||"Sans référence")} · modifiée ${esc(fmtDate(c.updated_at))}</small></div><div><b>${esc(c.nb_articles)} article(s)</b><small>${esc(c.quantite)} unité(s)</small></div><div><span class="badge ${esc(c.statut)}">${esc(statusLabel(c.statut))}</span></div><div class="card-actions"><button class="open-order" data-open="${c.id}">Ouvrir</button><button class="export-order" data-export="${c.id}">Excel</button>${c.statut!=="commandee"?`<button class="ordered-order" data-ordered="${c.id}">Commandée</button>`:""}<button class="delete-order" data-delete="${c.id}">Supprimer</button></div></div>`).join(""):'<div class="empty">Aucune commande enregistrée.</div>';box.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>openOrder(Number(b.dataset.open)));box.querySelectorAll("[data-export]").forEach(b=>b.onclick=()=>exportSavedOrder(Number(b.dataset.export)));box.querySelectorAll("[data-ordered]").forEach(b=>b.onclick=()=>markOrdered(Number(b.dataset.ordered)));box.querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>deleteOrder(Number(b.dataset.delete)))}catch(e){box.innerHTML='<div class="empty">Impossible de charger les commandes : '+esc(e.message)+'</div>'}}
+async function openOrder(id){try{const j=await apiJson("/commandes?id="+id),c=j.commande;currentOrderId=c.id;currentStatus=c.statut;order=new Map((j.lignes||[]).map(x=>[x.key||articleKey(x),x]));$("orderRef").value=c.reference||"";let f=suppliers.find(x=>String(x.id)===String(c.fournisseur_id));if(!f)f={id:c.fournisseur_id,nom:c.fournisseur,nb_articles:0};selectedSupplier=f;$("supplierSearch").value=c.fournisseur;$("orderSupplier").textContent=c.fournisseur;renderOrder();await chooseSupplier(c.fournisseur_id,false);$("saveState").textContent=statusLabel(c.statut)+" · commande #"+c.id;$("ordersPanel").classList.remove("show");window.scrollTo({top:0,behavior:"smooth"})}catch(e){toast("Erreur : "+e.message)}}
+async function markOrdered(id){if(!confirm("Marquer cette commande comme commandée ?"))return;try{await apiJson("/commandes/status",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,statut:"commandee"})});if(currentOrderId===id)currentStatus="commandee";await loadOrders();toast("Commande marquée comme commandée.")}catch(e){toast("Erreur : "+e.message)}}
+async function deleteOrder(id){if(!confirm("Supprimer définitivement cette commande ?"))return;try{await apiJson("/commandes?id="+id,{method:"DELETE"});if(currentOrderId===id)await newOrder();await loadOrders();toast("Commande supprimée.")}catch(e){toast("Erreur : "+e.message)}}
+function safeFile(v){return String(v||"Fournisseur").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9_-]+/gi,"_").replace(/^_+|_+$/g,"")}
+function makeExcel(supplier,ref,items,id){const date=new Date(),rows=items.sort((a,b)=>String(a.numero_article).localeCompare(String(b.numero_article),"fr",{numeric:true})).map(x=>({"N° article":x.numero_article,"Code EAN":x.ean,"N° article fournisseur":x.num_fournisseur,"Dénomination":x.denomination,"Fournisseur":supplier,"ID fournisseur":x.fournisseur_id,"Unité":x.unite,"Emballage":x.emballage,"Groupe principal":x.groupe_principal,"Sous-groupe":x.sous_groupe,"Quantité commandée":x.quantite,"Référence commande":ref,"N° commande":id||"","Date export":date.toLocaleDateString("fr-BE")}));const ws=XLSX.utils.json_to_sheet(rows);ws["!autofilter"]={ref:ws["!ref"]};ws["!cols"]=[{wch:16},{wch:18},{wch:24},{wch:50},{wch:28},{wch:14},{wch:12},{wch:14},{wch:20},{wch:20},{wch:18},{wch:30},{wch:14},{wch:14}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Commande");XLSX.writeFile(wb,"Commande_fournisseur_"+safeFile(supplier)+"_"+(id?("N"+id+"_"):"")+date.toISOString().slice(0,10)+".xlsx")}
+async function exportExcel(){if(!selectedSupplier||!order.size)return;try{await saveCurrent()}catch{}makeExcel(supplierName(selectedSupplier),$("orderRef").value.trim(),[...order.values()],currentOrderId)}
+async function exportSavedOrder(id){try{const j=await apiJson("/commandes?id="+id);makeExcel(j.commande.fournisseur,j.commande.reference||"",j.lignes||[],id)}catch(e){toast("Erreur : "+e.message)}}
+function showScanQuantity(a){
+  pendingScanArticle=a;
+  scannerBusy=true;
+  $("scanArticleName").textContent=a.denomination||a.numero_article||a.ean||"Article";
+  $("scanQty").value="1";
+  $("scanConfirm").style.display="block";
+  $("scannerMsg").textContent="Article reconnu. Choisissez la quantité puis OK.";
+  setTimeout(()=>{$("scanQty").focus();$("scanQty").select()},50);
+}
+function resumeScanner(message){
+  pendingScanArticle=null;
+  $("scanConfirm").style.display="none";
+  $("scannerMsg").textContent=message||"Scannez l’article suivant.";
+  setTimeout(()=>{scannerBusy=false;lastScannedCode="";lastScannedAt=0},500);
+}
+function confirmScannedArticle(){
+  if(!pendingScanArticle)return;
+  const qty=Number(String($("scanQty").value).replace(",","."));
+  if(!Number.isFinite(qty)||qty<=0){
+    $("scannerMsg").textContent="Quantité invalide.";
+    $("scanQty").focus();
+    return;
+  }
+  const a=pendingScanArticle;
+  addArticle(a,qty);
+  resumeScanner("Ajouté (x"+qty+"). Scannez l’article suivant.");
+}
+async function handleScannedCode(raw){
+  raw=cleanScanValue(raw);
+  if(!raw||scannerBusy||!selectedSupplier)return;
+  const now=Date.now();
+  if(raw===lastScannedCode&&now-lastScannedAt<1400)return;
+  lastScannedCode=raw;lastScannedAt=now;scannerBusy=true;
+  $("scannerMsg").textContent="Recherche chez "+supplierName(selectedSupplier)+"…";
+  try{
+    // Recherche serveur : elle vérifie toutes les associations fournisseur/article,
+    // y compris les tarifs secondaires. Elle ne s'arrête jamais au premier fournisseur trouvé.
+    const j=await apiJson("/commandes/scan?q="+encodeURIComponent(raw)+"&fournisseur_id="+encodeURIComponent(selectedSupplier.id));
+    const selected=j.selected||[];
+    if(selected.length){
+      // Le serveur a déjà filtré le fournisseur choisi. Si plusieurs lignes existent,
+      // préférer EAN exact puis n° article puis référence fournisseur.
+      const exact=selected.find(a=>norm(a.ean)===norm(raw))
+        ||selected.find(a=>norm(a.numero_article)===norm(raw))
+        ||selected.find(a=>norm(a.num_fournisseur)===norm(raw))
+        ||selected[0];
+      exact.fournisseur_id=selectedSupplier.id;
+      exact.fournisseur=supplierName(selectedSupplier);
+      showScanQuantity(exact);
+      return;
+    }
+    const others=j.others||[];
+    if(others.length){
+      const noms=[...new Set(others.map(a=>a.fournisseur).filter(Boolean))];
+      toast("Article trouvé, mais pas chez "+supplierName(selectedSupplier)+".");
+      resumeScanner("Trouvé chez : "+noms.slice(0,4).join(", ")+(noms.length>4?"…":"")+". Pas chez le fournisseur sélectionné.");
+    }else{
+      toast("Article introuvable.");
+      resumeScanner("Article introuvable dans la base. Scannez le suivant.");
+    }
+  }catch(e){
+    console.error("Recherche scan commande:",e);
+    toast("Erreur de recherche : "+e.message);
+    resumeScanner("Erreur de recherche. Scannez à nouveau.");
+  }
+}
+
+function commandBarcodeFormats(){
+ if(typeof Html5QrcodeSupportedFormats==="undefined")return undefined;
+ return [Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,Html5QrcodeSupportedFormats.ITF];
+}
+let commandBarcodeScanner=null;
+async function startScanner(){
+ if(!selectedSupplier){toast("Choisissez d’abord un fournisseur.");return}
+ if(typeof Html5Qrcode==="undefined"){toast("Module scanner non chargé.");return}
+ $("scannerModal").style.display="block";$("scannerMsg").textContent="Ouverture de la caméra…";scannerBusy=false;lastScannedCode="";lastScannedAt=0;pendingScanArticle=null;$("scanConfirm").style.display="none";
+ try{
+   if(commandBarcodeScanner){try{if(commandBarcodeScanner.isScanning)await commandBarcodeScanner.stop()}catch{} try{commandBarcodeScanner.clear()}catch{} commandBarcodeScanner=null;}
+   $("commandBarcodeReader").innerHTML="";
+   let cameras=[];try{cameras=await Html5Qrcode.getCameras()}catch(e){console.warn(e)}
+   const rear=cameras.find(c=>/back|rear|environment|arrière|arriere|world/i.test(c.label||""));
+   const cameraId=(rear||cameras[cameras.length-1]||cameras[0])?.id;
+   commandBarcodeScanner=new Html5Qrcode("commandBarcodeReader",{formatsToSupport:commandBarcodeFormats(),verbose:false});
+   const config={fps:10,qrbox:(vw,vh)=>({width:Math.max(180,Math.min(Math.floor(vw*.88),480)),height:Math.max(90,Math.min(Math.floor(vh*.34),170))})};
+   const onSuccess=async decoded=>{if(scannerBusy)return;const code=cleanScanValue(decoded);if(code)await handleScannedCode(code)};
+   if(cameraId) await commandBarcodeScanner.start(cameraId,config,onSuccess,()=>{});
+   else {try{await commandBarcodeScanner.start({facingMode:"environment"},config,onSuccess,()=>{})}catch(e){await commandBarcodeScanner.start({facingMode:{ideal:"environment"}},config,onSuccess,()=>{})}}
+   $("scannerMsg").textContent="Placez le code-barres dans le cadre.";
+ }catch(e){console.error("Scanner commandes:",e);$("scannerMsg").textContent="Impossible d'ouvrir la caméra : "+(e?.message||e);}
+}
+async function stopScanner(){
+ const sc=commandBarcodeScanner;commandBarcodeScanner=null;
+ if(sc){try{if(sc.isScanning)await sc.stop()}catch(e){console.warn(e)}try{sc.clear()}catch{}}
+ pendingScanArticle=null;scannerBusy=false;$("scanConfirm").style.display="none";$("commandBarcodeReader").innerHTML="";$("scannerModal").style.display="none";
+}
+$("supplierSearch").onfocus=()=>renderSupplierResults($("supplierSearch").value);$("supplierSearch").oninput=()=>renderSupplierResults($("supplierSearch").value);$("supplierSearch").onkeydown=e=>{if(e.key==="Escape")$("supplierResults").classList.remove("show")};document.addEventListener("click",e=>{if(!e.target.closest(".supplier-picker"))$("supplierResults").classList.remove("show")});$("searchInput").oninput=()=>lookup(false);$("searchInput").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();lookup(true)}};$("scanBtn").onclick=startScanner;$("scanOk").onclick=confirmScannedArticle;$("scanCancel").onclick=()=>resumeScanner("Ajout annulé. Scannez l’article suivant.");$("scanQty").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();confirmScannedArticle()}};$("closeScanner").onclick=stopScanner;$("exportBtn").onclick=exportExcel;$("orderRef").oninput=scheduleSave;$("clearBtn").onclick=()=>{if(confirm("Vider les lignes de cette commande ?")){order.clear();renderOrder();scheduleSave()}};$("newOrderBtn").onclick=newOrder;$("validateBtn").onclick=validateCurrent;$("myOrdersBtn").onclick=async()=>{const p=$("ordersPanel");p.classList.toggle("show");if(p.classList.contains("show"))await loadOrders()};loadSuppliers();renderOrder();
+</script><script id="unified-menu-script">(function(){const b=document.getElementById('unifiedMenuBtn'),m=document.getElementById('unifiedMenu');if(!b||!m)return;function close(){m.classList.remove('open');b.setAttribute('aria-expanded','false')}b.addEventListener('click',function(e){e.stopPropagation();const o=m.classList.toggle('open');b.setAttribute('aria-expanded',o?'true':'false')});m.addEventListener('click',e=>e.stopPropagation());document.addEventListener('click',close);document.addEventListener('keydown',e=>{if(e.key==='Escape')close()})})();</script></body></html>

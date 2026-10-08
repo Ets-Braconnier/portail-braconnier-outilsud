@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script id="portal-access-guard">
+(function(){
+  const TOKEN_KEY="braconnier_portal_token_v3";
+  const AUTH_API="https://braconnier-auth.sebastien-025.workers.dev";
+  document.documentElement.style.visibility="hidden";
+  const token=sessionStorage.getItem(TOKEN_KEY);
+  if(!token){ location.replace(new URL("/base/index.html",location.origin).href); return; }
+  fetch(AUTH_API+"/auth/check",{headers:{Authorization:"Bearer "+token},cache:"no-store"})
+    .then(r=>{if(!r.ok)throw new Error("unauthorized"); document.documentElement.style.visibility="";})
+    .catch(()=>{sessionStorage.removeItem(TOKEN_KEY);location.replace(new URL("/base/index.html",location.origin).href);});
+})();
+</script>
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Générateur de plans – Encadrements de fenêtres & portes</title>
+<style>
+:root{--ink:#111;--muted:#666;--blue:#1457d9;--red:#d11;--line:#d7dbe0;--bg:#eef1f4}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:#fff;border-bottom:1px solid var(--line);padding:16px 20px}
+h1{font-size:20px;margin:0 0 4px}.sub{font-size:13px;color:var(--muted)}
+main{display:grid;grid-template-columns:560px 1fr;gap:16px;padding:16px;align-items:start}
+.panel,.preview{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px}
+.preview{overflow:auto;min-height:80vh}
+h2{font-size:16px;margin:0 0 10px}h3{font-size:14px;margin:18px 0 8px}
+label{font-size:12px;color:#333}input,select,button{font:inherit}
+input,select{width:100%;padding:7px 8px;border:1px solid #bbb;border-radius:6px;background:#fff}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+table{border-collapse:collapse;width:100%;font-size:12px}
+th,td{border:1px solid #ddd;padding:5px}th{background:#f4f6f8;text-align:left}td input{padding:5px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+button{border:1px solid #aaa;border-radius:7px;padding:8px 11px;background:#fff;cursor:pointer}
+button.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+button.danger{color:#a00}.rowbtn{padding:4px 7px;font-size:11px}
+.hint{font-size:11px;color:#666;line-height:1.35;margin-top:7px}
+.check{display:flex;align-items:center;gap:8px;margin-top:10px}.check input{width:auto}
+.calc{margin-top:10px;padding:8px 10px;border:1px solid #efd08a;background:#fff8e7;border-radius:7px;font-size:12px;line-height:1.4}
+#plan{display:block;width:100%;height:auto;background:#fff}
+@media(max-width:1050px){main{grid-template-columns:1fr}}
+@media print{
+  body{background:#fff}
+  header,.panel{display:none!important}
+  main{display:block;padding:0}
+  .preview{border:none;padding:0}
+  #plan{width:100%;height:auto}
+}
+</style>
+</head>
+<body>
+<header>
+<h1>Générateur de plans – Encadrements de fenêtres & portes</h1>
+<div class="sub">Linteau posé sur les montants • chanfreins côté intérieur • chanfrein du linteau centré • seuil optionnel</div>
+</header>
+
+<main>
+<section class="panel">
+<h2>Paramètres</h2>
+
+<div class="grid2">
+  <div>
+    <label>Section largeur (cm)</label>
+    <input id="secW" type="number" step="0.1" placeholder="Ex. 14">
+  </div>
+  <div>
+    <label>Section hauteur / profondeur (cm)</label>
+    <input id="secH" type="number" step="0.1" placeholder="Ex. 15">
+  </div>
+</div>
+
+<h3>Séries de fenêtres</h3>
+<table id="seriesTable">
+  <thead>
+    <tr>
+      <th>Longueur montant</th>
+      <th>Qté montants</th>
+      <th>Fenêtres</th>
+      <th>Longueur linteau</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<div class="actions">
+  <button onclick="addSerie()">+ Ajouter une ligne</button>
+</div>
+
+<div class="calc">
+  <b>Calcul automatique du chanfrein du linteau :</b><br>
+  longueur du linteau − 2 × largeur du montant.<br>
+  Le linteau garde sa longueur complète et repose sur les deux montants.
+</div>
+
+<h3>Chanfreins</h3>
+<select id="chanfrein">
+  <option value="non">Sans chanfrein</option>
+  <option value="oui">Avec chanfrein</option>
+</select>
+<div class="hint">
+  Montants : chanfrein longitudinal sur les arêtes intérieures.<br>
+  Linteau : chanfrein longitudinal centré sur la longueur calculée.
+</div>
+
+<h3>Seuil</h3>
+<div class="check">
+  <input id="seuil" type="checkbox">
+  <label for="seuil">Ajouter un seuil</label>
+</div>
+<div id="seuilOptions" style="display:none;margin-top:8px">
+  <label>Position du seuil</label>
+  <select id="seuilMode">
+    <option value="entre">Entre les montants</option>
+    <option value="dessous">Sous les montants, pleine largeur</option>
+  </select>
+</div>
+
+<h3>Affichage</h3>
+<div class="grid2">
+  <div>
+    <label>Échelle</label>
+    <select id="scaleMode">
+      <option value="auto">Automatique</option>
+      <option value="uniform">Proportionnelle</option>
+    </select>
+  </div>
+  <div>
+    <label>Unité</label>
+    <select id="unit">
+      <option value="cm">cm</option>
+      <option value="mm">mm</option>
+    </select>
+  </div>
+</div>
+
+<div class="hint" style="margin-top:8px">
+  <b>Automatique :</b> chaque fenêtre utilise au mieux la place de son bloc.<br>
+  <b>Proportionnelle :</b> toutes les fenêtres sont dessinées à la même échelle.
+</div>
+
+<div class="actions">
+  <button class="primary" onclick="render()">Générer</button>
+  <button onclick="downloadSVG()">Télécharger SVG</button>
+  <button onclick="downloadPNG()">Télécharger PNG</button>
+  <button onclick="window.print()">Imprimer / PDF</button>
+</div>
+</section>
+
+<section class="preview">
+<svg id="plan" viewBox="0 0 1500 700" xmlns="http://www.w3.org/2000/svg"></svg>
+</section>
+</main>
+
+<script>
+let rowId=0;
+
+function addSerie(v={M:'',Q:'2',F:'1',L:''}){
+  const tr=document.createElement('tr');
+  tr.dataset.id=rowId++;
+  tr.innerHTML=`
+    <td><input class="mL" type="number" step="0.1" value="${v.M}" placeholder="Ex. 140"></td>
+    <td><input class="mQ" type="number" step="1" value="${v.Q}" placeholder="Ex. 2"></td>
+    <td><input class="mF" type="number" step="1" value="${v.F}" placeholder="Ex. 1"></td>
+    <td><input class="lL" type="number" step="0.1" value="${v.L}" placeholder="Ex. 200"></td>
+    <td><button class="rowbtn danger" onclick="this.closest('tr').remove();render()">✕</button></td>`;
+  document.querySelector('#seriesTable tbody').appendChild(tr);
+}
+
+function S(tag,a={},t=''){
+  const e=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));
+  if(t)e.textContent=t;
+  return e;
+}
+function line(g,x1,y1,x2,y2,a={}){g.appendChild(S('line',{x1,y1,x2,y2,stroke:'#111','stroke-width':2,...a}))}
+function txt(g,x,y,t,a={}){g.appendChild(S('text',{x,y,fill:'#111','font-family':'Arial,Helvetica,sans-serif','font-size':16,...a},t))}
+function dim(g,x1,y1,x2,y2,label,vert=false){
+  const c='#d11';
+  line(g,x1,y1,x2,y2,{stroke:c,'stroke-width':1.5});
+  if(vert){
+    line(g,x1-6,y1,x1+6,y1,{stroke:c,'stroke-width':1.5});
+    line(g,x2-6,y2,x2+6,y2,{stroke:c,'stroke-width':1.5});
+    txt(g,x1-10,(y1+y2)/2,label,{fill:c,'font-size':15,'font-weight':'bold','text-anchor':'middle',
+      transform:`rotate(-90 ${x1-10} ${(y1+y2)/2})`});
+  }else{
+    line(g,x1,y1-6,x1,y1+6,{stroke:c,'stroke-width':1.5});
+    line(g,x2,y2-6,x2,y2+6,{stroke:c,'stroke-width':1.5});
+    txt(g,(x1+x2)/2,y1-8,label,{fill:c,'font-size':15,'font-weight':'bold','text-anchor':'middle'});
+  }
+}
+function num(el){const v=parseFloat(el.value);return Number.isFinite(v)?v:null}
+function U(v){
+  if(unit.value==='mm') return Math.round(v*10);
+  return Number.isInteger(v)?v:v.toFixed(1);
+}
+function getData(){
+  return [...document.querySelectorAll('#seriesTable tbody tr')].map(tr=>({
+    M:num(tr.querySelector('.mL')),
+    Q:num(tr.querySelector('.mQ'))||0,
+    F:num(tr.querySelector('.mF'))||0,
+    L:num(tr.querySelector('.lL'))
+  })).filter(x=>x.M||x.L||x.Q||x.F);
+}
+
+function render(){
+  const svg=document.getElementById('plan');
+  svg.innerHTML='';
+
+  const secW=num(document.getElementById('secW'));
+  const secH=num(document.getElementById('secH'));
+  const data=getData();
+  const ch=chanfrein.value==='oui';
+  const hasSeuil=seuil.checked;
+  const mode=scaleMode.value;
+
+  const canvasW=1500;
+  const cols = data.length<=2 ? Math.max(1,data.length) : 3;
+  const rows = Math.max(1,Math.ceil(Math.max(data.length,1)/cols));
+  const headerH=110;
+  const cardH=520;
+  const summaryRowH=28;
+  const summaryH=125 + Math.max(data.length,1)*summaryRowH;
+  const footerH=35;
+  const canvasH=headerH + rows*cardH + summaryH + footerH;
+
+  svg.setAttribute('viewBox',`0 0 ${canvasW} ${canvasH}`);
+  svg.appendChild(S('rect',{x:0,y:0,width:canvasW,height:canvasH,fill:'#fff'}));
+
+  txt(svg,30,40,'PLANS – ENCADREMENTS DE FENÊTRES & PORTES',{fill:'#1457d9','font-size':28,'font-weight':'bold'});
+  txt(svg,30,70,`Linteaux posés sur les montants • chanfreins ${ch?'activés':'désactivés'} • mode ${mode==='uniform'?'proportionnel':'automatique'}`,{'font-size':15});
+  line(svg,30,92,canvasW-30,92,{stroke:'#555','stroke-width':1});
+
+  if(!secW || !secH || !data.length){
+    txt(svg,30,140,'Saisissez la section et au moins une série.',{fill:'#666','font-size':19});
+    return;
+  }
+
+  const cardGap=18;
+  const cardW=(canvasW-60-(cols-1)*cardGap)/cols;
+
+  const valid=data.filter(d=>d.M && d.L && d.L>2*secW);
+  const maxSeriesW=Math.max(...valid.map(d=>d.L),1);
+  const maxSeriesH=Math.max(...valid.map(d=>d.M+secW+(hasSeuil&&seuilMode.value==='dessous'?secW:0)),1);
+
+  data.forEach((d,i)=>{
+    const col=i%cols, row=Math.floor(i/cols);
+    const ox=30+col*(cardW+cardGap);
+    const oy=headerH+row*cardH;
+    const cx=ox+cardW/2;
+
+    // Card border keeps every series together.
+    svg.appendChild(S('rect',{x:ox,y:oy,width:cardW,height:cardH-18,fill:'#fff',stroke:'#ddd','stroke-width':1}));
+
+    txt(svg,ox+15,oy+28,`Série ${i+1} — ${d.F} fenêtre${d.F>1?'s':''}`,{
+      fill:'#1457d9','font-size':18,'font-weight':'bold'
+    });
+
+    if(!d.M || !d.L || d.L<=2*secW){
+      txt(svg,cx,oy+90,'Cotes incomplètes ou linteau trop court',{
+        fill:'#b00020','font-size':15,'font-weight':'bold','text-anchor':'middle'
+      });
+      return;
+    }
+
+    const chanL=d.L-2*secW;
+    const totalH=d.M+secW+(hasSeuil&&seuilMode.value==='dessous'?secW:0);
+
+    // Drawing zone is fixed inside card; info is always below it.
+    const drawZoneX=ox+60;
+    const drawZoneY=oy+70;
+    const drawZoneW=cardW-120;
+    const drawZoneH=270;
+
+    let sc;
+    if(mode==='uniform'){
+      sc=Math.min(drawZoneW/maxSeriesW,drawZoneH/maxSeriesH);
+    }else{
+      sc=Math.min(drawZoneW/d.L,drawZoneH/totalH);
+    }
+
+    const dw=d.L*sc;
+    const postH=d.M*sc;
+    const pw=secW*sc;
+    const x=cx-dw/2;
+    const y=drawZoneY + (drawZoneH-(postH+pw+(hasSeuil&&seuilMode.value==='dessous'?pw:0)))/2;
+
+    // Linteau full width on top of montants.
+    svg.appendChild(S('rect',{x,y,width:dw,height:pw,fill:'none',stroke:'#111','stroke-width':2}));
+
+    // Montants below lintel.
+    svg.appendChild(S('rect',{x,y:y+pw,width:pw,height:postH,fill:'none',stroke:'#111','stroke-width':2}));
+    svg.appendChild(S('rect',{x:x+dw-pw,y:y+pw,width:pw,height:postH,fill:'none',stroke:'#111','stroke-width':2}));
+
+    // Optional threshold.
+    if(hasSeuil){
+      if(seuilMode.value==='entre'){
+        svg.appendChild(S('rect',{x:x+pw,y:y+pw+postH-pw,width:dw-2*pw,height:pw,fill:'none',stroke:'#111','stroke-width':2}));
+      }else{
+        svg.appendChild(S('rect',{x,y:y+pw+postH,width:dw,height:pw,fill:'none',stroke:'#111','stroke-width':2}));
+      }
+    }
+
+    // Internal longitudinal chamfers.
+    if(ch){
+      // left post: inner edge = right side
+      line(svg,x+pw-7,y+pw+2,x+pw-7,y+pw+postH-2,{stroke:'#555','stroke-width':2});
+      // right post: inner edge = left side
+      line(svg,x+dw-pw+7,y+pw+2,x+dw-pw+7,y+pw+postH-2,{stroke:'#555','stroke-width':2});
+
+      // lintel: centered chamfer on inner/bottom face
+      line(svg,x+pw,y+pw-7,x+dw-pw,y+pw-7,{stroke:'#555','stroke-width':2});
+
+      if(hasSeuil){
+        if(seuilMode.value==='entre'){
+          line(svg,x+pw+7,y+pw+postH-pw+7,x+dw-pw-7,y+pw+postH-pw+7,{stroke:'#555','stroke-width':2});
+        }else{
+          line(svg,x+pw,y+pw+postH+7,x+dw-pw,y+pw+postH+7,{stroke:'#555','stroke-width':2});
+        }
+      }
+    }
+
+    // Dimensions stay attached to drawing.
+    dim(svg,x,y-18,x+dw,y-18,`${U(d.L)} ${unit.value}`,false);
+    dim(svg,x-22,y+pw,x-22,y+pw+postH,`${U(d.M)} ${unit.value}`,true);
+
+    txt(svg,cx,y-2,`LINTEAU ${U(d.L)} ${unit.value}`,{
+      'font-size':13,'font-weight':'bold','text-anchor':'middle'
+    });
+
+    // Information block: fixed area, centered.
+    const infoY=oy+375;
+    txt(svg,cx,infoY,`Montants : ${U(d.M)} × ${U(secW)} × ${U(secH)} ${unit.value} — Qté ${d.Q}`,{
+      'font-size':13,'text-anchor':'middle'
+    });
+    txt(svg,cx,infoY+23,`Linteau : ${U(d.L)} × ${U(secW)} × ${U(secH)} ${unit.value}`,{
+      'font-size':13,'font-weight':'bold','text-anchor':'middle'
+    });
+
+    if(ch){
+      txt(svg,cx,infoY+46,`Chanfreins montants : ${U(d.M)} ${unit.value} sur les 2 arêtes intérieures`,{
+        'font-size':13,'text-anchor':'middle'
+      });
+      txt(svg,cx,infoY+69,`Chanfrein linteau centré : ${U(chanL)} ${unit.value} = ${U(secW)} + ${U(chanL)} + ${U(secW)}`,{
+        'font-size':13,'text-anchor':'middle'
+      });
+    }else{
+      txt(svg,cx,infoY+46,'Sans chanfrein sur les montants ni sur le linteau',{
+        'font-size':13,fill:'#777','text-anchor':'middle'
+      });
+    }
+
+    if(hasSeuil){
+      const sl=seuilMode.value==='entre'?d.L-2*secW:d.L;
+      txt(svg,cx,infoY+(ch?92:69),`Seuil : ${U(sl)} × ${U(secW)} × ${U(secH)} ${unit.value}`,{
+        'font-size':13,'font-weight':'bold','text-anchor':'middle'
+      });
+    }
+  });
+
+  // Résumé général en fin de plan.
+  const summaryY=headerH+rows*cardH+18;
+  const sx=55, swidth=canvasW-110;
+  txt(svg,canvasW/2,summaryY,'RÉSUMÉ GÉNÉRAL',{
+    fill:'#1457d9','font-size':20,'font-weight':'bold','text-anchor':'middle'
+  });
+
+  const top=summaryY+20;
+  const colsX=[sx, sx+110, sx+360, sx+550, sx+750, sx+1000, sx+swidth];
+  svg.appendChild(S('rect',{x:sx,y:top,width:swidth,height:30,fill:'#f4f6f8',stroke:'#999','stroke-width':1}));
+  for(let j=1;j<colsX.length-1;j++) line(svg,colsX[j],top,colsX[j],top+30+data.length*summaryRowH,{stroke:'#bbb','stroke-width':1});
+  const headers=['Série','Montants','Qté','Linteau','Chanfreins','Seuil'];
+  const centers=[
+    (colsX[0]+colsX[1])/2,(colsX[1]+colsX[2])/2,(colsX[2]+colsX[3])/2,
+    (colsX[3]+colsX[4])/2,(colsX[4]+colsX[5])/2,(colsX[5]+colsX[6])/2
+  ];
+  headers.forEach((h,j)=>txt(svg,centers[j],top+20,h,{'font-size':13,'font-weight':'bold','text-anchor':'middle'}));
+
+  data.forEach((d,i)=>{
+    const yy=top+30+i*summaryRowH;
+    svg.appendChild(S('rect',{x:sx,y:yy,width:swidth,height:summaryRowH,fill:'#fff',stroke:'#bbb','stroke-width':1}));
+    if(!d.M || !d.L || d.L<=2*secW){
+      txt(svg,centers[0],yy+19,`${i+1}`,{'font-size':12,'text-anchor':'middle'});
+      txt(svg,(colsX[1]+colsX[6])/2,yy+19,'Cotes incomplètes',{'font-size':12,fill:'#b00020','text-anchor':'middle'});
+      return;
+    }
+    const chanL=d.L-2*secW;
+    const sl=hasSeuil ? (seuilMode.value==='entre'?d.L-2*secW:d.L) : null;
+    const values=[
+      `${i+1}`,
+      `${U(d.M)} × ${U(secW)} × ${U(secH)} ${unit.value}`,
+      `${d.Q}`,
+      `${U(d.L)} × ${U(secW)} × ${U(secH)} ${unit.value}`,
+      ch ? `M: ${U(d.M)} / L: ${U(chanL)} ${unit.value}` : 'Sans',
+      hasSeuil ? `${U(sl)} × ${U(secW)} × ${U(secH)} ${unit.value}` : 'Sans'
+    ];
+    values.forEach((v,j)=>txt(svg,centers[j],yy+19,v,{'font-size':11.5,'text-anchor':'middle'}));
+  });
+
+  const totalWindows=data.reduce((a,d)=>a+(d.F||0),0);
+  const totalPosts=data.reduce((a,d)=>a+(d.Q||0),0);
+  const totalLintels=data.reduce((a,d)=>a+(d.F||0),0);
+  const totalThresholds=hasSeuil?totalWindows:0;
+  const totalsY=top+30+data.length*summaryRowH+28;
+  txt(svg,canvasW/2,totalsY,
+    `TOTAL : ${totalWindows} fenêtre${totalWindows>1?'s':''} • ${totalPosts} montants • ${totalLintels} linteau${totalLintels>1?'x':''}${hasSeuil?` • ${totalThresholds} seuil${totalThresholds>1?'s':''}`:''}`,
+    {'font-size':14,'font-weight':'bold','text-anchor':'middle'}
+  );
+
+  svg.appendChild(S('rect',{x:10,y:10,width:canvasW-20,height:canvasH-20,fill:'none',stroke:'#aaa','stroke-width':1}));
+}
+
+function serializeSVG(){
+  const c=plan.cloneNode(true);
+  c.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  return new XMLSerializer().serializeToString(c);
+}
+function downloadSVG(){
+  const b=new Blob([serializeSVG()],{type:'image/svg+xml;charset=utf-8'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b);
+  a.download='plans_encadrements_fenetres.svg';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),500);
+}
+function downloadPNG(){
+  const b=new Blob([serializeSVG()],{type:'image/svg+xml'}),url=URL.createObjectURL(b),img=new Image();
+  img.onload=()=>{
+    const vb=plan.viewBox.baseVal;
+    const scale=1.5;
+    const c=document.createElement('canvas');
+    c.width=Math.round(vb.width*scale);
+    c.height=Math.round(vb.height*scale);
+    const ctx=c.getContext('2d');
+    ctx.fillStyle='white';
+    ctx.fillRect(0,0,c.width,c.height);
+    ctx.drawImage(img,0,0,c.width,c.height);
+    URL.revokeObjectURL(url);
+    c.toBlob(blob=>{
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='plans_encadrements_fenetres.png';
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),500);
+    },'image/png');
+  };
+  img.src=url;
+}
+
+document.getElementById('seuil').addEventListener('change',()=>{
+  seuilOptions.style.display=seuil.checked?'block':'none';
+  render();
+});
+document.addEventListener('input',e=>{
+  if(e.target.matches('input,select')) render();
+});
+
+addSerie();
+render();
+</script>
+</body>
+</html>

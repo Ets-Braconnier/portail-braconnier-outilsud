@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<title>Inventaire Braconnier</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{--brand:#f47b00;--brand-dark:#d96d00;--ink:#222a31;--muted:#667085;--line:#dfe4e8;--navy:#29343d;--soft:#f4f6f7;--green:#18794e;--red:#a33b3b;--blue:#245a86}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f5f6;color:var(--ink)}button,input{font:inherit}.wrap{max-width:1180px;margin:auto;padding:14px}.header{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--navy);color:#fff;padding:10px 12px;border-radius:11px}.brand{display:flex;align-items:center;gap:10px}.logo{width:38px;height:38px;border-radius:9px;background:var(--brand);display:grid;place-items:center;font-weight:900}.title{font-weight:800}.subtitle{font-size:10px;color:#cbd3d9;margin-top:2px}.head-actions{display:flex;gap:6px;flex-wrap:wrap}.head-actions button,.head-actions a{height:31px;padding:0 10px;border:0;border-radius:6px;color:#fff;text-decoration:none;display:flex;align-items:center;font-size:10px;font-weight:800;cursor:pointer;background:#48535d}.head-actions .orange{background:var(--brand)}
+.statusbar{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:10px 0}.kpi{background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px}.kpi b{display:block;font-size:18px}.kpi span{font-size:10px;color:var(--muted)}
+.panel{background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px;margin-top:9px;box-shadow:0 1px 4px rgba(0,0,0,.03)}.search-row{display:grid;grid-template-columns:1fr auto;gap:7px}.search{height:48px;border:2px solid #d9dee3;border-radius:9px;padding:0 13px;font-size:17px;outline:none}.search:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(244,123,0,.12)}.scan-btn{display:none;width:50px;border:0;border-radius:9px;background:var(--brand);color:#fff;font-size:20px;cursor:pointer}.hint{font-size:10px;color:var(--muted);margin-top:7px;line-height:1.45}
+.lookup-state{margin-top:10px;font-size:11px;color:var(--muted)}.results{display:grid;gap:6px;margin-top:9px}.result{border:1px solid var(--line);border-radius:8px;padding:9px 10px;cursor:pointer;background:#fbfcfc}.result:hover{border-color:#b7c0c8;background:#fff}.result strong{font-size:13px}.result .meta{font-size:10px;color:var(--muted);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap}
+.selected{display:none;margin-top:10px;border:2px solid var(--brand);border-radius:11px;padding:12px;background:#fffaf5}.selected.show{display:block}.selected h2{font-size:17px;margin:0 0 10px}.article-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.field{background:#f6f8f9;border:1px solid #e4e8eb;border-radius:7px;padding:8px}.field b{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px}.field span{font-size:12px;word-break:break-word}.qty-row{display:grid;grid-template-columns:minmax(120px,180px) auto 1fr;gap:8px;align-items:end;margin-top:10px}.qty-box label{display:block;font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px}.qty{width:100%;height:46px;border:2px solid #cfd6dc;border-radius:8px;padding:0 10px;font-size:20px;font-weight:800;text-align:center}.ok-btn{height:46px;border:0;border-radius:8px;padding:0 25px;background:var(--green);color:#fff;font-weight:900;cursor:pointer}.previous{font-size:10px;color:var(--muted);padding-bottom:4px}
+.inventory-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.inventory-head h2{margin:0;font-size:15px}.inventory-actions{display:flex;gap:6px;flex-wrap:wrap}.inventory-actions button{height:32px;border:0;border-radius:6px;padding:0 10px;color:#fff;font-size:10px;font-weight:800;cursor:pointer}.excel{background:#217346}.retry{background:var(--blue)}.table-wrap{overflow:auto;margin-top:8px;border:1px solid var(--line);border-radius:8px}.table{width:100%;border-collapse:collapse;min-width:880px}.table th,.table td{padding:8px;border-bottom:1px solid #edf0f2;text-align:left;font-size:10px}.table th{background:#eef2f3;position:sticky;top:0}.table td.qtycell{font-size:13px;font-weight:800}.empty{padding:22px;text-align:center;color:var(--muted);font-size:11px}
+.sync{font-size:10px;font-weight:800;padding:5px 8px;border-radius:999px}.sync.ok{background:#def3e7;color:#176b2c}.sync.wait{background:#fff1cc;color:#7b5e00}.sync.bad{background:#fde3e3;color:#8b1b1b}
+#loginGate{position:fixed;inset:0;background:linear-gradient(135deg,#eef1f3,#fafbfb);z-index:9999;display:grid;place-items:center;padding:18px}.login-card{width:min(410px,100%);background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:0 18px 55px rgba(25,34,41,.14)}.login-brand{width:52px;height:52px;border-radius:11px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:22px;font-weight:900}.login-card h1{font-size:21px;margin:13px 0 5px}.login-card p{font-size:11px;color:var(--muted);line-height:1.45}.login-card input{width:100%;height:44px;border:1px solid #cfd6dc;border-radius:8px;padding:0 12px;font-size:16px}.login-card button{width:100%;height:42px;border:0;border-radius:8px;background:var(--brand);color:#fff;font-weight:900;margin-top:9px;cursor:pointer}.login-error{font-size:10px;color:var(--red);min-height:14px;margin-top:5px}
+#scannerModal{display:none;position:fixed;inset:0;background:#101417;z-index:10000;color:#fff}.scanner-shell{height:100%;display:flex;flex-direction:column}.scanner-top{display:flex;justify-content:space-between;align-items:center;padding:12px}.scanner-top button{border:0;border-radius:7px;background:#fff;color:#111;padding:9px 12px;font-weight:800}.video-wrap{position:relative;flex:1;min-height:0;display:grid;place-items:center;overflow:hidden}.video-wrap video{width:100%;height:100%;object-fit:cover}.scan-frame{position:absolute;width:min(82vw,480px);height:180px;border:3px solid var(--brand);border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.35)}.scanner-msg{padding:12px;text-align:center;font-size:12px;background:#101417}
+.scan-qty-overlay{display:none;position:absolute;inset:0;z-index:10002;background:rgba(0,0,0,.58);align-items:center;justify-content:center;padding:14px}
+.scan-qty-overlay.show{display:flex}.scan-qty-card{width:min(390px,94vw);background:#fff;color:#202830;border-radius:16px;padding:16px;box-shadow:0 18px 55px rgba(0,0,0,.38)}
+.scan-qty-card h3{margin:0 0 5px;font-size:18px}.scan-qty-meta{font-size:11px;color:#667085;line-height:1.4;margin-bottom:10px}.scan-qty-display{height:58px;border:2px solid #cfd6dc;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;margin-bottom:10px;background:#f7f8f9}
+.scan-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.scan-keypad button{height:52px;border:0;border-radius:10px;background:#eef1f3;color:#202830;font-size:22px;font-weight:900;cursor:pointer;touch-action:manipulation}.scan-keypad button:active{transform:scale(.98)}
+.scan-keypad .key-clear{background:#fde8e8;color:#8b1b1b}.scan-keypad .key-ok{grid-column:1/-1;background:var(--green);color:#fff;font-size:17px}.scan-keypad .key-cancel{grid-column:1/-1;background:#e8ebed;color:#3b4650;font-size:14px;height:42px}
+.scan-found{font-size:10px;color:#18794e;font-weight:800;margin-bottom:8px;text-align:center}
+.toast{position:fixed;right:14px;bottom:14px;z-index:10001;background:#202830;color:#fff;border-radius:8px;padding:10px 12px;font-size:11px;box-shadow:0 6px 22px rgba(0,0,0,.18);display:none}.toast.show{display:block}
+@media(max-width:760px){.wrap{padding:8px}.header{border-radius:9px}.head-actions .desktop-hide{display:none}.statusbar{grid-template-columns:1fr 1fr}.scan-btn{display:block}.article-grid{grid-template-columns:1fr 1fr}.qty-row{grid-template-columns:1fr auto}.previous{grid-column:1/-1}.search{font-size:16px}.panel{padding:10px}}
+@media(max-width:420px){.article-grid{grid-template-columns:1fr}.qty-row{grid-template-columns:1fr}.ok-btn{width:100%}}
+
+.admin-open{background:#8a4f13!important}
+#adminModal{display:none;position:fixed;inset:0;z-index:12000;background:rgba(20,26,31,.68);padding:18px;overflow:auto}
+#adminModal.show{display:block}
+.admin-shell{width:min(1180px,100%);margin:0 auto;background:#f5f7f8;border-radius:14px;box-shadow:0 24px 80px rgba(0,0,0,.28);overflow:hidden}
+.admin-top{background:var(--navy);color:#fff;padding:12px 14px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.admin-top h2{font-size:16px;margin:0}.admin-top small{display:block;color:#cbd3d9;font-size:10px;margin-top:3px}
+.admin-top button{border:0;border-radius:7px;background:#fff;color:#222;padding:8px 11px;font-size:10px;font-weight:800;cursor:pointer}
+.admin-content{padding:12px}
+.admin-login{max-width:430px;margin:30px auto;background:#fff;border:1px solid var(--line);border-radius:11px;padding:16px}
+.admin-login h3{margin:0 0 5px;font-size:16px}.admin-login p{font-size:10px;color:var(--muted);line-height:1.45}
+.admin-login input{width:100%;height:42px;border:1px solid #cfd6dc;border-radius:8px;padding:0 11px}
+.admin-login button{width:100%;height:39px;margin-top:8px;border:0;border-radius:8px;background:var(--brand);color:#fff;font-weight:900;cursor:pointer}
+.admin-error{min-height:16px;color:var(--red);font-size:10px;margin-top:6px}
+.admin-dashboard{display:none}.admin-dashboard.show{display:block}
+.admin-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+.admin-tools{display:flex;gap:7px;flex-wrap:wrap;align-items:center;background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px}
+.admin-tools input{height:34px;min-width:220px;flex:1;border:1px solid #cfd6dc;border-radius:7px;padding:0 10px}
+.admin-tools button{height:34px;border:0;border-radius:7px;padding:0 11px;color:#fff;font-size:10px;font-weight:800;cursor:pointer}
+.admin-tools .all-export{background:#217346}.admin-tools .refresh{background:var(--blue)}.admin-tools .logout-admin{background:#6b7280}
+.admin-table{width:100%;border-collapse:collapse;min-width:760px}.admin-table th,.admin-table td{padding:9px;border-bottom:1px solid #edf0f2;font-size:10px;text-align:left}.admin-table th{background:#eef2f3;position:sticky;top:0}
+.admin-table button{border:0;border-radius:6px;padding:6px 8px;color:#fff;font-size:9px;font-weight:800;cursor:pointer;margin-right:4px}.admin-table .open{background:var(--blue)}.admin-table .one-excel{background:#217346}
+.admin-detail{display:none;margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px}.admin-detail.show{display:block}
+.admin-detail-head{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}.admin-detail-head h3{margin:0;font-size:14px}.admin-detail-head button{height:31px;border:0;border-radius:6px;padding:0 9px;color:#fff;background:#217346;font-size:9px;font-weight:800;cursor:pointer}
+@media(max-width:760px){#adminModal{padding:0}.admin-shell{min-height:100vh;border-radius:0}.admin-kpis{grid-template-columns:1fr}.admin-content{padding:8px}}
+
+
+.admin-table .delete-one{background:#b42318}
+.admin-tools .delete-user{background:#b42318}
+.admin-detail-head .delete-user{background:#b42318}
+.admin-detail .delete-row{border:0;border-radius:6px;padding:6px 8px;background:#b42318;color:#fff;font-size:9px;font-weight:800;cursor:pointer}
+
+
+.result{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.result-info{min-width:0;flex:1}
+.result-count{display:flex;align-items:center;gap:7px;flex:0 0 auto}
+.result-qty{width:82px;height:38px;border:2px solid #cfd6dc;border-radius:8px;padding:0 8px;font-size:16px;font-weight:800;text-align:center;background:#fff}
+.result-qty:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(244,123,0,.12)}
+.result-ok{height:38px;border:0;border-radius:8px;padding:0 14px;background:var(--green);color:#fff;font-weight:900;cursor:pointer}
+.result-prev{font-size:9px;color:var(--muted);white-space:nowrap}
+@media(max-width:640px){
+  .result{align-items:flex-start;flex-wrap:wrap}
+  .result-count{width:100%;justify-content:flex-end}
+  .result-qty{width:100px}
+}
+
+
+.history-table{width:100%;border-collapse:collapse;min-width:760px}.history-table th,.history-table td{padding:8px;border-bottom:1px solid #edf0f2;text-align:left;font-size:10px}.history-table th{background:#eef2f3}.history-qty{width:86px;height:34px;border:1px solid #cfd6dc;border-radius:7px;padding:0 7px;font-weight:800;text-align:center}.history-save{height:34px;border:0;border-radius:7px;padding:0 10px;background:var(--blue);color:#fff;font-size:9px;font-weight:800;cursor:pointer}.history-title{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.history-title h2{margin:0;font-size:15px}.history-title small{font-size:10px;color:var(--muted)}
+
+</style>
+<style id="unified-portal-header-style">
+.unified-header{background:#29343d!important;color:#fff!important;border-radius:13px!important;padding:14px 16px!important;min-height:70px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;position:relative!important;top:auto!important;box-shadow:0 3px 12px rgba(20,27,32,.08)!important;z-index:1000!important}
+.unified-brand{display:flex!important;align-items:center!important;gap:11px!important;min-width:0!important;flex:1 1 auto!important}.unified-logo{width:42px!important;height:42px!important;min-width:42px!important;border-radius:9px!important;background:#f47b00!important;color:#fff!important;display:grid!important;place-items:center!important;font-weight:900!important;font-size:20px!important}.unified-brand h1{font-family:Arial,Helvetica,sans-serif!important;font-size:19px!important;line-height:1.1!important;margin:0!important;color:#fff!important}.unified-brand p{font-family:Arial,Helvetica,sans-serif!important;font-size:10px!important;line-height:1.35!important;color:#d4dce1!important;margin:4px 0 0!important}
+.unified-tools{display:flex!important;align-items:center!important;gap:7px!important;flex:0 0 auto!important}.unified-menu-wrap{position:relative!important}.unified-menu-btn,.unified-logout{height:36px!important;border:0!important;border-radius:8px!important;padding:0 13px!important;color:#fff!important;font:800 10px Arial,Helvetica,sans-serif!important;cursor:pointer!important;display:inline-flex!important;align-items:center!important;gap:7px!important}.unified-menu-btn{background:#f47b00!important}.unified-menu-btn:hover{background:#dc6f00!important}.unified-logout{background:#46515a!important}.unified-logout:hover{background:#56636d!important}.unified-menu-icon{font-size:15px!important;line-height:1!important}
+.unified-menu{display:none!important;position:absolute!important;right:0!important;top:44px!important;width:255px!important;background:#fff!important;border:1px solid #dfe4e8!important;border-radius:12px!important;padding:7px!important;box-shadow:0 18px 45px rgba(20,27,32,.2)!important;z-index:99999!important}.unified-menu.open{display:block!important}.unified-menu a{box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:space-between!important;width:100%!important;padding:10px 11px!important;border-radius:8px!important;color:#29343d!important;text-decoration:none!important;font:700 11px Arial,Helvetica,sans-serif!important;background:transparent!important}.unified-menu a:hover{background:#f4f6f7!important}.unified-menu a.active{background:#fff1e4!important;color:#c86200!important}.unified-menu a.active:after{content:'•';font-size:17px;color:#f47b00}.unified-page-actions{display:flex!important;gap:6px!important;align-items:center!important;margin-left:auto!important}.unified-page-actions button{height:36px!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:8px!important;color:#fff!important;font:800 10px Arial,Helvetica,sans-serif!important;padding:0 11px!important;cursor:pointer!important;background:#3d4851!important}.unified-page-actions button:hover{background:#4a5660!important}
+@media(max-width:760px){.unified-header{border-radius:9px!important;padding:11px 12px!important;gap:9px!important;flex-wrap:wrap!important}.unified-brand{min-width:calc(100% - 120px)!important}.unified-brand h1{font-size:17px!important}.unified-brand p{display:none!important}.unified-tools{margin-left:auto!important}.unified-page-actions{order:3!important;width:100%!important;margin-left:0!important;overflow-x:auto!important}.unified-page-actions button{white-space:nowrap!important}.unified-logout{width:36px!important;padding:0!important;justify-content:center!important;font-size:0!important}.unified-logout:before{content:'↪';font-size:17px!important}.unified-menu{position:fixed!important;left:10px!important;right:10px!important;top:78px!important;width:auto!important;max-height:calc(100vh - 95px)!important;overflow:auto!important}}
+</style>
+<style id="brand-theme">
+:root{--orange:#f47b00!important}
+body{background:#f7f7f7!important}
+.unified-header{background:#fff!important;color:#29343d!important;border:1px solid #e5e7eb!important;border-top:4px solid #f47b00!important;box-shadow:0 4px 16px rgba(20,27,32,.07)!important}
+.unified-brand h1{color:#29343d!important}.unified-brand p{color:#6b7280!important}
+.unified-menu-btn{background:#f47b00!important}.unified-logout{background:#f1f3f5!important;color:#29343d!important;border:1px solid #dde2e6!important}
+</style>
+</head>
+<body>
+<div id="loginGate">
+<div class="login-card">
+<div class="login-brand">B</div>
+<h1>Inventaire Braconnier</h1>
+<p>Entrez simplement votre nom ou identifiant. Aucun mot de passe. Le même identifiant reprend automatiquement l’inventaire déjà commencé.</p>
+<input autocomplete="name" id="loginInput" placeholder=""/>
+<button id="loginBtn">Commencer / reprendre</button>
+<div class="login-error" id="loginError"></div>
+</div>
+</div>
+<div class="wrap">
+<header class="unified-header"><div class="unified-brand"><div class="unified-logo">B</div><div><h1>Inventaire</h1><p>Ets Braconnier · scan, recherche et comptage magasin</p></div></div><div class="unified-page-actions"><button class="admin-open" id="adminBtn">Gestion des inventaires</button><button class="orange" id="changeUserBtn">Changer d’utilisateur</button></div><div class="unified-tools"><div class="unified-menu-wrap"><button aria-controls="unifiedMenu" aria-expanded="false" class="unified-menu-btn" id="unifiedMenuBtn" type="button"><span class="unified-menu-icon">☰</span> Menu</button><nav aria-label="Navigation principale" class="unified-menu" id="unifiedMenu"><a href="index.html">Accueil</a><a href="calculs.html">Calculs</a><a href="netstore.html">NetStore</a><a href="fournisseurs.html">Base fournisseurs</a><a class="active" href="inventaire.html">Inventaire</a><a href="commandes.html">Commandes</a><a href="notes.html">Notes</a><a href="electricite.html">Électricité</a></nav></div></div></header>
+<div class="statusbar">
+<div class="kpi"><b id="userKpi">—</b><span>Utilisateur</span></div>
+<div class="kpi"><b id="countKpi">0</b><span>Articles comptés</span></div>
+<div class="kpi"><b id="unitsKpi">0</b><span>Unités saisies</span></div>
+<div class="kpi"><b id="catalogKpi">0</b><span>Articles dans la bibliothèque</span></div>
+</div>
+<div class="panel">
+<div class="search-row">
+<input autocomplete="off" class="search" id="searchInput" inputmode="search" placeholder="Scanner un EAN ou rechercher article / réf. fournisseur / désignation…" type="search"/>
+<button aria-label="Scanner un code-barres" class="scan-btn" id="scanBtn" type="button">▣</button>
+</div>
+<div class="hint">Scanner USB/Bluetooth sur PC : cliquez dans le champ puis scannez. Le préfixe parasite <b>in #</b> ou <b>#</b> est automatiquement ignoré. Sur téléphone, utilisez le bouton scanner.</div>
+<div class="lookup-state" id="lookupState">Chargement de la bibliothèque d’articles…</div>
+<div class="results" id="results"></div>
+<div class="selected" id="selected">
+<h2 id="selTitle">Article</h2>
+<div class="article-grid">
+<div class="field"><b>Code EAN</b><span id="selEan"></span></div>
+<div class="field"><b>N° article</b><span id="selArticle"></span></div>
+<div class="field"><b>N° article fournisseur</b><span id="selSupplierRef"></span></div>
+<div class="field"><b>Dénomination</b><span id="selDenom"></span></div>
+</div>
+<div class="qty-row">
+<div class="qty-box"><label>Quantité en magasin</label><input class="qty" id="qtyInput" inputmode="numeric" min="0" placeholder="0" step="1" type="number"/></div>
+<button class="ok-btn" id="okBtn">OK ✓</button>
+<div class="previous" id="previous"></div>
+</div>
+</div>
+</div>
+<div class="panel" id="historyPanel">
+<div class="history-title">
+<h2>20 dernières saisies</h2>
+<small>Vous pouvez corriger directement une quantité.</small>
+</div>
+<div class="table-wrap">
+<table class="history-table">
+<thead><tr><th>Heure</th><th>Article</th><th>Dénomination</th><th>Quantité</th><th>Action</th></tr></thead>
+<tbody id="historyBody"></tbody>
+</table>
+</div>
+</div>
+<div class="panel">
+<div class="inventory-head">
+<h2>Inventaire de <span id="inventoryUser">—</span></h2>
+<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+<span class="sync wait" id="syncBadge">Chargement…</span>
+<div class="inventory-actions">
+<button class="retry" id="syncBtn">Synchroniser</button>
+<button class="excel" id="exportBtn">Exporter Excel</button>
+</div>
+</div>
+</div>
+<div class="table-wrap"><table class="table"><thead><tr><th>EAN</th><th>N° article</th><th>N° article fournisseur</th><th>Dénomination</th><th>Fournisseur</th><th>Quantité</th><th>Dernière saisie</th></tr></thead><tbody id="inventoryBody"></tbody></table></div>
+</div>
+</div>
+<div id="adminModal">
+<div class="admin-shell">
+<div class="admin-top">
+<div>
+<h2>Gestion des inventaires</h2>
+<small>Tous les inventaires enregistrés dans D1, au même endroit.</small>
+</div>
+<button id="adminCloseBtn" type="button">Fermer ✕</button>
+</div>
+<div class="admin-content">
+<div class="admin-login" id="adminLogin">
+<h3>Accès administrateur</h3>
+<p>Entrez le mot de passe administrateur de la Base fournisseurs. Il n’est conservé que pendant cette session du navigateur.</p>
+<input autocomplete="current-password" id="adminPassword" placeholder="Mot de passe administrateur" type="password"/>
+<button id="adminLoginBtn" type="button">Ouvrir la gestion</button>
+<div class="admin-error" id="adminError"></div>
+</div>
+<div class="admin-dashboard" id="adminDashboard">
+<div class="admin-kpis">
+<div class="kpi"><b id="adminUsersKpi">0</b><span>Inventaires / utilisateurs</span></div>
+<div class="kpi"><b id="adminArticlesKpi">0</b><span>Articles comptés</span></div>
+<div class="kpi"><b id="adminUnitsKpi">0</b><span>Unités comptées</span></div>
+</div>
+<div class="admin-tools">
+<input id="adminSearch" placeholder="Rechercher un utilisateur…" type="search"/>
+<button class="refresh" id="adminRefreshBtn" type="button">Actualiser</button>
+<button class="all-export" id="adminExportAllBtn" type="button">Exporter tous les inventaires</button>
+<button class="logout-admin" id="adminLogoutBtn" type="button">Verrouiller</button>
+</div>
+<div class="table-wrap">
+<table class="admin-table">
+<thead>
+<tr>
+<th>Utilisateur</th>
+<th>Articles</th>
+<th>Unités</th>
+<th>Dernière saisie</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody id="adminInventoryBody"></tbody>
+</table>
+</div>
+<div class="admin-detail" id="adminDetail">
+<div class="admin-detail-head">
+<h3 id="adminDetailTitle">Inventaire</h3>
+<div style="display:flex;gap:6px;flex-wrap:wrap"><button id="adminDetailExportBtn" type="button">Télécharger cet Excel</button><button class="delete-user" id="adminDeleteUserBtn" type="button">Supprimer cet inventaire</button></div>
+</div>
+<div class="table-wrap">
+<table class="table">
+<thead>
+<tr>
+<th>EAN</th>
+<th>N° article</th>
+<th>N° article fournisseur</th>
+<th>Dénomination</th>
+<th>Fournisseur</th>
+<th>Quantité</th>
+<th>Dernière saisie</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="adminDetailBody"></tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="scannerModal">
+<div class="scanner-shell">
+<div class="scanner-top"><b>Scanner le code-barres</b><button id="closeScanner">Fermer ✕</button></div>
+<div class="video-wrap"><video autoplay="" id="scannerVideo" muted="" playsinline=""></video><div class="scan-frame"></div></div>
+<div class="scanner-msg" id="scannerMsg">Placez le code-barres dans le cadre.</div>
+</div>
+<div class="scan-qty-overlay" id="scanQtyOverlay">
+  <div class="scan-qty-card">
+    <div class="scan-found">Article trouvé</div>
+    <h3 id="scanQtyTitle">Article</h3>
+    <div class="scan-qty-meta" id="scanQtyMeta"></div>
+    <div class="scan-qty-display" id="scanQtyDisplay">0</div>
+    <div class="scan-keypad" id="scanKeypad">
+      <button type="button" data-key="1">1</button><button type="button" data-key="2">2</button><button type="button" data-key="3">3</button>
+      <button type="button" data-key="4">4</button><button type="button" data-key="5">5</button><button type="button" data-key="6">6</button>
+      <button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button>
+      <button type="button" class="key-clear" data-key="clear">⌫</button><button type="button" data-key="0">0</button><button type="button" class="key-clear" data-key="reset">C</button>
+      <button type="button" class="key-ok" data-key="ok">Valider ✓</button>
+      <button type="button" class="key-cancel" data-key="cancel">Annuler et continuer le scan</button>
+    </div>
+  </div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const API_BASE="https://braconnier-api.sebastien-025.workers.dev";
+// Les accès normaux à l'API utilisent automatiquement la session du portail.
+// X-Admin-Password reste envoyé uniquement par les fonctions d'administration qui le demandent explicitement.
+const nativeFetchForPrivateApi=window.fetch.bind(window);
+window.fetch=function(input,init={}){
+  const target=typeof input==="string"?input:(input&&input.url)||"";
+  if(target.startsWith(API_BASE)){
+    const headers=new Headers(init.headers||(typeof input!=="string"&&input.headers)||{});
+    if(!headers.has("Authorization")){
+      const token=sessionStorage.getItem("braconnier_portal_token_v3")||"";
+      if(token)headers.set("Authorization","Bearer "+token);
+    }
+    init={...init,headers};
+  }
+  return nativeFetchForPrivateApi(input,init);
+};
+
+const AUTH_API_PORTAL="https://braconnier-auth.sebastien-025.workers.dev";
+const PORTAL_TOKEN_KEY="braconnier_portal_token_v3";
+const USER_KEY="braconnier_inventory_user_v1";
+const LOCAL_PREFIX="braconnier_inventory_v1_";
+let catalog=[], currentUser="", selectedArticle=null, inventory=new Map(), serverInventoryAvailable=true, pendingSync=new Set();
+let adminPassword="", adminSummaries=[], adminDetailItems=[], adminDetailLogin="";
+let scannerStream=null, scannerLoop=null, scannerPaused=false, scannerPersistent=false, scannerLastCode="", scannerQtyArticle=null, scannerQtyValue="";
+
+const $=id=>document.getElementById(id);
+const norm=s=>String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+const esc=s=>String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+function userKey(){return LOCAL_PREFIX+norm(currentUser).replace(/[^a-z0-9_-]+/g,"_")}
+function safeNum(v){const n=Number(v);return Number.isFinite(n)?n:0}
+function cleanScanValue(v){
+  let s=String(v??"").trim();
+  s=s.replace(/^in\s*#\s*/i,"").replace(/^#+\s*/,"").trim();
+  // Certains lecteurs ajoutent du texte avant l'EAN. Si une séquence EAN classique est présente, on la garde.
+  const groups=s.match(/\d{8,14}/g);
+  if(groups&&groups.length){const best=groups.sort((a,b)=>b.length-a.length)[0];if(best.length>=8)return best}
+  return s;
+}
+function articleKey(a){return String(a.ean||"").trim()||("A:"+String(a.numero_article||"").trim()+"|F:"+String(a.num_fournisseur||"").trim()+"|S:"+String(a.fournisseur_id||""))}
+function nowIso(){return new Date().toISOString()}
+function niceDate(v){try{return new Date(v).toLocaleString("fr-BE")}catch{return v||""}}
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("show"),2200)}
+
+async function portalCheck(){
+  const token=sessionStorage.getItem(PORTAL_TOKEN_KEY);
+  if(!token)return; // page inventaire conserve son propre login fonctionnel même hors portail
+  try{const r=await fetch(AUTH_API_PORTAL+"/auth/check",{headers:{Authorization:"Bearer "+token}});if(!r.ok)sessionStorage.removeItem(PORTAL_TOKEN_KEY)}catch{}
+}
+
+function loadLocalInventory(){
+  try{const arr=JSON.parse(localStorage.getItem(userKey())||"[]");inventory=new Map(Array.isArray(arr)?arr.map(x=>[x.key||articleKey(x),x]):[])}catch{inventory=new Map()}
+}
+function saveLocalInventory(){localStorage.setItem(userKey(),JSON.stringify([...inventory.values()]))}
+
+function updateKpis(){
+  $("userKpi").textContent=currentUser||"—";$("inventoryUser").textContent=currentUser||"—";
+  $("countKpi").textContent=inventory.size;
+  $("unitsKpi").textContent=[...inventory.values()].reduce((s,x)=>s+safeNum(x.quantite),0);
+  $("catalogKpi").textContent="—";
+}
+function setSyncBadge(type,text){const b=$("syncBadge");b.className="sync "+type;b.textContent=text}
+function renderInventory(){
+  updateKpis();
+  const rows=[...inventory.values()].sort((a,b)=>String(b.updated_at||"").localeCompare(String(a.updated_at||"")));
+  $("inventoryBody").innerHTML=rows.length?rows.map(x=>`<tr><td>${esc(x.ean)}</td><td>${esc(x.numero_article)}</td><td>${esc(x.num_fournisseur)}</td><td>${esc(x.denomination)}</td><td>${esc(x.fournisseur||"")}</td><td class="qtycell">${esc(x.quantite)}</td><td>${esc(niceDate(x.updated_at))}</td></tr>`).join(""):`<tr><td colspan="7" class="empty">Aucun article compté pour cet utilisateur.</td></tr>`;
+  renderHistory();
+}
+
+function renderHistory(){
+  const rows=[...inventory.values()].sort((a,b)=>String(b.updated_at||"").localeCompare(String(a.updated_at||""))).slice(0,20);
+  const body=$("historyBody");
+  if(!body)return;
+  body.innerHTML=rows.length?rows.map((x,i)=>`<tr>
+    <td>${esc(niceDate(x.updated_at))}</td>
+    <td>${esc(x.numero_article||x.ean||"—")}</td>
+    <td>${esc(x.denomination||"—")}</td>
+    <td><input class="history-qty" data-history-qty="${i}" type="number" min="0" step="1" inputmode="numeric" value="${esc(x.quantite)}"></td>
+    <td><button class="history-save" data-history-save="${i}" type="button">Modifier</button></td>
+  </tr>`).join(""):`<tr><td colspan="5" class="empty">Aucune saisie pour le moment.</td></tr>`;
+  body.querySelectorAll("[data-history-save]").forEach(btn=>{
+    btn.addEventListener("click",async()=>{
+      const i=Number(btn.dataset.historySave);
+      const item=rows[i];
+      const input=body.querySelector(`[data-history-qty="${i}"]`);
+      if(!item||!input)return;
+      const ok=await saveCountForArticle(item,input.value,{resetAfter:false,resumeCamera:false});
+      if(ok){btn.textContent="✓ Modifié";setTimeout(()=>btn.textContent="Modifier",900)}
+    });
+  });
+  body.querySelectorAll("[data-history-qty]").forEach(input=>input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();body.querySelector(`[data-history-save="${input.dataset.historyQty}"]`)?.click()}}));
+}
+
+async function apiJson(path,opts={}){const r=await fetch(API_BASE+path,opts);const j=await r.json().catch(()=>({}));if(!r.ok||j.ok===false)throw new Error(j.erreur||("HTTP "+r.status));return j}
+
+async function loadServerInventory(){
+  if(!currentUser)return;
+  try{
+    setSyncBadge("wait","Synchronisation…");
+    const j=await apiJson("/inventaire?login="+encodeURIComponent(currentUser));
+    if(Array.isArray(j.items)){
+      const localPending=[...inventory.values()].filter(x=>x.local_pending===true);
+      const serverMap=new Map();
+      for(const x of j.items){
+        const item={...x,key:x.key||articleKey(x),local_pending:false};
+        serverMap.set(item.key,item);
+      }
+      for(const local of localPending){
+        const server=serverMap.get(local.key);
+        if(!server||String(local.updated_at||"")>String(server.updated_at||"")){
+          serverMap.set(local.key,local);
+          pendingSync.add(local.key);
+        }
+      }
+      inventory=serverMap;
+      saveLocalInventory();renderInventory();
+    }
+    serverInventoryAvailable=true;setSyncBadge("ok",pendingSync.size?pendingSync.size+" en attente":"D1 synchronisé");
+  }catch(err){serverInventoryAvailable=false;setSyncBadge("bad","Local uniquement");console.warn("Inventaire D1 indisponible:",err.message)}
+}
+async function syncItem(item){
+  pendingSync.add(item.key);setSyncBadge("wait","Synchronisation…");
+  try{
+    await apiJson("/inventaire/upsert",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({login:currentUser,item})});
+    pendingSync.delete(item.key);item.local_pending=false;inventory.set(item.key,item);saveLocalInventory();serverInventoryAvailable=true;setSyncBadge("ok",pendingSync.size?pendingSync.size+" en attente":"D1 synchronisé");
+  }catch(err){serverInventoryAvailable=false;setSyncBadge("bad","Local uniquement · "+pendingSync.size+" à synchroniser");console.warn(err)}
+}
+async function syncAll(){
+  const todo=[...inventory.values()].filter(item=>item.local_pending===true||pendingSync.has(item.key));
+
+  if(!todo.length){
+    await loadServerInventory();
+    return;
+  }
+
+  setSyncBadge("wait","Synchronisation…");
+  let ok=0,fail=0;
+
+  for(const item of todo){
+    try{
+      await apiJson("/inventaire/upsert",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({login:currentUser,item})
+      });
+      item.local_pending=false;
+      inventory.set(item.key,item);
+      pendingSync.delete(item.key);
+      ok++;
+    }catch{
+      pendingSync.add(item.key);
+      fail++;
+    }
+  }
+
+  saveLocalInventory();
+  serverInventoryAvailable=fail===0;
+
+  if(fail){
+    setSyncBadge("bad",fail+" non synchronisé(s)");
+  }else{
+    await loadServerInventory();
+  }
+
+  if(ok)toast(ok+" ligne(s) synchronisée(s)");
+}
+
+async function loadCatalog(){
+  // V11 : ne précharge plus tous les fournisseurs/articles.
+  // Les articles sont recherchés à la demande via /articles/recherche.
+  catalog=[];
+  $("lookupState").textContent="Recherche à la demande prête. Scannez un EAN ou saisissez au moins 3 caractères.";
+  $("catalogKpi").textContent="—";
+  $("searchInput").focus();
+}
+
+function mapApiArticle(a){
+  return {
+    fournisseur_id:a.fournisseur_id??null,
+    fournisseur:a.fournisseur||a.nom_fournisseur||"",
+    numero_article:a.numero_article||"",
+    num_fournisseur:a.num_fournisseur||"",
+    denomination:a.denomination||"",
+    ean:String(a.ean||"").trim(),
+    unite:a.unite||"",
+    emballage:a.emballage||""
+  };
+}
+
+let lookupSeq=0, lookupTimer=null;
+async function searchCatalog(q){
+  const cleaned=cleanScanValue(q);
+  if(!cleaned)return [];
+  const seq=++lookupSeq;
+  $("lookupState").textContent="Recherche…";
+  try{
+    const j=await apiJson("/articles/recherche?q="+encodeURIComponent(cleaned)+"&limit=30");
+    if(seq!==lookupSeq)return null;
+    const list=(Array.isArray(j.articles)?j.articles:[]).map(mapApiArticle);
+    $("lookupState").textContent=list.length?`${list.length} résultat(s).`:`Aucun article trouvé.`;
+    return list;
+  }catch(err){
+    if(seq!==lookupSeq)return null;
+    $("lookupState").textContent="Recherche impossible : "+err.message;
+    return [];
+  }
+}
+
+async function saveCountForArticle(a,qtyValue,{resetAfter=true,resumeCamera=true}={}){
+  const qty=Number(qtyValue);
+  if(!Number.isFinite(qty)||qty<0){
+    toast("Entrez une quantité valide.");
+    return false;
+  }
+
+  const item={
+    key:articleKey(a),
+    ean:a.ean||"",
+    numero_article:a.numero_article||"",
+    num_fournisseur:a.num_fournisseur||"",
+    denomination:a.denomination||"",
+    fournisseur:a.fournisseur||"",
+    fournisseur_id:a.fournisseur_id||null,
+    quantite:qty,
+    updated_at:nowIso(),
+    local_pending:true
+  };
+
+  inventory.set(item.key,item);
+  pendingSync.add(item.key);
+  saveLocalInventory();
+  renderInventory();
+  syncItem(item);
+  toast("Quantité enregistrée : "+qty);
+
+  if(resetAfter){
+    $("searchInput").value="";
+    $("results").innerHTML="";
+    selectedArticle=null;
+    $("selected").classList.remove("show");
+    $("searchInput").focus();
+    $("searchInput").scrollIntoView({behavior:"smooth",block:"center"});
+  }
+  if(resumeCamera && scannerStream && scannerPersistent){
+    setTimeout(resumeScanner,180);
+  }
+  return true;
+}
+
+function renderResults(list){
+  const box=$("results");
+  if(!$("searchInput").value.trim()){box.innerHTML="";return}
+  if(!list.length){
+    box.innerHTML='<div class="result" style="cursor:default"><div class="result-info"><strong>Aucun article trouvé</strong><div class="meta">Vérifiez le code ou essayez une partie de la dénomination / référence.</div></div></div>';
+    return
+  }
+
+  box.innerHTML=list.map((a,i)=>{
+    const prev=inventory.get(articleKey(a));
+    return `<div class="result" data-i="${i}">
+      <div class="result-info">
+        <strong>${esc(a.denomination||a.numero_article||a.ean||"Article")}</strong>
+        <div class="meta">
+          <span>EAN : ${esc(a.ean||"—")}</span>
+          <span>Article : ${esc(a.numero_article||"—")}</span>
+          <span>Réf. fournisseur : ${esc(a.num_fournisseur||"—")}</span>
+          <span>${esc(a.fournisseur||"")}</span>
+        </div>
+      </div>
+      <div class="result-count">
+        <span class="result-prev">${prev?("Déjà : "+esc(prev.quantite)):""}</span>
+        <input class="result-qty" data-qty="${i}" type="number" min="0" step="1" inputmode="numeric" placeholder="Qté" value="${prev?esc(prev.quantite):""}">
+        <button class="result-ok" data-ok="${i}" type="button">OK ✓</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  box.querySelectorAll(".result[data-i]").forEach(el=>{
+    el.addEventListener("click",e=>{
+      if(e.target.closest(".result-count"))return;
+      selectArticle(list[Number(el.dataset.i)]);
+    });
+  });
+
+  box.querySelectorAll("[data-ok]").forEach(btn=>{
+    btn.addEventListener("click",async e=>{
+      e.stopPropagation();
+      const i=Number(btn.dataset.ok);
+      const input=box.querySelector(`[data-qty="${i}"]`);
+      const ok=await saveCountForArticle(list[i],input?.value);
+      if(ok && document.body.contains(btn)){
+        btn.textContent="✓";
+      }
+    });
+  });
+
+  box.querySelectorAll("[data-qty]").forEach(input=>{
+    input.addEventListener("click",e=>e.stopPropagation());
+    input.addEventListener("keydown",e=>{
+      if(e.key==="Enter"){
+        e.preventDefault();
+        const i=Number(input.dataset.qty);
+        const btn=box.querySelector(`[data-ok="${i}"]`);
+        btn?.click();
+      }
+    });
+  });
+}
+function selectArticle(a){
+  selectedArticle=a;$("selected").classList.add("show");$("selTitle").textContent=a.fournisseur?"Article · "+a.fournisseur:"Article";$("selEan").textContent=a.ean||"—";$("selArticle").textContent=a.numero_article||"—";$("selSupplierRef").textContent=a.num_fournisseur||"—";$("selDenom").textContent=a.denomination||"—";
+  const prev=inventory.get(articleKey(a));$("previous").textContent=prev?`Déjà compté : ${prev.quantite} · ${niceDate(prev.updated_at)}`:"Pas encore compté dans cet inventaire.";
+  $("qtyInput").value=prev?.quantite??"";$("results").innerHTML="";setTimeout(()=>{$("qtyInput").focus();$("qtyInput").select()},0)
+}
+async function runLookup({scan=false}={}){
+  const raw=$("searchInput").value, cleaned=cleanScanValue(raw);
+  if(cleaned!==raw&&scan)$("searchInput").value=cleaned;
+  if(!cleaned){lookupSeq++;$("results").innerHTML="";$("lookupState").textContent="Recherche à la demande prête.";return}
+  if(!scan && cleaned.length<3){lookupSeq++;$("results").innerHTML="";$("lookupState").textContent="Saisissez au moins 3 caractères.";return}
+  const list=await searchCatalog(cleaned);
+  if(list===null)return;
+  if(scan){
+    const exact=list.find(a=>norm(a.ean)===norm(cleaned))||list.find(a=>norm(a.numero_article)===norm(cleaned))||list.find(a=>norm(a.num_fournisseur)===norm(cleaned));
+    if(exact){selectArticle(exact);return}
+  }
+  if(list.length===1 && /^\d{8,14}$/.test(cleaned)){selectArticle(list[0]);return}
+  renderResults(list);
+}
+
+async function saveCount(){
+  if(!selectedArticle)return;
+  const a=selectedArticle;
+  const qty=$("qtyInput").value;
+  await saveCountForArticle(a,qty,{resetAfter:true,resumeCamera:true});
+}
+
+function exportExcel(){
+  const rows=[...inventory.values()].sort((a,b)=>String(a.numero_article).localeCompare(String(b.numero_article),"fr",{numeric:true})).map(x=>({Login:currentUser,"Code EAN":x.ean,"N° article":x.numero_article,"N° article fournisseur":x.num_fournisseur,"Dénomination":x.denomination,"Fournisseur":x.fournisseur,"Quantité":x.quantite,"Dernière saisie":niceDate(x.updated_at)}));
+  const ws=XLSX.utils.json_to_sheet(rows.length?rows:[{Login:currentUser,"Code EAN":"","N° article":"","N° article fournisseur":"","Dénomination":"","Fournisseur":"","Quantité":"","Dernière saisie":""}]);ws["!autofilter"]={ref:ws["!ref"]};ws["!cols"]=[{wch:18},{wch:18},{wch:16},{wch:24},{wch:48},{wch:24},{wch:12},{wch:22}];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Inventaire");const fn="Inventaire_"+currentUser.replace(/[^a-z0-9_-]+/gi,"_")+".xlsx";XLSX.writeFile(wb,fn)
+}
+
+
+function adminHeaders(){
+  return adminPassword ? {"X-Admin-Password":adminPassword} : {};
+}
+
+async function adminApi(path,opts={}){
+  const headers={...adminHeaders(),...(opts.headers||{})};
+  const r=await fetch(API_BASE+path,{...opts,headers});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok||j.ok===false)throw new Error(j.erreur||("HTTP "+r.status));
+  return j;
+}
+
+function safeSheetName(name,used){
+  let base=String(name||"Inventaire").replace(/[\\/?*[\]:]/g," ").trim()||"Inventaire";
+  base=base.slice(0,31);
+  let out=base,n=2;
+  while(used.has(out)){const suffix=" "+n++;out=(base.slice(0,31-suffix.length)+suffix)}
+  used.add(out);return out;
+}
+
+function inventoryRowsForExcel(login,items){
+  return items.map(x=>({
+    Login:login,
+    "Code EAN":x.ean||"",
+    "N° article":x.numero_article||"",
+    "N° article fournisseur":x.num_fournisseur||"",
+    "Dénomination":x.denomination||"",
+    "Fournisseur":x.fournisseur||"",
+    "Quantité":x.quantite,
+    "Dernière saisie":niceDate(x.updated_at)
+  }));
+}
+
+function makeInventorySheet(login,items){
+  const rows=inventoryRowsForExcel(login,items);
+  const ws=XLSX.utils.json_to_sheet(rows.length?rows:[{
+    Login:login,"Code EAN":"","N° article":"","N° article fournisseur":"",
+    "Dénomination":"","Fournisseur":"","Quantité":"","Dernière saisie":""
+  }]);
+  ws["!autofilter"]={ref:ws["!ref"]};
+  ws["!cols"]=[{wch:20},{wch:18},{wch:16},{wch:24},{wch:48},{wch:24},{wch:12},{wch:22}];
+  return ws;
+}
+
+function renderAdminSummaries(){
+  const q=norm($("adminSearch").value);
+  const list=adminSummaries.filter(x=>!q||norm(x.login).includes(q));
+  $("adminUsersKpi").textContent=adminSummaries.length;
+  $("adminArticlesKpi").textContent=adminSummaries.reduce((s,x)=>s+safeNum(x.articles),0);
+  $("adminUnitsKpi").textContent=adminSummaries.reduce((s,x)=>s+safeNum(x.unites),0);
+
+  $("adminInventoryBody").innerHTML=list.length?list.map((x,i)=>`
+    <tr>
+      <td><b>${esc(x.login||"—")}</b></td>
+      <td>${esc(x.articles)}</td>
+      <td>${esc(x.unites)}</td>
+      <td>${esc(niceDate(x.derniere_saisie))}</td>
+      <td>
+        <button class="open" data-open="${i}">Ouvrir</button>
+        <button class="one-excel" data-excel="${i}">Excel</button>
+        <button class="delete-one" data-delete-user="${i}">Supprimer</button>
+      </td>
+    </tr>
+  `).join(""):`<tr><td colspan="5" class="empty">Aucun inventaire trouvé.</td></tr>`;
+
+  $("adminInventoryBody").querySelectorAll("[data-open]").forEach(btn=>{
+    btn.addEventListener("click",()=>openAdminInventory(list[Number(btn.dataset.open)].login));
+  });
+  $("adminInventoryBody").querySelectorAll("[data-excel]").forEach(btn=>{
+    btn.addEventListener("click",()=>exportOneAdminInventory(list[Number(btn.dataset.excel)].login));
+  });
+  $("adminInventoryBody").querySelectorAll("[data-delete-user]").forEach(btn=>{
+    btn.addEventListener("click",()=>deleteAdminUserInventory(list[Number(btn.dataset.deleteUser)].login).catch(err=>toast(err.message)));
+  });
+}
+
+async function loadAdminSummaries(){
+  $("adminInventoryBody").innerHTML='<tr><td colspan="5" class="empty">Chargement…</td></tr>';
+  const j=await adminApi("/admin/inventaires");
+  adminSummaries=Array.isArray(j.inventaires)?j.inventaires:[];
+  renderAdminSummaries();
+}
+
+async function openAdminInventory(login){
+  $("adminDetail").classList.add("show");
+  $("adminDetailTitle").textContent="Inventaire de "+login+" · chargement…";
+  $("adminDetailBody").innerHTML='<tr><td colspan="7" class="empty">Chargement…</td></tr>';
+  const j=await adminApi("/admin/inventaires?login="+encodeURIComponent(login));
+  adminDetailLogin=j.login||login;
+  adminDetailItems=Array.isArray(j.items)?j.items:[];
+  $("adminDetailTitle").textContent="Inventaire de "+adminDetailLogin+" · "+adminDetailItems.length+" article(s)";
+  $("adminDetailBody").innerHTML=adminDetailItems.length?adminDetailItems.map((x,i)=>`
+    <tr>
+      <td>${esc(x.ean||"")}</td>
+      <td>${esc(x.numero_article||"")}</td>
+      <td>${esc(x.num_fournisseur||"")}</td>
+      <td>${esc(x.denomination||"")}</td>
+      <td>${esc(x.fournisseur||"")}</td>
+      <td class="qtycell">${esc(x.quantite)}</td>
+      <td>${esc(niceDate(x.updated_at))}</td>
+      <td><button class="delete-row" data-delete-row="${i}" type="button">Supprimer</button></td>
+    </tr>
+  `).join(""):`<tr><td colspan="8" class="empty">Aucune ligne.</td></tr>`;
+
+  $("adminDetailBody").querySelectorAll("[data-delete-row]").forEach(btn=>{
+    btn.addEventListener("click",()=>deleteAdminItem(adminDetailItems[Number(btn.dataset.deleteRow)]).catch(err=>toast(err.message)));
+  });
+
+  $("adminDetail").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+
+async function deleteAdminItem(item){
+  if(!adminDetailLogin||!item)return;
+  const label=item.denomination||item.numero_article||item.ean||"cet article";
+  if(!confirm(`Supprimer définitivement "${label}" de l'inventaire de ${adminDetailLogin} ?`))return;
+
+  await adminApi(
+    "/admin/inventaires/item?login="+encodeURIComponent(adminDetailLogin)+"&key="+encodeURIComponent(item.key),
+    {method:"DELETE"}
+  );
+
+  if(norm(currentUser)===norm(adminDetailLogin)){
+    inventory.delete(item.key);
+    pendingSync.delete(item.key);
+    saveLocalInventory();
+    renderInventory();
+  }
+
+  toast("Ligne supprimée.");
+  await openAdminInventory(adminDetailLogin);
+  await loadAdminSummaries();
+}
+
+async function deleteAdminUserInventory(login){
+  if(!login)return;
+  if(!confirm(`Supprimer définitivement TOUT l'inventaire de ${login} ?\n\nCette action efface toutes ses lignes dans D1.`))return;
+
+  await adminApi(
+    "/admin/inventaires?login="+encodeURIComponent(login),
+    {method:"DELETE"}
+  );
+
+  if(norm(currentUser)===norm(login)){
+    inventory=new Map();
+    pendingSync.clear();
+    saveLocalInventory();
+    renderInventory();
+  }
+
+  adminDetailItems=[];
+  adminDetailLogin="";
+  $("adminDetail").classList.remove("show");
+  toast("Inventaire supprimé.");
+  await loadAdminSummaries();
+}
+
+async function exportOneAdminInventory(login){
+  const j=await adminApi("/admin/inventaires?login="+encodeURIComponent(login));
+  const items=Array.isArray(j.items)?j.items:[];
+  const realLogin=j.login||login;
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,makeInventorySheet(realLogin,items),"Inventaire");
+  XLSX.writeFile(wb,"Inventaire_"+realLogin.replace(/[^a-z0-9_-]+/gi,"_")+".xlsx");
+}
+
+async function exportAllAdminInventories(){
+  const btn=$("adminExportAllBtn");
+  const old=btn.textContent;
+  btn.disabled=true;btn.textContent="Préparation…";
+  try{
+    const j=await adminApi("/admin/inventaires?all=1");
+    const all=Array.isArray(j.items)?j.items:[];
+    const grouped=new Map();
+    for(const x of all){
+      const login=x.login||"Sans nom";
+      if(!grouped.has(login))grouped.set(login,[]);
+      grouped.get(login).push(x);
+    }
+
+    const wb=XLSX.utils.book_new();
+
+    const recap=[...grouped.entries()].map(([login,items])=>({
+      Utilisateur:login,
+      "Articles comptés":items.length,
+      "Unités":items.reduce((s,x)=>s+safeNum(x.quantite),0),
+      "Dernière saisie":niceDate(items.reduce((m,x)=>String(x.updated_at||"")>m?String(x.updated_at||""):m,""))
+    }));
+    const recapWs=XLSX.utils.json_to_sheet(recap.length?recap:[{Utilisateur:"","Articles comptés":"","Unités":"","Dernière saisie":""}]);
+    recapWs["!autofilter"]={ref:recapWs["!ref"]};
+    recapWs["!cols"]=[{wch:24},{wch:18},{wch:14},{wch:22}];
+    XLSX.utils.book_append_sheet(wb,recapWs,"Récapitulatif");
+
+    const used=new Set(["Récapitulatif"]);
+    for(const [login,items] of grouped){
+      XLSX.utils.book_append_sheet(wb,makeInventorySheet(login,items),safeSheetName(login,used));
+    }
+
+    const d=new Date();
+    const stamp=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    XLSX.writeFile(wb,"Inventaires_Braconnier_"+stamp+".xlsx");
+    toast(grouped.size+" inventaire(s) exporté(s) dans un seul fichier.");
+  }finally{
+    btn.disabled=false;btn.textContent=old;
+  }
+}
+
+async function adminLogin(){
+  const pass=$("adminPassword").value;
+  if(!pass){$("adminError").textContent="Entrez le mot de passe administrateur.";return}
+  adminPassword=pass;
+  $("adminError").textContent="";
+  try{
+    await loadAdminSummaries();
+    sessionStorage.setItem("braconnier_inventory_admin_password",adminPassword);
+    $("adminLogin").style.display="none";
+    $("adminDashboard").classList.add("show");
+  }catch(err){
+    adminPassword="";
+    $("adminError").textContent=err.message||"Accès refusé.";
+    $("adminPassword").select();
+  }
+}
+
+function openAdminPanel(){
+  $("adminModal").classList.add("show");
+  const saved=sessionStorage.getItem("braconnier_inventory_admin_password")||"";
+  if(saved&&!adminPassword)adminPassword=saved;
+  if(adminPassword){
+    $("adminLogin").style.display="none";
+    $("adminDashboard").classList.add("show");
+    loadAdminSummaries().catch(err=>{
+      adminPassword="";
+      sessionStorage.removeItem("braconnier_inventory_admin_password");
+      $("adminDashboard").classList.remove("show");
+      $("adminLogin").style.display="";
+      $("adminError").textContent=err.message||"Accès refusé.";
+    });
+  }else{
+    $("adminDashboard").classList.remove("show");
+    $("adminLogin").style.display="";
+    setTimeout(()=>$("adminPassword").focus(),0);
+  }
+}
+
+function closeAdminPanel(){
+  $("adminModal").classList.remove("show");
+}
+
+function lockAdminPanel(){
+  adminPassword="";
+  adminSummaries=[];
+  adminDetailItems=[];
+  adminDetailLogin="";
+  sessionStorage.removeItem("braconnier_inventory_admin_password");
+  $("adminPassword").value="";
+  $("adminDashboard").classList.remove("show");
+  $("adminLogin").style.display="";
+  $("adminDetail").classList.remove("show");
+  $("adminError").textContent="";
+}
+
+
+function setScannerQtyDisplay(){
+  $("scanQtyDisplay").textContent=scannerQtyValue===""?"0":scannerQtyValue;
+}
+function openScannerQuantity(a){
+  scannerQtyArticle=a;
+  const prev=inventory.get(articleKey(a));
+  scannerQtyValue=prev?String(prev.quantite):"";
+  $("scanQtyTitle").textContent=a.denomination||a.numero_article||a.ean||"Article";
+  $("scanQtyMeta").textContent=[a.ean&&("EAN : "+a.ean),a.numero_article&&("Article : "+a.numero_article),a.fournisseur].filter(Boolean).join(" · ")+(prev?" · Déjà compté : "+prev.quantite:"");
+  setScannerQtyDisplay();
+  $("scanQtyOverlay").classList.add("show");
+}
+function closeScannerQuantity({resume=true}={}){
+  $("scanQtyOverlay").classList.remove("show");
+  scannerQtyArticle=null;scannerQtyValue="";
+  if(resume&&scannerStream&&scannerPersistent){
+    scannerPaused=false;
+    $("scannerMsg").textContent="Placez le code-barres suivant dans le cadre.";
+  }
+}
+async function handleScannerCode(raw){
+  const code=cleanScanValue(raw);
+  if(!code)return;
+  scannerPaused=true;
+  $("scannerMsg").textContent="Recherche de l’article…";
+  const list=await searchCatalog(code);
+  if(!scannerStream||!scannerPersistent)return;
+  if(list===null){scannerPaused=false;return}
+  const exact=list.find(a=>norm(a.ean)===norm(code))||list.find(a=>norm(a.numero_article)===norm(code))||list.find(a=>norm(a.num_fournisseur)===norm(code));
+  const found=exact||(list.length===1?list[0]:null);
+  if(!found){
+    $("scannerMsg").textContent="Article non trouvé. Présentez un autre code-barres.";
+    setTimeout(()=>{if(scannerStream&&scannerPersistent&&!$("scanQtyOverlay").classList.contains("show"))scannerPaused=false},650);
+    return;
+  }
+  $("scannerMsg").textContent="Article trouvé — indiquez la quantité.";
+  openScannerQuantity(found);
+}
+async function validateScannerQuantity(){
+  if(!scannerQtyArticle)return;
+  const qty=scannerQtyValue===""?0:Number(scannerQtyValue);
+  if(!Number.isFinite(qty)||qty<0)return;
+  const a=scannerQtyArticle;
+  const ok=await saveCountForArticle(a,qty,{resetAfter:false,resumeCamera:false});
+  if(!ok)return;
+  closeScannerQuantity({resume:true});
+}
+
+async function startScanner(){
+  if(!navigator.mediaDevices?.getUserMedia){toast("Caméra non disponible sur ce navigateur.");return}
+  scannerPersistent=true;
+
+  // Si la caméra est déjà active, on la réutilise sans la redémarrer.
+  if(scannerStream){
+    resumeScanner();
+    return;
+  }
+
+  $("scannerModal").style.display="block";
+  $("scannerMsg").textContent="Ouverture de la caméra…";
+  try{
+    scannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}},audio:false});
+    $("scannerVideo").srcObject=scannerStream;
+    if(!("BarcodeDetector" in window)){
+      $("scannerMsg").textContent="Lecture automatique non prise en charge par ce navigateur. Utilisez un lecteur code-barres ou la recherche manuelle.";
+      return
+    }
+    const supported=await BarcodeDetector.getSupportedFormats().catch(()=>[]);
+    const wanted=["ean_13","ean_8","upc_a","upc_e","code_128","code_39","itf"].filter(x=>!supported.length||supported.includes(x));
+    const detector=new BarcodeDetector({formats:wanted.length?wanted:undefined});
+    $("scannerMsg").textContent="Placez le code-barres dans le cadre.";
+    scannerPaused=false;
+
+    const detect=async()=>{
+      if(!scannerStream)return;
+      if(!scannerPaused){
+        try{
+          const codes=await detector.detect($("scannerVideo"));
+          if(!codes.length)scannerLastCode="";
+          if(codes.length){
+            const raw=cleanScanValue(codes[0].rawValue||"");
+            if(raw){
+              if(raw!==scannerLastCode){
+                scannerLastCode=raw;
+                handleScannerCode(raw);
+              }
+            }
+          }
+        }catch{}
+      }
+      scannerLoop=requestAnimationFrame(detect);
+    };
+    scannerLoop=requestAnimationFrame(detect);
+  }catch(err){
+    $("scannerMsg").textContent="Accès caméra impossible. Vérifiez l’autorisation et que la page est ouverte en HTTPS.";
+  }
+}
+
+function resumeScanner(){
+  if(!scannerStream)return;
+  scannerPaused=false;
+  $("scannerModal").style.display="block";
+  $("scannerMsg").textContent="Placez le code-barres suivant dans le cadre.";
+}
+
+function closeScanner(){
+  $("scanQtyOverlay").classList.remove("show");scannerQtyArticle=null;scannerQtyValue="";scannerLastCode="";
+  scannerPersistent=false;
+  scannerPaused=false;
+  if(scannerLoop)cancelAnimationFrame(scannerLoop);
+  scannerLoop=null;
+  if(scannerStream){scannerStream.getTracks().forEach(t=>t.stop());scannerStream=null}
+  $("scannerVideo").srcObject=null;
+  $("scannerModal").style.display="none";
+}
+
+async function login(name){
+  const clean=String(name||"").trim();if(clean.length<2){$("loginError").textContent="Entrez au moins 2 caractères.";return}
+  currentUser=clean;localStorage.setItem(USER_KEY,currentUser);$("loginGate").style.display="none";loadLocalInventory();renderInventory();await loadServerInventory();if(!catalog.length)loadCatalog();$("searchInput").focus()
+}
+function changeUser(){localStorage.removeItem(USER_KEY);currentUser="";inventory=new Map();selectedArticle=null;$("selected").classList.remove("show");$("loginInput").value="";$("loginGate").style.display="grid";$("loginInput").focus()}
+
+
+$("adminBtn").addEventListener("click",openAdminPanel);
+$("adminCloseBtn").addEventListener("click",closeAdminPanel);
+$("adminLoginBtn").addEventListener("click",adminLogin);
+$("adminPassword").addEventListener("keydown",e=>{if(e.key==="Enter")adminLogin()});
+$("adminRefreshBtn").addEventListener("click",()=>loadAdminSummaries().catch(err=>toast(err.message)));
+$("adminExportAllBtn").addEventListener("click",()=>exportAllAdminInventories().catch(err=>toast(err.message)));
+$("adminLogoutBtn").addEventListener("click",lockAdminPanel);
+$("adminSearch").addEventListener("input",renderAdminSummaries);
+$("adminDetailExportBtn").addEventListener("click",()=>{
+  if(adminDetailLogin)exportOneAdminInventory(adminDetailLogin).catch(err=>toast(err.message));
+});
+$("adminDeleteUserBtn").addEventListener("click",()=>{
+  if(adminDetailLogin)deleteAdminUserInventory(adminDetailLogin).catch(err=>toast(err.message));
+});
+
+$("loginBtn").addEventListener("click",()=>login($("loginInput").value));$("loginInput").addEventListener("keydown",e=>{if(e.key==="Enter")login($("loginInput").value)});
+$("scanKeypad").addEventListener("click",e=>{
+  const btn=e.target.closest("button[data-key]");if(!btn)return;
+  const key=btn.dataset.key;
+  if(/^\d$/.test(key)){if(scannerQtyValue.length<7)scannerQtyValue=(scannerQtyValue==="0"?"":scannerQtyValue)+key;setScannerQtyDisplay();return}
+  if(key==="clear"){scannerQtyValue=scannerQtyValue.slice(0,-1);setScannerQtyDisplay();return}
+  if(key==="reset"){scannerQtyValue="";setScannerQtyDisplay();return}
+  if(key==="cancel"){closeScannerQuantity({resume:true});return}
+  if(key==="ok")validateScannerQuantity();
+});
+$("changeUserBtn").addEventListener("click",changeUser);$("searchInput").addEventListener("input",()=>{clearTimeout(lookupTimer);lookupTimer=setTimeout(()=>runLookup(),280)});$("searchInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();clearTimeout(lookupTimer);runLookup({scan:true})}});$("qtyInput").addEventListener("keydown",e=>{if(e.key==="Enter")saveCount()});$("okBtn").addEventListener("click",saveCount);$("exportBtn").addEventListener("click",exportExcel);$("syncBtn").addEventListener("click",syncAll);$("scanBtn").addEventListener("click",startScanner);$("closeScanner").addEventListener("click",closeScanner);
+window.addEventListener("beforeunload",closeScanner);window.addEventListener("online",()=>{if(currentUser)syncAll()});
+
+(async()=>{await portalCheck();const last=localStorage.getItem(USER_KEY)||"";if(last){$("loginInput").value=last;login(last)}else{$("loginInput").focus()}})();
+</script>
+<script id="unified-menu-script">(function(){const b=document.getElementById('unifiedMenuBtn'),m=document.getElementById('unifiedMenu');if(!b||!m)return;function close(){m.classList.remove('open');b.setAttribute('aria-expanded','false')}b.addEventListener('click',function(e){e.stopPropagation();const o=m.classList.toggle('open');b.setAttribute('aria-expanded',o?'true':'false')});m.addEventListener('click',e=>e.stopPropagation());document.addEventListener('click',close);document.addEventListener('keydown',e=>{if(e.key==='Escape')close()})})();</script></body>
+</html>

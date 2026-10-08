@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>Scanner de prix · Braconnier & Outilsud</title>
+<style>
+*{box-sizing:border-box}
+:root{--orange:#f47b00;--blue:#37378f;--blue2:#284f9e;--ink:#20252a;--muted:#727b83;--line:#e8ebee;--bg:#f5f6f7;--red:#c7352d}
+html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg)}
+body{min-height:100vh;min-height:100dvh}.app{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+.brandbar{background:#fff;border-bottom:4px solid transparent;border-image:linear-gradient(90deg,var(--orange) 0 50%,var(--blue2) 50% 100%) 1;padding:17px 22px;display:flex;align-items:center;justify-content:center;gap:42px;min-height:112px}
+.logo-box{height:76px;display:flex;align-items:center;justify-content:center}.logo-box.brac{width:min(270px,36vw)}.logo-box.outil{width:min(330px,42vw)}
+.logo-box img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain}
+.main{width:min(760px,100%);margin:auto;padding:25px 18px 34px;display:flex;flex-direction:column;align-items:center}
+.eyebrow{display:flex;align-items:center;justify-content:center;gap:8px;font-weight:900;text-transform:uppercase;letter-spacing:.11em;font-size:10px}.eyebrow .o{color:var(--orange)}.eyebrow .b{color:var(--blue2)}
+h1{font-size:clamp(28px,5vw,42px);line-height:1.08;text-align:center;margin:9px 0 8px}.lead{font-size:14px;color:var(--muted);text-align:center;margin:0 0 24px;line-height:1.5}
+.scan-card,.product,.notfound,.choices{width:100%;background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:0 16px 50px rgba(31,39,45,.09)}
+.scan-card{padding:22px}.scan-button{width:100%;min-height:195px;border:0;border-radius:18px;background:linear-gradient(115deg,#f47b00 0%,#f47b00 22%,#ee7410 34%,#d65d32 48%,#a94d5e 60%,#675080 73%,#284f9e 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;cursor:pointer;box-shadow:0 10px 28px rgba(40,79,158,.20);position:relative;overflow:hidden}
+.scan-button:before{content:"";position:absolute;left:0;top:0;bottom:0;width:9px;background:var(--orange)}
+.scan-button svg{width:62px;height:62px}.scan-button strong{font-size:25px}.scan-button span{font-size:12px;opacity:.9}.status{margin-top:15px;text-align:center;color:var(--muted);font-size:11px;min-height:16px}
+.store-badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.store-badge{display:inline-flex;align-items:center;border-radius:999px;padding:6px 11px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+.store-badge.braconnier{background:#fff1e3;color:#b75b00;border:1px solid #ffd2a3}
+.store-badge.outilsud{background:#eef2ff;color:var(--blue2);border:1px solid #cdd7ff}
+.choice-stores{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.choice-stores .store-badge{padding:4px 8px;font-size:9px}
+.result,.choices,.notfound{display:none}.result.show,.choices.show,.notfound.show{display:block}.product{overflow:hidden}.product-top{padding:26px 22px 18px;text-align:center}.product-name{font-size:clamp(20px,4vw,29px);font-weight:900;line-height:1.22}
+.pricebox{margin:0 18px;background:#fff6ec;border:1px solid #ffe0bd;border-radius:18px;padding:20px;text-align:center}.pricebox span{display:block;color:#a95600;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}.pricebox strong{display:block;color:var(--orange);font-size:clamp(44px,10vw,70px);line-height:1;margin-top:7px}
+.refs{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:18px}.ref{background:#f6f7f8;border-radius:13px;padding:13px 14px;text-align:left;min-width:0}.ref span{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;font-weight:900}.ref b{display:block;font-size:13px;margin-top:5px;overflow-wrap:anywhere}
+.again,.retry{height:56px;border:0;border-radius:14px;background:var(--blue2);color:#fff;font-size:15px;font-weight:900;cursor:pointer;border-left:8px solid var(--orange)}.again{margin:0 18px 18px;width:calc(100% - 36px)}
+.notfound{padding:30px 22px;text-align:center}.notfound h2{margin:8px 0 5px}.notfound p{color:var(--muted);font-size:12px}.retry{padding:0 24px}
+.choices{padding:20px}.choices h2{text-align:center;margin:0 0 5px}.choices>p{text-align:center;color:var(--muted);font-size:12px;margin:0 0 15px}.choice{width:100%;text-align:left;border:1px solid var(--line);border-left:5px solid var(--orange);background:#fff;border-radius:13px;padding:13px;margin-top:9px;cursor:pointer}.choice strong{display:block;font-size:14px}.choice small{display:block;color:var(--muted);margin-top:5px}.choice-price{float:right;color:var(--orange);font-size:18px;font-weight:900}
+#scanner{display:none;position:fixed;inset:0;background:#090b0d;z-index:1000;color:#fff}#scanner.open{display:flex;flex-direction:column}
+.scan-head{padding:12px 16px;background:#fff;display:flex;align-items:center;justify-content:center;gap:28px;position:relative;border-bottom:4px solid transparent;border-image:linear-gradient(90deg,var(--orange) 0 50%,var(--blue2) 50% 100%) 1}.scan-logo{height:55px;display:flex;align-items:center;justify-content:center}.scan-logo.brac{width:min(190px,31vw)}.scan-logo.outil{width:min(235px,36vw)}.scan-logo img{max-width:100%;max-height:100%;object-fit:contain}.close{position:absolute;right:12px;top:50%;transform:translateY(-50%);border:0;background:#eef1f4;color:#15191c;border-radius:10px;width:40px;height:40px;font-weight:900;font-size:0}.close:after{content:"✕";font-size:17px}
+.camera{position:relative;flex:1;min-height:0;overflow:hidden;background:#000}.camera video{width:100%;height:100%;object-fit:cover}.target{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(84vw,560px);height:190px;border-radius:18px;border:3px solid var(--orange);box-shadow:0 0 0 9999px rgba(0,0,0,.46)}.target:after{content:"";position:absolute;left:0;right:0;top:50%;height:3px;background:var(--blue2)}
+.scan-help{background:#0d1013;text-align:center;padding:16px 18px 22px;font-size:13px}.scan-help strong{display:block;font-size:16px;margin-bottom:4px}.scan-loading{display:none;flex:1;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:#090b0d;color:#fff;text-align:center;padding:30px}.scan-loading.show{display:flex}.scan-loading .spinner{width:46px;height:46px;border:4px solid rgba(255,255,255,.22);border-top-color:#fff;border-radius:50%;animation:spin .75s linear infinite}.scan-loading strong{font-size:20px}.scan-loading span{font-size:13px;color:#cfd6dc}@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:560px){.brandbar{min-height:92px;padding:12px;gap:18px}.logo-box{height:58px}.logo-box.brac{width:42vw}.logo-box.outil{width:46vw}.main{padding:20px 12px 24px}.scan-card{padding:12px}.scan-button{min-height:225px}.refs{grid-template-columns:1fr}.scan-head{gap:12px;justify-content:flex-start;padding-right:58px}.scan-logo{height:48px}.scan-logo.brac{width:34vw}.scan-logo.outil{width:39vw}}
+</style>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+<div class="app">
+<header class="brandbar">
+ <div class="logo-box brac"><img src="logo-braconnier.png" alt="Braconnier"></div>
+ <div class="logo-box outil"><img src="logo-outilsud.png" alt="Outilsud"></div>
+</header>
+<main class="main">
+ <div id="homeView" style="width:100%">
+  <div class="eyebrow"><span class="o">Braconnier</span><span>•</span><span class="b">Outilsud</span></div>
+  <h1>Scannez votre article</h1><p class="lead">Présentez le code-barres de l'article devant la caméra.</p>
+  <div class="scan-card"><button class="scan-button" id="startScan" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 9v6M10 8v8M13 9v6M16 8v8"/></svg><strong>Scanner un article</strong><span>EAN · N° article magasin · Référence article fournisseur</span></button><div class="status" id="status">Appuyez pour démarrer le scanner.</div></div>
+ </div>
+ <section class="result" id="resultView"><article class="product"><div class="product-top"><div class="store-badges" id="productStores"></div><div class="product-name" id="productName"></div></div><div class="pricebox"><span>Prix TVAC</span><strong id="productPrice"></strong></div><div class="refs"><div class="ref"><span>N° article magasin</span><b id="productArticle"></b></div><div class="ref"><span>Référence article fournisseur</span><b id="productSupplierRef"></b></div></div><button class="again" id="scanAgain">Scanner un autre article</button></article></section>
+ <section class="choices" id="choicesView"><h2>Plusieurs articles trouvés</h2><p>Choisissez l'article correspondant.</p><div id="choiceList"></div><button class="again" id="choicesAgain" style="margin-top:18px">Scanner un autre article</button></section>
+ <section class="notfound" id="notFound"><h2>Article introuvable</h2><p>Ce code n'a pas été trouvé dans notre base articles.</p><button class="retry" id="retry">Scanner un autre article</button></section>
+</main></div>
+<section id="scanner">
+ <div class="scan-head"><div class="scan-logo brac"><img src="logo-braconnier.png" alt="Braconnier"></div><div class="scan-logo outil"><img src="logo-outilsud.png" alt="Outilsud"></div><button class="close" id="closeScan">Fermer</button></div>
+ <div class="camera"><div id="priceBarcodeReader" style="width:100%;height:100%"></div><div class="target"></div></div>
+ <div class="scan-help" id="scanHelp"><strong>Placez le code-barres dans le cadre</strong>EAN · N° article magasin · Référence article fournisseur</div>
+ <div class="scan-loading" id="scanLoading"><div class="spinner"></div><strong>Recherche du prix…</strong><span>Consultation Braconnier & Outilsud</span></div>
+</section>
+<script>
+const API="https://braconnier-api.sebastien-025.workers.dev", $=id=>document.getElementById(id);
+let priceBarcodeScanner=null,barcodeStarting=false,busy=false;
+function clean(v){return String(v||"").trim().replace(/^(?:in\s*)?#\s*/i,"").replace(/^#\s*/,"").trim()}
+function norm(v){return String(v??"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"")}
+function euro(v){const n=Number(v);return Number.isFinite(n)?new Intl.NumberFormat("fr-BE",{style:"currency",currency:"EUR",minimumFractionDigits:2,maximumFractionDigits:2}).format(n):"Prix indisponible"}
+function matchType(a,q){const n=norm(q);if(norm(a.ean)===n)return 3;if(norm(a.numero_article)===n)return 2;if(norm(a.num_fournisseur)===n)return 1;return 0}
+function views(name){$("homeView").style.display=name==="home"?"block":"none";$("resultView").classList.toggle("show",name==="result");$("choicesView").classList.toggle("show",name==="choices");$("notFound").classList.toggle("show",name==="notfound")}
+function storeLabel(e){return e==="outilsud"?"Outilsud":"Braconnier"}
+function storeBadges(stores){return [...new Set(stores)].map(e=>'<span class="store-badge '+e+'">'+storeLabel(e)+'</span>').join("")}
+function articleKey(a){return [norm(a.ean),norm(a.numero_article),norm(a.num_fournisseur),norm(a.denomination)].join("|")}
+function samePrice(a,b){const x=Number(a.prix_vente_tvac),y=Number(b.prix_vente_tvac);return Number.isFinite(x)&&Number.isFinite(y)&&Math.abs(x-y)<0.005}
+function groupSameProducts(rows){
+ const groups=[];
+ rows.forEach(a=>{
+   const key=articleKey(a);
+   let g=groups.find(x=>x.key===key && samePrice(x.article,a));
+   if(!g){g={key,article:a,stores:[]};groups.push(g)}
+   g.stores.push(a._enseigne);
+ });
+ return groups;
+}
+function finishScanLookup(){ $("scanLoading").classList.remove("show"); $("scanHelp").style.display=""; document.querySelector(".camera").style.display=""; stopScanner(true); busy=false }
+function showArticle(a,stores=[a._enseigne]){
+ finishScanLookup();
+ $("productStores").innerHTML=storeBadges(stores);
+ $("productName").textContent=a.denomination||"Article";
+ $("productPrice").textContent=euro(a.prix_vente_tvac);
+ $("productArticle").textContent=a.numero_article||"—";
+ $("productSupplierRef").textContent=a.num_fournisseur||"—";
+ views("result")
+}
+function showChoices(groups){
+ finishScanLookup();
+ $("choiceList").innerHTML="";
+ groups.forEach(g=>{
+   const a=g.article,b=document.createElement("button");b.className="choice";
+   const price=document.createElement("span");price.className="choice-price";price.textContent=euro(a.prix_vente_tvac);
+   const strong=document.createElement("strong");strong.textContent=a.denomination||"Article";
+   const small=document.createElement("small");small.textContent="N° article : "+(a.numero_article||"—")+" · Réf. article : "+(a.num_fournisseur||"—");
+   const badges=document.createElement("div");badges.className="choice-stores";badges.innerHTML=storeBadges(g.stores);
+   b.append(price,strong,small,badges);b.onclick=()=>showArticle(a,g.stores);$("choiceList").appendChild(b)
+ });
+ views("choices")
+}
+async function lookup(raw){
+ const q=clean(raw);if(!q)return;views("home");$("status").textContent="Recherche de l'article…";
+ try{
+ const url=API+"/scanner/recherche?q="+encodeURIComponent(q)+"&limit=100";
+ const load=async enseigne=>{try{const opt={cache:"no-store"};if(enseigne==="outilsud")opt.headers={"X-Enseigne":"outilsud"};const r=await fetch(url,opt),j=await r.json().catch(()=>({}));if(!r.ok||j.ok===false)return [];return (j.articles||[]).map(a=>({...a,_enseigne:enseigne}))}catch{return []}};
+ const [brac,outilsud]=await Promise.all([load("braconnier"),load("outilsud")]);
+ const rows=[...brac,...outilsud].map(a=>({a,m:matchType(a,q)})).filter(x=>x.m>0).sort((x,y)=>y.m-x.m).map(x=>x.a);
+ if(!rows.length){finishScanLookup();views("notfound");return}
+ const groups=groupSameProducts(rows);
+ if(groups.length===1){showArticle(groups[0].article,groups[0].stores);return}
+ showChoices(groups)}
+ catch(e){finishScanLookup();views("home");$("status").textContent="Connexion impossible. Réessayez."}
+}
+function barcodeFormats(){
+ if(typeof Html5QrcodeSupportedFormats==="undefined")return undefined;
+ return [Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,Html5QrcodeSupportedFormats.ITF,Html5QrcodeSupportedFormats.CODABAR];
+}
+async function chooseCamera(){
+ let cameras=[];try{cameras=await Html5Qrcode.getCameras()}catch(e){console.warn("Liste caméras:",e)}
+ if(!cameras||!cameras.length)return null;
+ const rear=cameras.find(c=>/back|rear|environment|arrière|arriere|world/i.test(c.label||""));
+ return (rear||cameras[cameras.length-1]||cameras[0]).id;
+}
+async function startScanner(){
+ if(busy||barcodeStarting)return;
+ if(typeof Html5Qrcode==="undefined"){$("status").textContent="Le module scanner n’a pas pu être chargé. Rechargez la page.";return}
+ if(!navigator.mediaDevices?.getUserMedia){$("status").textContent="Caméra non disponible.";return}
+ busy=true;barcodeStarting=true;$("scanLoading").classList.remove("show");$("scanHelp").style.display="";document.querySelector(".camera").style.display="";$("scanner").classList.add("open");
+ try{
+   const cameraId=await chooseCamera();
+   if(!cameraId)throw new Error("Aucune caméra détectée");
+   priceBarcodeScanner=new Html5Qrcode("priceBarcodeReader",{formatsToSupport:barcodeFormats(),verbose:false});
+   await priceBarcodeScanner.start(cameraId,{fps:10,qrbox:{width:Math.min(500,Math.max(250,window.innerWidth-60)),height:180},aspectRatio:1.777778},async decodedText=>{
+     if(!busy)return;
+     const value=clean(decodedText);if(!value)return;
+     barcodeStarting=false;
+     await stopScanner(false);
+     document.querySelector(".camera").style.display="none";$("scanHelp").style.display="none";$("scanLoading").classList.add("show");
+     await lookup(value);
+   },()=>{});
+   barcodeStarting=false;
+   $("status").textContent="Scanner actif.";
+ }catch(e){console.warn("Scanner prix:",e);barcodeStarting=false;await stopScanner();busy=false;$("status").textContent="Impossible d’ouvrir la caméra. Vérifiez l’autorisation caméra et utilisez Safari/Chrome en HTTPS."}
+}
+async function stopScanner(closeOverlay=true){
+ const scanner=priceBarcodeScanner;priceBarcodeScanner=null;barcodeStarting=false;
+ if(scanner){try{if(scanner.isScanning)await scanner.stop()}catch(e){console.warn(e)}try{scanner.clear()}catch(e){}}
+ if(closeOverlay)$("scanner").classList.remove("open");
+}
+$("startScan").onclick=startScanner;$("scanAgain").onclick=startScanner;$("choicesAgain").onclick=startScanner;$("retry").onclick=startScanner;$("closeScan").onclick=async()=>{$("scanLoading").classList.remove("show");$("scanHelp").style.display="";document.querySelector(".camera").style.display="";await stopScanner();busy=false};
+</script>
+</body></html>

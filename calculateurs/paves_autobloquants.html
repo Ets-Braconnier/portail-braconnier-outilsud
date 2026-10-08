@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script id="portal-access-guard">
+(function(){
+  const TOKEN_KEY="braconnier_portal_token_v3";
+  const AUTH_API="https://braconnier-auth.sebastien-025.workers.dev";
+  document.documentElement.style.visibility="hidden";
+  const token=sessionStorage.getItem(TOKEN_KEY);
+  if(!token){ location.replace(new URL("/base/index.html",location.origin).href); return; }
+  fetch(AUTH_API+"/auth/check",{headers:{Authorization:"Bearer "+token},cache:"no-store"})
+    .then(r=>{if(!r.ok)throw new Error("unauthorized"); document.documentElement.style.visibility="";})
+    .catch(()=>{sessionStorage.removeItem(TOKEN_KEY);location.replace(new URL("/base/index.html",location.origin).href);});
+})();
+</script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="../favicon.png">
+  <title>Calculateur pavés – Bast Aménagement</title>
+  <meta name="description" content="Calcul du terrassement, du foisonnement des terres, de l’empierrement, du stabilisé, du ciment et des pavés.">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --anthracite: #111827;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --soft: #f9fafb;
+      --green: #1f5f34;
+      --green-soft: #eef6f0;
+      --danger: #991b1b;
+      --danger-soft: #fef2f2;
+    }
+    body {
+      margin: 0;
+      padding: 1rem;
+      background: #e5e7eb;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+    }
+    .pv-wrapper {
+      max-width: 1050px;
+      margin: 2.3rem auto;
+      padding: 1.7rem 1.8rem 1.9rem;
+      background: rgba(255,255,255,.95);
+      border-radius: 22px;
+      border: 1px solid rgba(0,0,0,.04);
+      box-shadow: 0 18px 45px rgba(15,23,42,.10);
+    }
+    .pv-title {
+      text-align: center;
+      font-size: 1.35rem;
+      margin-bottom: .55rem;
+      text-transform: uppercase;
+      letter-spacing: .16em;
+      font-weight: 500;
+    }
+    .pv-sub {
+      text-align: center;
+      font-size: .96rem;
+      color: var(--muted);
+      max-width: 800px;
+      margin: 0 auto 1.4rem;
+      line-height: 1.55;
+    }
+    .pv-note {
+      margin: 0 0 1.3rem;
+      padding: .85rem 1rem;
+      border-radius: 14px;
+      background: var(--green-soft);
+      border: 1px solid rgba(31,95,52,.16);
+      color: #31523a;
+      font-size: .88rem;
+      line-height: 1.5;
+      text-align: center;
+    }
+    .section-title {
+      margin: 1.35rem 0 .65rem;
+      font-size: .88rem;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: #4b5563;
+    }
+    .pv-table-wrapper { margin-bottom: 1.1rem; }
+    table.pv-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .9rem;
+      background: #fff;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 10px 28px rgba(15,23,42,.07);
+    }
+    .pv-table th, .pv-table td {
+      padding: .68rem 1rem;
+      border-bottom: 1px solid rgba(229,231,235,.85);
+      text-align: left;
+      vertical-align: middle;
+    }
+    .pv-table thead th {
+      font-weight: 600;
+      background: var(--soft);
+      text-align: center;
+    }
+    .pv-table tbody tr:nth-child(odd) { background: #fcfcfd; }
+    .pv-table td.pv-res {
+      text-align: right;
+      white-space: nowrap;
+      font-weight: 650;
+    }
+    .pv-input, .pv-select {
+      width: 100%;
+      padding: .58rem .9rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,.6);
+      background: #fff;
+      font-size: .95rem;
+      outline: none;
+      color: var(--text);
+    }
+    .pv-select { text-align: left; }
+    .pv-input { text-align: center; }
+    .pv-input:focus, .pv-select:focus {
+      border-color: var(--anthracite);
+      box-shadow: 0 0 0 5px rgba(17,24,39,.07);
+    }
+    .pv-small {
+      color: var(--muted);
+      font-size: .79rem;
+      font-weight: 400;
+      line-height: 1.35;
+    }
+    .pv-error {
+      display: none;
+      margin: 1rem 0;
+      padding: .8rem 1rem;
+      border: 1px solid #fecaca;
+      background: var(--danger-soft);
+      color: var(--danger);
+      border-radius: 12px;
+      font-size: .9rem;
+      text-align: center;
+    }
+    @media (max-width: 780px) {
+      body { padding: .4rem; }
+      .pv-wrapper {
+        margin: 1rem .35rem 1.5rem;
+        padding: 1.2rem .9rem 1.4rem;
+      }
+      .pv-table, .pv-table tbody, .pv-table tr, .pv-table td { display: block; }
+      .pv-table thead { display: none; }
+      .pv-table tbody tr {
+        margin: 0 0 .8rem;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .pv-table td {
+        border-bottom: 1px solid #f3f4f6;
+        padding: .6rem .8rem;
+      }
+      .pv-table td::before {
+        content: attr(data-label);
+        display: block;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: .25rem;
+      }
+      .pv-table td.pv-res { text-align: left; white-space: normal; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="pv-wrapper">
+    <div class="pv-title">PAVÉS AUTOBLOQUANTS</div>
+    <div class="pv-sub">
+      Calcul du terrassement, des terres à évacuer, de l’empierrement, du stabilisé et des pavés.
+    </div>
+
+    <div class="pv-note">
+      L’empierrement comprend automatiquement <strong>5 % supplémentaires</strong>.
+      Le stabilisé est calculé avec un <strong>tassement fixe de 15 %</strong>.
+      Ces réglages ne sont pas modifiables.
+    </div>
+
+    <h2 class="section-title">Dimensions du chantier</h2>
+    <div class="pv-table-wrapper">
+      <table class="pv-table">
+        <thead>
+          <tr>
+            <th>Surface (m²)</th>
+            <th>Profondeur totale (cm)</th>
+            <th>Stabilisé fini compacté (cm)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-label="Surface (m²)">
+              <input id="surface" class="pv-input" type="number" min="0" step="0.01" placeholder="Ex. 40">
+            </td>
+            <td data-label="Profondeur totale (cm)">
+              <input id="total-depth" class="pv-input" type="number" min="1" step="0.5" value="60">
+            </td>
+            <td data-label="Stabilisé fini compacté (cm)">
+              <input id="stabilise-depth" class="pv-input" type="number" min="0" step="0.5" value="5">
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="section-title">Sol excavé et foisonnement</h2>
+    <div class="pv-table-wrapper">
+      <table class="pv-table">
+        <thead>
+          <tr>
+            <th>Composition du sol</th>
+            <th>Humidité</th>
+            <th>Coefficient appliqué</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-label="Composition du sol">
+              <select id="soil" class="pv-select"></select>
+            </td>
+            <td data-label="Humidité">
+              <select id="humidity" class="pv-select">
+                <option value="sec">Sec</option>
+                <option value="normal" selected>Normal</option>
+                <option value="humide">Humide</option>
+                <option value="tresHumide">Très humide</option>
+              </select>
+            </td>
+            <td data-label="Coefficient appliqué" id="soil-coef" class="pv-res">–</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="section-title">Pavés et stabilisé</h2>
+    <div class="pv-table-wrapper">
+      <table class="pv-table">
+        <thead>
+          <tr>
+            <th>Modèle de pavé</th>
+            <th>Dosage ciment (kg/m³ de stabilisé)</th>
+            <th>Perte pavés (%)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-label="Modèle de pavé">
+              <select id="paver-type" class="pv-select">
+                <option value="">-- Sélectionnez un pavé --</option>
+                <optgroup label="Pavés chanfreinés">
+                  <option data-length="14.5" data-width="14.5" data-height="8">Pavé chanfreiné 14,5 × 14,5 × 8 cm</option>
+                  <option data-length="21.75" data-width="14.5" data-height="8">Pavé chanfreiné 21,75 × 14,5 × 8 cm</option>
+                </optgroup>
+                <optgroup label="Pavés classiques">
+                  <option data-length="22" data-width="11" data-height="6">Pavé classique 22 × 11 × 6 cm (Ardenne)</option>
+                  <option data-length="22" data-width="11" data-height="8">Pavé classique 22 × 11 × 8 cm</option>
+                  <option data-length="22" data-width="11" data-height="10">Pavé classique 22 × 11 × 10 cm</option>
+                </optgroup>
+                <optgroup label="Pavés francs">
+                  <option data-length="7.25" data-width="14.5" data-height="10">Pavé franc 7,25 × 14,5 × 10 cm</option>
+                  <option data-length="11" data-width="11" data-height="6">Pavé franc 11 × 11 × 6 cm</option>
+                  <option data-length="14.5" data-width="14.5" data-height="6">Pavé franc 14,5 × 14,5 × 6 cm (Ardenne)</option>
+                  <option data-length="14.5" data-width="14.5" data-height="8">Pavé franc 14,5 × 14,5 × 8 cm (Luxembourg)</option>
+                  <option data-length="21.75" data-width="14.5" data-height="10">Pavé franc 21,75 × 14,5 × 10 cm (Ardenne)</option>
+                  <option data-combi="true" data-height="8">Pavé franc combi Semois</option>
+                </optgroup>
+                <optgroup label="Pavés rustiques">
+                  <option data-length="7.25" data-width="14.5" data-height="10">Pavé rustique 7,25 × 14,5 × 10 cm</option>
+                  <option data-length="11" data-width="11" data-height="6">Pavé rustique 11 × 11 × 6 cm (Luxembourg)</option>
+                  <option data-length="14.5" data-width="14.5" data-height="6">Pavé rustique 14,5 × 14,5 × 6 cm (Ardenne)</option>
+                  <option data-length="14.5" data-width="14.5" data-height="10">Pavé rustique 14,5 × 14,5 × 10 cm (Tourbe)</option>
+                  <option data-combi="true" data-height="8">Pavé rustique combi Condroz</option>
+                </optgroup>
+                <optgroup label="Pavés tambourinés">
+                  <option data-length="21.75" data-width="14.5" data-height="8">Pavé tambouriné 21,75 × 14,5 × 8 cm</option>
+                  <option data-length="21.75" data-width="14.5" data-height="10">Pavé tambouriné 21,75 × 14,5 × 10 cm</option>
+                </optgroup>
+              </select>
+            </td>
+            <td data-label="Dosage ciment">
+              <input id="cement-dosage" class="pv-input" type="number" min="0" step="10" value="150">
+            </td>
+            <td data-label="Perte pavés (%)">
+              <input id="waste" class="pv-input" type="number" min="0" step="0.5" value="5">
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="error" class="pv-error"></div>
+
+    <h2 class="section-title">Résultats</h2>
+    <table class="pv-table">
+      <thead>
+        <tr>
+          <th>Poste</th>
+          <th>Base de calcul</th>
+          <th>Quantité nécessaire</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td data-label="Poste">Terrassement</td>
+          <td id="base-terrassement" data-label="Base de calcul">Profondeur totale</td>
+          <td id="result-terrassement" data-label="Quantité nécessaire" class="pv-res">–</td>
+        </tr>
+        <tr>
+          <td data-label="Poste">Terres à évacuer</td>
+          <td id="base-terres" data-label="Base de calcul">Selon le sol et l’humidité</td>
+          <td id="result-terres" data-label="Quantité nécessaire" class="pv-res">–</td>
+        </tr>
+        <tr>
+          <td data-label="Poste">Poids estimé des terres</td>
+          <td id="base-poids" data-label="Base de calcul">Densité selon le sol</td>
+          <td id="result-poids" data-label="Quantité nécessaire" class="pv-res">–</td>
+        </tr>
+        <tr>
+          <td data-label="Poste">Empierrement</td>
+          <td id="base-empierrement" data-label="Base de calcul">Profondeur totale − stabilisé − pavé</td>
+          <td id="result-empierrement" data-label="Quantité nécessaire" class="pv-res">–</td>
+        </tr>
+        <tr>
+          <td data-label="Poste">Stabilisé</td>
+          <td id="base-stabilise" data-label="Base de calcul">Épaisseur finie choisie</td>
+          <td id="result-stabilise" data-label="Quantité nécessaire" class="pv-res">–</td>
+        </tr>
+        <tr>
+          <td data-label="Poste">Ciment</td>
+          <td id="base-ciment" data-label="Base de calcul">Dosage choisi</td>
+          <td id="result-ciment" data-label="Quantité nécessaire" class="pv-res">–</td>
+        </tr>
+        <tr>
+          <td data-label="Poste">Sacs de ciment (25 kg)</td>
+          <td data-label="Base de calcul">Arrondi au sac supérieur</td>
+          <td id="result-sacs" data-label="Quantité nécessaire" class="pv-res">–</td>
+        </tr>
+        <tr>
+          <td data-label="Poste">Pavés</td>
+          <td id="base-paves" data-label="Base de calcul">Surface + perte</td>
+          <td id="result-paves" data-label="Quantité nécessaire" class="pv-res">–</td>
+        </tr>
+        <tr>
+          <td data-label="Poste">Nombre de pavés</td>
+          <td data-label="Base de calcul">Selon le format choisi</td>
+          <td id="result-pieces" data-label="Quantité nécessaire" class="pv-res">–</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const EMP_EXTRA = 0.05;
+    const STAB_TASSEMENT = 0.15;
+
+    const soils = {
+      terreVegetale: { name: "Terre végétale", coef: 1.15, densities: { sec: 1.20, normal: 1.35, humide: 1.50, tresHumide: 1.65 } },
+      terreLimoneuse: { name: "Terre limoneuse", coef: 1.20, densities: { sec: 1.30, normal: 1.45, humide: 1.60, tresHumide: 1.75 } },
+      terreArgileuse: { name: "Terre argileuse", coef: 1.28, densities: { sec: 1.40, normal: 1.60, humide: 1.80, tresHumide: 2.00 } },
+      terreSablonneuse: { name: "Terre sablonneuse", coef: 1.15, densities: { sec: 1.35, normal: 1.50, humide: 1.65, tresHumide: 1.80 } },
+      sable: { name: "Sable", coef: 1.12, densities: { sec: 1.45, normal: 1.60, humide: 1.75, tresHumide: 1.90 } },
+      pierreux: { name: "Terrain pierreux / cailloux", coef: 1.18, densities: { sec: 1.60, normal: 1.80, humide: 2.00, tresHumide: 2.20 } },
+      roche: { name: "Roche", coef: 1.50, densities: { sec: 1.60, normal: 1.80, humide: 2.00, tresHumide: 2.20 } }
+    };
+
+    function parseFr(value) {
+      return parseFloat(String(value ?? "").replace(",", "."));
+    }
+
+    function fmt(value, decimals = 2) {
+      return Number(value).toLocaleString("fr-BE", {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    function populateSoils() {
+      const select = document.getElementById("soil");
+      Object.entries(soils).forEach(([key, soil]) => {
+        const option = document.createElement("option");
+        option.value = key;
+        option.textContent = soil.name;
+        select.appendChild(option);
+      });
+      select.value = "terreVegetale";
+    }
+
+    function resetResults() {
+      ["result-terrassement","result-terres","result-poids","result-empierrement",
+       "result-stabilise","result-ciment","result-sacs","result-paves","result-pieces"]
+        .forEach(id => document.getElementById(id).textContent = "–");
+      document.getElementById("soil-coef").textContent = "–";
+    }
+
+    function showError(message) {
+      const box = document.getElementById("error");
+      box.textContent = message;
+      box.style.display = message ? "block" : "none";
+    }
+
+    function calculate() {
+      const surface = parseFr(document.getElementById("surface").value);
+      const totalDepthCm = parseFr(document.getElementById("total-depth").value);
+      const stabDepthCm = parseFr(document.getElementById("stabilise-depth").value);
+      const cementDosage = parseFr(document.getElementById("cement-dosage").value);
+      const waste = Math.max(0, parseFr(document.getElementById("waste").value) || 0);
+
+      const soilKey = document.getElementById("soil").value;
+      const humidity = document.getElementById("humidity").value;
+      const soil = soils[soilKey];
+
+      const paverSelect = document.getElementById("paver-type");
+      const paver = paverSelect.options[paverSelect.selectedIndex];
+      const paverHeightCm = paver ? parseFr(paver.dataset.height) : NaN;
+      const lengthCm = paver ? parseFr(paver.dataset.length) : NaN;
+      const widthCm = paver ? parseFr(paver.dataset.width) : NaN;
+      const isCombi = paver ? paver.dataset.combi === "true" : false;
+
+      document.getElementById("soil-coef").textContent =
+        soil ? `${fmt(soil.coef, 2)} (+${fmt((soil.coef - 1) * 100, 0)} %)` : "–";
+
+      if (!surface || surface <= 0 || isNaN(totalDepthCm) || totalDepthCm <= 0 ||
+          isNaN(stabDepthCm) || stabDepthCm < 0 || isNaN(cementDosage) ||
+          cementDosage < 0 || !soil || isNaN(paverHeightCm)) {
+        resetResults();
+        if (soil) {
+          document.getElementById("soil-coef").textContent =
+            `${fmt(soil.coef, 2)} (+${fmt((soil.coef - 1) * 100, 0)} %)`;
+        }
+        showError("");
+        return;
+      }
+
+      const empDepthCm = totalDepthCm - stabDepthCm - paverHeightCm;
+      if (empDepthCm < 0) {
+        resetResults();
+        document.getElementById("soil-coef").textContent =
+          `${fmt(soil.coef, 2)} (+${fmt((soil.coef - 1) * 100, 0)} %)`;
+        showError("La profondeur totale est insuffisante pour contenir le pavé et le stabilisé.");
+        return;
+      }
+      showError("");
+
+      const terrassement = surface * totalDepthCm / 100;
+      const terresFoisonnees = terrassement * soil.coef;
+      const density = soil.densities[humidity];
+      const poidsTerres = terresFoisonnees * density;
+
+      const empCompacte = surface * empDepthCm / 100;
+      const empAPrevoir = empCompacte * (1 + EMP_EXTRA);
+
+      const stabCompacte = surface * stabDepthCm / 100;
+      const stabAPreparer = stabCompacte / (1 - STAB_TASSEMENT);
+
+      const cimentKg = stabAPreparer * cementDosage;
+      const sacs = Math.ceil(cimentKg / 25);
+
+      const paveSurface = surface * (1 + waste / 100);
+      let pieces = "Non calculable pour un format combi";
+      if (!isCombi && !isNaN(lengthCm) && !isNaN(widthCm)) {
+        pieces = `${Math.ceil(paveSurface / ((lengthCm / 100) * (widthCm / 100)))} pièces`;
+      }
+
+      document.getElementById("base-terrassement").textContent = `${fmt(totalDepthCm, 1)} cm`;
+      document.getElementById("result-terrassement").textContent = `${fmt(terrassement)} m³ en place`;
+
+      document.getElementById("base-terres").textContent =
+        `${soil.name}, coefficient ${fmt(soil.coef, 2)}`;
+      document.getElementById("result-terres").innerHTML =
+        `${fmt(terresFoisonnees)} m³ à évacuer<br><span class="pv-small">Volume après excavation</span>`;
+
+      document.getElementById("base-poids").textContent =
+        `${fmt(density, 2)} T/m³ — humidité ${document.getElementById("humidity").selectedOptions[0].text.toLowerCase()}`;
+      document.getElementById("result-poids").innerHTML =
+        `${fmt(poidsTerres)} T<br><span class="pv-small">Estimation indicative</span>`;
+
+      document.getElementById("base-empierrement").textContent =
+        `${fmt(empDepthCm, 1)} cm (${fmt(totalDepthCm,1)} − ${fmt(stabDepthCm,1)} − ${fmt(paverHeightCm,1)})`;
+      document.getElementById("result-empierrement").innerHTML =
+        `${fmt(empAPrevoir)} m³ à prévoir<br><span class="pv-small">${fmt(empCompacte)} m³ finis + 5 %</span>`;
+
+      document.getElementById("base-stabilise").textContent =
+        `${fmt(stabDepthCm, 1)} cm finis — tassement 15 %`;
+      document.getElementById("result-stabilise").innerHTML =
+        `${fmt(stabAPreparer)} m³ à préparer<br><span class="pv-small">${fmt(stabCompacte)} m³ après compactage</span>`;
+
+      document.getElementById("base-ciment").textContent =
+        `${fmt(cementDosage, 0)} kg/m³ de stabilisé préparé`;
+      document.getElementById("result-ciment").textContent = `${fmt(cimentKg, 1)} kg`;
+      document.getElementById("result-sacs").textContent = `${sacs} ${sacs > 1 ? "sacs" : "sac"}`;
+
+      document.getElementById("base-paves").textContent =
+        `Surface + ${fmt(waste, 1)} % de perte`;
+      document.getElementById("result-paves").textContent = `${fmt(paveSurface)} m²`;
+      document.getElementById("result-pieces").textContent = pieces;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      populateSoils();
+      document.querySelectorAll("input, select").forEach(el => {
+        el.addEventListener("input", calculate);
+        el.addEventListener("change", calculate);
+      });
+      calculate();
+    });
+  </script>
+</body>
+</html>

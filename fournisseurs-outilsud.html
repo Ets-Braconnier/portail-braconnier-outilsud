@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="fr"><head>
+<script>
+const AUTH_API_PORTAL="https://braconnier-auth.sebastien-025.workers.dev";
+const PORTAL_TOKEN_KEY="braconnier_portal_token_v3";
+(async()=>{
+  const token=sessionStorage.getItem(PORTAL_TOKEN_KEY);
+  if(!token){window.location.replace("index.html");return;}
+  try{
+    const r=await fetch(AUTH_API_PORTAL+"/auth/check",{headers:{"Authorization":"Bearer "+token}});
+    if(!r.ok)throw new Error();
+  }catch(e){
+    sessionStorage.removeItem(PORTAL_TOKEN_KEY);
+    window.location.replace("index.html");
+  }
+})();
+</script>
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Base fournisseur Outilsud</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#f5f7f9;color:#222}.wrap{max-width:1280px;margin:auto;padding:26px}
+h1{color:#1f4e78;margin:0 0 6px}.sub{color:#667085;margin-bottom:18px;line-height:1.45}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:12px}
+.kpi,.box,.card{background:#fff;border:1px solid #dce3e8;border-radius:12px;padding:14px}
+.kpi{cursor:pointer;text-align:left;transition:.15s;appearance:none;width:100%}
+.kpi:hover{border-color:#1f4e78;transform:translateY(-1px)}
+.kpi.active-filter{outline:2px solid #1f4e78;border-color:#1f4e78}
+.kpi b{font-size:22px;color:#1f4e78}.kpi span{display:block;font-size:12px;color:#667085;margin-top:4px}
+.inactive-breakdown{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 16px}
+.mini-filter{background:#fff;color:#555;border:1px solid #dce3e8;padding:8px 11px;border-radius:18px}
+.mini-filter:hover,.mini-filter.active-filter{border-color:#8b1b1b;color:#8b1b1b;background:#fff7f7}
+.controls{display:grid;grid-template-columns:1fr 1fr 230px 190px auto auto;gap:9px}input,select,button{padding:12px;border:1px solid #cbd4dc;border-radius:8px;font-size:14px}
+button{background:#1f4e78;color:#fff;border:0;cursor:pointer}.stats{margin-top:10px;color:#667085}
+.cards{display:grid;gap:10px;margin-top:12px}.name{font-size:19px;font-weight:700;color:#1f4e78}.current{margin:5px 0 9px;font-size:14px}.identity{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:9px 0}.identity div{background:#f8fafc;border:1px solid #e3e8ed;border-radius:8px;padding:8px 10px;font-size:12px}.identity b{display:block;color:#667085;font-size:11px;margin-bottom:3px}.status-main{font-weight:700}@media(max-width:700px){.identity{grid-template-columns:1fr}}
+.meta,.tags{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.badge,.tag{font-size:12px;padding:5px 9px;border-radius:15px;background:#edf3f7}
+.ok{background:#dff3e4;color:#176b2c}.warn{background:#fff3cd;color:#725700}.bad{background:#fde3e3;color:#8b1b1b}.neutral{background:#edf0f3;color:#555}
+.note{font-size:13px;color:#667085;line-height:1.4;margin-top:8px}a{color:#1f4e78}@media(max-width:850px){.kpis{grid-template-columns:1fr 1fr}.controls{grid-template-columns:1fr}}
+
+.export-btn{border:0;border-radius:8px;padding:12px 14px;background:#217346;color:#fff;font-weight:700;cursor:pointer;white-space:nowrap}
+.export-btn:hover{filter:brightness(.94)}
+.all-export-btn{border:0;border-radius:8px;padding:12px 14px;background:#14532d;color:#fff;font-weight:800;cursor:pointer;white-space:nowrap}.all-export-btn:hover{filter:brightness(.94)}
+.import-btn{border:0;border-radius:8px;padding:12px 14px;background:#b7791f;color:#fff;font-weight:700;cursor:pointer;white-space:nowrap}.import-btn:hover{filter:brightness(.94)}
+.supplier-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.supplier-actions .article-btn{margin-top:0}.tariff-btn{border:0;border-radius:9px;padding:8px 13px;background:#7c3aed;color:#fff;font-weight:700;cursor:pointer}.tariff-btn:hover{filter:brightness(.94)}
+.article-actions{display:flex;gap:9px;align-items:center}
+@media(max-width:850px){.article-actions{width:100%}.article-actions button{flex:1}}
+
+/* ===== Modernisation Braconnier 2026 ===== */
+:root{
+  --brand:#f47b00;
+  --brand-dark:#dc6f00;
+  --ink:#222a31;
+  --muted:#667085;
+  --line:#e1e5e9;
+  --panel:#ffffff;
+  --soft:#f6f7f8;
+  --navy:#29343d;
+  --green:#1f7a4d;
+  --red:#a33b3b;
+  --purple:#7252b7;
+}
+body{
+  background:#f3f5f6;
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1360px;padding:18px 22px 30px}
+.app-header{
+  min-height:62px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--navy);color:#fff;border-radius:12px;
+  padding:10px 14px;margin-bottom:13px;
+  box-shadow:0 4px 16px rgba(26,34,40,.08)
+}
+.app-brand{display:flex;align-items:center;gap:11px}
+.app-logo{
+  width:38px;height:38px;border-radius:9px;background:var(--brand);
+  color:#fff;display:grid;place-items:center;font-weight:900;font-size:18px
+}
+.app-header h1{font-size:18px;color:#fff;margin:0;line-height:1.1}
+.app-subtitle{font-size:10px;color:#cbd3d9;margin-top:3px}
+.app-pill{
+  font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+  padding:7px 10px;border:1px solid rgba(255,255,255,.18);
+  border-radius:999px;background:rgba(255,255,255,.07)
+}
+
+/* KPIs */
+.kpis{gap:7px;margin-bottom:9px}
+.kpi{
+  min-height:72px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.025);background:#fff
+}
+.kpi:hover{border-color:#cbd2d8;transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.05)}
+.kpi.active-filter{outline:none;border-color:var(--brand);box-shadow:0 0 0 2px rgba(244,123,0,.13)}
+.kpi b{font-size:20px;color:var(--ink)}
+.kpi span{font-size:10px;color:var(--muted);margin-top:3px}
+.kpi:nth-child(2) b{color:var(--green)}
+.kpi:nth-child(3) b{color:#a56a00}
+.kpi:nth-child(4) b{color:var(--red)}
+
+.inactive-breakdown{gap:5px;margin-bottom:10px}
+.mini-filter{
+  padding:6px 9px;border-radius:6px;font-size:10px;background:#fff;color:#59636d
+}
+.mini-filter:hover,.mini-filter.active-filter{
+  border-color:#d6a0a0;color:#8b1b1b;background:#fff8f8
+}
+
+/* Search / filter toolbar */
+.box{
+  border-radius:10px;border:1px solid var(--line);padding:9px;background:#fff;
+  box-shadow:0 1px 4px rgba(0,0,0,.025)
+}
+.controls{
+  grid-template-columns:minmax(190px,1fr) minmax(190px,1fr) 190px 175px auto auto;
+  gap:6px;align-items:center
+}
+input,select,button{font-family:inherit}
+.controls input,.controls select{
+  height:35px;padding:0 10px;border:1px solid #d7dce1;border-radius:7px;
+  font-size:11px;background:#fbfcfc
+}
+.controls input:focus,.controls select:focus{
+  outline:none;border-color:var(--brand);box-shadow:0 0 0 2px rgba(244,123,0,.10);background:#fff
+}
+.controls button,.export-btn,.all-export-btn,.import-btn{
+  min-height:35px;padding:0 11px;border-radius:7px;font-size:10px;font-weight:800
+}
+.controls > button[onclick="resetAll()"]{background:#59636d}
+.import-btn{background:#b7791f}
+.export-btn{background:#217346}
+.all-export-btn{background:#14532d}
+.stats{font-size:10px;margin-top:7px}
+
+/* Supplier cards */
+.cards{gap:7px;margin-top:9px}
+.card{
+  border:1px solid var(--line);border-radius:10px;padding:11px 12px;
+  box-shadow:0 1px 4px rgba(0,0,0,.025);
+  transition:border-color .15s,box-shadow .15s,transform .15s;
+  position:relative;overflow:hidden
+}
+.card::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--brand)
+}
+.card:hover{border-color:#d2d7dc;box-shadow:0 4px 12px rgba(0,0,0,.055);transform:translateY(-1px)}
+.name{font-size:15px;color:var(--ink);padding-right:8px}
+.current{font-size:11px;margin:3px 0 6px;color:#59636d}
+.identity{gap:5px;margin:7px 0}
+.identity div{
+  background:#f8f9fa;border:1px solid #e7eaed;border-radius:6px;padding:6px 8px;font-size:10px
+}
+.identity b{font-size:9px;margin-bottom:2px;color:#7a838d}
+.meta,.tags{gap:4px;margin:6px 0}
+.badge,.tag{font-size:9px;padding:4px 7px;border-radius:999px}
+.tag{background:#f0f3f5;color:#4a545e}
+.note{font-size:10px;line-height:1.35;margin-top:6px;color:#68727c}
+.note a{font-weight:700;color:#4c657a}
+.supplier-actions{gap:5px;margin-top:9px}
+.article-btn,.tariff-btn{height:28px;padding:0 10px;border-radius:6px;font-size:9px}
+.article-btn{background:#2d6b5e!important}
+.article-btn.zero{background:#e8ebed!important;color:#808892!important}
+.tariff-btn{background:var(--purple)}
+
+/* Login */
+#loginGate{
+  background:
+   radial-gradient(circle at 15% 20%,rgba(244,123,0,.10),transparent 28%),
+   linear-gradient(135deg,#eef1f3 0%,#fafbfb 55%,#edf0f2 100%)
+}
+.login-card{
+  width:min(390px,100%);border-radius:14px;border:1px solid #dde2e6;
+  padding:28px;box-shadow:0 18px 55px rgba(25,34,41,.12)
+}
+.login-brand{width:52px;height:52px;border-radius:11px;background:var(--brand);font-size:21px}
+.login-card h1{font-size:22px;color:var(--ink)}
+.login-card p{font-size:12px;margin-bottom:18px}
+.login-field label{font-size:11px}
+.login-field input{height:40px;padding:0 12px;border-radius:7px;font-size:13px}
+.login-submit{height:40px;padding:0 14px;border-radius:7px;background:var(--brand);font-size:12px}
+.login-submit:hover{background:var(--brand-dark)}
+.login-note{font-size:10px}
+.logout-btn{
+  right:14px;bottom:14px;border-radius:7px;padding:8px 11px;font-size:10px;background:var(--navy)
+}
+
+/* Articles / documents modals */
+#articleModal,#tariffModal{background:#f3f5f6}
+.article-shell,.tariff-shell{padding:14px}
+.article-top,.tariff-top{background:#f3f5f6}
+.article-title,.tariff-title{font-size:19px}
+.article-search,.tariff-search{height:38px;padding:0 11px;border-radius:7px;font-size:12px}
+.article-table-wrap,.tariff-table-wrap{border-radius:9px}
+.article-table th,.article-table td,.tariff-table th,.tariff-table td{padding:7px 8px}
+.article-table th,.tariff-table th{font-size:10px}
+.article-table td,.tariff-table td{font-size:10px}
+.article-close{border-radius:6px;padding:7px 10px;font-size:9px;background:var(--navy)}
+
+@media(max-width:1000px){
+  .controls{grid-template-columns:1fr 1fr}
+  .controls > *{min-width:0}
+}
+@media(max-width:700px){
+  .wrap{padding:10px}
+  .app-header{border-radius:9px}
+  .app-pill{display:none}
+  .kpis{grid-template-columns:1fr 1fr}
+  .controls{grid-template-columns:1fr}
+  .identity{grid-template-columns:1fr}
+}
+
+.back-netstore{height:29px;padding:0 11px;border-radius:6px;background:#f47b00;color:#fff!important;text-decoration:none;display:flex;align-items:center;font-size:9px;font-weight:800}
+.back-netstore:hover{background:#dc6f00}
+
+/* Stockage R2 */
+.storage-panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 10px;box-shadow:0 1px 4px rgba(0,0,0,.025)}
+.storage-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:7px;font-size:10px;color:#59636d}
+.storage-row strong{font-size:11px;color:var(--ink)}
+.storage-track{height:9px;background:#edf0f2;border-radius:999px;overflow:hidden}
+.storage-fill{height:100%;width:0;background:#1f7a4d;border-radius:999px;transition:width .25s ease,background .25s ease}
+.storage-panel.warning .storage-fill{background:#c88a00}
+.storage-panel.danger .storage-fill,.storage-panel.blocked .storage-fill{background:#a33b3b}
+.storage-note{font-size:9px;color:#7a838d;margin-top:6px}
+.storage-panel.blocked .storage-note{color:#a33b3b;font-weight:800}
+
+/* Scanner code-barres mobile */
+.product-search-wrap{position:relative;min-width:0}
+.product-search-wrap #pq{width:100%;box-sizing:border-box}
+.barcode-scan-btn{display:none;position:absolute;right:3px;top:3px;width:29px;height:29px;min-height:0!important;padding:0!important;border:0;border-radius:6px;background:var(--brand);color:#fff;align-items:center;justify-content:center;z-index:2}
+.barcode-scan-btn svg{width:17px;height:17px;display:block}
+.barcode-scan-btn:active{background:var(--brand-dark)}
+#barcodeModal{display:none;position:fixed;inset:0;z-index:12000;background:rgba(17,24,39,.88);padding:14px;align-items:center;justify-content:center}
+#barcodeModal.open{display:flex}
+.barcode-shell{width:min(520px,100%);background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.barcode-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;background:var(--navy);color:#fff}
+.barcode-title{font-size:14px;font-weight:800}
+.barcode-close{height:30px;padding:0 10px;border:0;border-radius:6px;background:#59636d;color:#fff;font-size:10px;font-weight:800}
+.barcode-body{padding:12px}
+#barcodeReader{width:100%;min-height:260px;background:#111;border-radius:10px;overflow:hidden}
+#barcodeReader video{object-fit:cover}
+#barcodeStatus{font-size:11px;color:#667085;text-align:center;margin:9px 2px 2px;line-height:1.4}
+/* Barre d’actions professionnelle */
+.controls{grid-template-columns:minmax(190px,1fr) minmax(190px,1fr) 190px 175px auto!important}
+.controls .filter-empty{white-space:nowrap;font-size:11px;padding:0 8px!important;height:35px}
+.toolbar-actions{grid-column:1/-1;display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;padding-top:6px}
+.action-group{display:flex;align-items:center;gap:6px;padding:5px;background:#f5f7f8;border:1px solid #e1e6e9;border-radius:9px}
+.action-group.export-group{margin-left:auto;background:#f3f8f5;border-color:#d9e8df}
+.toolbar-actions button{height:34px!important;min-height:34px!important;padding:0 12px!important;border-radius:7px!important;font-size:10px!important;font-weight:800!important;box-shadow:none!important;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.toolbar-actions .btn-refresh{background:#315f86}.toolbar-actions .btn-reset{background:#69737c}.toolbar-actions .btn-import{background:#b7791f}.toolbar-actions .btn-update{background:#9a671d}.toolbar-actions .btn-export{background:#217346}.toolbar-actions .btn-articles-zip{background:#14532d}.toolbar-actions .btn-add{background:var(--brand);box-shadow:0 2px 6px rgba(244,123,0,.18)!important}
+.toolbar-actions button:hover{filter:brightness(.96);transform:translateY(-1px)}
+@media(max-width:1100px){.controls{grid-template-columns:1fr 1fr!important}.toolbar-actions{grid-column:1/-1}.action-group.export-group{margin-left:0}}
+@media(max-width:700px){.controls{grid-template-columns:1fr!important}.toolbar-actions{display:grid;grid-template-columns:1fr}.action-group{display:grid;grid-template-columns:1fr 1fr;width:100%;box-sizing:border-box}.action-group.export-group{margin-left:0}.toolbar-actions button{width:100%;justify-content:center}}
+
+/* Résultats articles directement sur la page principale */
+.product-results{display:grid;gap:7px;margin-top:9px}
+.product-result{
+ background:#fff;border:1px solid var(--line);border-left:3px solid var(--brand);
+ border-radius:9px;padding:10px 12px;cursor:pointer;transition:.15s;
+ box-shadow:0 1px 4px rgba(0,0,0,.025)
+}
+.product-result:hover{border-color:#cfd5da;border-left-color:var(--brand);box-shadow:0 4px 12px rgba(0,0,0,.06);transform:translateY(-1px)}
+.product-result-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.product-result-title{font-size:14px;font-weight:900;color:var(--ink)}
+.product-result-supplier{font-size:10px;font-weight:800;color:#fff;background:#59636d;border-radius:999px;padding:4px 8px}
+.product-result-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;font-size:10px;color:#59636d}
+.product-result-meta span{background:#f3f5f6;border-radius:6px;padding:4px 7px}
+.product-result-meta b{color:#29343d}
+.product-result-open{margin-left:auto;color:#f47b00!important;background:#fff7ef!important;font-weight:900}
+
+@media(max-width:700px){
+ .product-search-wrap #pq{padding-right:38px}
+ .barcode-scan-btn{display:flex}
+ .barcode-shell{border-radius:11px}
+ #barcodeReader{min-height:230px}
+}
+</style><script>
+(() => {
+ const tokenKey="braconnier_portal_token_v3",logoutKey="braconnier_portal_logout";
+ const home=new URL("index.html",window.location.href).href;
+ window.portalLogout=function(){
+  sessionStorage.removeItem(tokenKey);
+  try{localStorage.setItem(logoutKey,Date.now()+":"+Math.random())}catch{}
+  window.location.replace(home);
+ };
+ window.addEventListener("storage",event=>{
+  if(event.key===logoutKey){sessionStorage.removeItem(tokenKey);window.location.replace(home)}
+ });
+ window.addEventListener("pageshow",event=>{
+  if(event.persisted&&!sessionStorage.getItem(tokenKey))window.location.replace(home);
+ });
+})();
+
+</script>
+<style id="unified-portal-header-style">
+.unified-header{background:#29343d!important;color:#fff!important;border-radius:13px!important;padding:14px 16px!important;min-height:70px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;position:relative!important;top:auto!important;box-shadow:0 3px 12px rgba(20,27,32,.08)!important;z-index:1000!important}
+.unified-brand{display:flex!important;align-items:center!important;gap:11px!important;min-width:0!important;flex:1 1 auto!important}.unified-logo{width:42px!important;height:42px!important;min-width:42px!important;border-radius:9px!important;background:#f47b00!important;color:#fff!important;display:grid!important;place-items:center!important;font-weight:900!important;font-size:20px!important}.unified-brand h1{font-family:Arial,Helvetica,sans-serif!important;font-size:19px!important;line-height:1.1!important;margin:0!important;color:#fff!important}.unified-brand p{font-family:Arial,Helvetica,sans-serif!important;font-size:10px!important;line-height:1.35!important;color:#d4dce1!important;margin:4px 0 0!important}
+.unified-tools{display:flex!important;align-items:center!important;gap:7px!important;flex:0 0 auto!important}.unified-menu-wrap{position:relative!important}.unified-menu-btn,.unified-logout{height:36px!important;border:0!important;border-radius:8px!important;padding:0 13px!important;color:#fff!important;font:800 10px Arial,Helvetica,sans-serif!important;cursor:pointer!important;display:inline-flex!important;align-items:center!important;gap:7px!important}.unified-menu-btn{background:#f47b00!important}.unified-menu-btn:hover{background:#dc6f00!important}.unified-logout{background:#46515a!important}.unified-logout:hover{background:#56636d!important}.unified-menu-icon{font-size:15px!important;line-height:1!important}
+.unified-menu{display:none!important;position:absolute!important;right:0!important;top:44px!important;width:255px!important;background:#fff!important;border:1px solid #dfe4e8!important;border-radius:12px!important;padding:7px!important;box-shadow:0 18px 45px rgba(20,27,32,.2)!important;z-index:99999!important}.unified-menu.open{display:block!important}.unified-menu a{box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:space-between!important;width:100%!important;padding:10px 11px!important;border-radius:8px!important;color:#29343d!important;text-decoration:none!important;font:700 11px Arial,Helvetica,sans-serif!important;background:transparent!important}.unified-menu a:hover{background:#f4f6f7!important}.unified-menu a.active{background:#fff1e4!important;color:#c86200!important}.unified-menu a.active:after{content:'•';font-size:17px;color:#f47b00}.unified-page-actions{display:flex!important;gap:6px!important;align-items:center!important;margin-left:auto!important}.unified-page-actions button{height:36px!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:8px!important;color:#fff!important;font:800 10px Arial,Helvetica,sans-serif!important;padding:0 11px!important;cursor:pointer!important;background:#3d4851!important}.unified-page-actions button:hover{background:#4a5660!important}
+@media(max-width:760px){.unified-header{border-radius:9px!important;padding:11px 12px!important;gap:9px!important;flex-wrap:wrap!important}.unified-brand{min-width:calc(100% - 120px)!important}.unified-brand h1{font-size:17px!important}.unified-brand p{display:none!important}.unified-tools{margin-left:auto!important}.unified-page-actions{order:3!important;width:100%!important;margin-left:0!important;overflow-x:auto!important}.unified-page-actions button{white-space:nowrap!important}.unified-logout{width:36px!important;padding:0!important;justify-content:center!important;font-size:0!important}.unified-logout:before{content:'↪';font-size:17px!important}.unified-menu{position:fixed!important;left:10px!important;right:10px!important;top:78px!important;width:auto!important;max-height:calc(100vh - 95px)!important;overflow:auto!important}}
+</style>
+<style id="brand-theme">
+:root{--orange:#f47b00!important}
+body{background:#f7f7f7!important}
+.unified-header{background:#fff!important;color:#29343d!important;border:1px solid #e5e7eb!important;border-top:4px solid #f47b00!important;box-shadow:0 4px 16px rgba(20,27,32,.07)!important}
+.unified-brand h1{color:#29343d!important}.unified-brand p{color:#6b7280!important}
+.unified-menu-btn{background:#f47b00!important}.unified-logout{background:#f1f3f5!important;color:#29343d!important;border:1px solid #dde2e6!important}
+</style>
+<script id="outilsud-api-scope">
+(()=>{const _fetch=window.fetch.bind(window);window.fetch=(input,init={})=>{const u=typeof input==='string'?input:(input&&input.url)||'';if(u.startsWith('https://braconnier-api.sebastien-025.workers.dev')){const h=new Headers(init.headers||(typeof input!=='string'&&input.headers)||{});h.set('X-Enseigne','outilsud');return _fetch(input,{...init,headers:h});}return _fetch(input,init);};})();
+</script>
+<style id="brand-theme">
+:root{--orange:#284f9e!important;--blue:#284f9e!important}
+body{background:#f7f8fb!important}
+.unified-header{background:#fff!important;color:#29343d!important;border:1px solid #e2e6ef!important;border-top:4px solid #284f9e!important;box-shadow:0 4px 16px rgba(20,27,32,.07)!important}
+.unified-logo{background:#284f9e!important}.unified-brand h1{color:#29343d!important}.unified-brand p{color:#6b7280!important}
+.unified-menu-btn{background:#284f9e!important}.unified-menu-btn:hover{background:#203f7e!important}.unified-logout{background:#f1f3f5!important;color:#29343d!important;border:1px solid #dde2e6!important}
+.unified-menu a.active{background:#eef3ff!important;color:#284f9e!important}.unified-menu a.active:after{color:#284f9e!important}
+.control:focus{border-color:#284f9e!important;box-shadow:0 0 0 3px rgba(40,79,158,.1)!important}.supplier-option:hover,.supplier-option.active{background:#eef3ff!important}
+.new-order{background:#284f9e!important}.scan-frame{border-color:#284f9e!important}
+</style>
+</head><body>
+<div class="wrap">
+<header class="unified-header"><div class="unified-brand"><div class="unified-logo">O</div><div><h1>Base fournisseurs</h1><p>Outilsud · recherche, articles et documents</p></div></div><div class="unified-tools"><div class="unified-menu-wrap"><button aria-controls="unifiedMenu" aria-expanded="false" class="unified-menu-btn" id="unifiedMenuBtn" type="button"><span class="unified-menu-icon">☰</span> Menu</button><nav aria-label="Navigation principale" class="unified-menu" id="unifiedMenu"><a href="index.html">Accueil</a><a href="calculs.html">Calculs</a><a class="active" href="fournisseurs-outilsud.html">Base fournisseurs</a><a href="inventaire-outilsud.html">Inventaire</a><a href="commandes-outilsud.html">Commandes</a><a href="notes.html">Notes</a></nav></div><button class="unified-logout" onclick="portalLogout()" type="button">Déconnexion</button></div></header>
+<div class="kpis">
+<button class="kpi" data-status="" id="filterAll" type="button"><b id="kTotal">0</b><span>Tous les fournisseurs</span></button>
+<button class="kpi" data-status="Présence trouvée" id="filterActive" type="button"><b id="kActive">0</b><span>Actifs vérifiés</span></button>
+<button class="kpi" data-status="Changement confirmé" id="filterChanged" type="button"><b id="kChanged">0</b><span>Reprises / changements confirmés</span></button>
+<button class="kpi" data-status="Inactif confirmé / signalé" id="filterInactive" type="button"><b id="kInactive">0</b><span>Inactifs confirmés</span></button>
+</div>
+<div class="storage-panel" id="storagePanel">
+<div class="storage-row">
+<strong>Stockage documents</strong>
+<span id="storageText">Calcul du stockage…</span>
+</div>
+<div class="storage-track"><div class="storage-fill" id="storageFill"></div></div>
+<div class="storage-note" id="storageNote">Limite de sécurité : 9,5 Go</div>
+</div>
+<div class="inactive-breakdown">
+<button class="mini-filter" data-inactive="Faillite" type="button">Faillites <b id="kBankrupt">0</b></button>
+<button class="mini-filter" data-inactive="Liquidation" type="button">Liquidations <b id="kLiquidation">0</b></button>
+<button class="mini-filter" data-inactive="Radiation" type="button">Radiations <b id="kRadiation">0</b></button>
+<button class="mini-filter" data-inactive="Fusion / absorption" type="button">Fusions / absorptions <b id="kFusion">0</b></button>
+<button class="mini-filter" data-inactive="Autre inactif" type="button">Autres inactifs <b id="kOtherInactive">0</b></button>
+</div>
+<div class="sub" style="margin-top:-5px">Clique sur un compteur pour afficher directement les fournisseurs concernés. Les fournisseurs sans catégorie sont indiqués séparément dans le filtre « Sans catégorie ».</div>
+<div class="box"><div class="controls">
+<input id="fq" placeholder="Fournisseur…"/><div class="product-search-wrap"><input id="pq" placeholder="Matériau / produit…"/><button aria-label="Scanner un code-barres" class="barcode-scan-btn" id="barcodeScanBtn" onclick="openBarcodeScanner()" title="Scanner un code-barres" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M3 5a2 2 0 0 1 2-2h3v2H5v3H3V5Zm13-2h3a2 2 0 0 1 2 2v3h-2V5h-3V3ZM3 16h2v3h3v2H5a2 2 0 0 1-2-2v-3Zm16 0h2v3a2 2 0 0 1-2 2h-3v-2h3v-3ZM7 8h1v8H7V8Zm3 0h2v8h-2V8Zm4 0h1v8h-1V8Zm3 0h2v8h-2V8Z" fill="currentColor"></path></svg></button></div>
+<select id="sq">
+<option value="">Tous les statuts</option>
+<option value="Présence trouvée">Actifs vérifiés</option>
+<option value="Changement confirmé">Reprises / changements confirmés</option>
+<option value="Inactif confirmé / signalé">Inactifs confirmés</option>
+</select>
+<select id="inactiveFilter">
+<option value="">Tous les types d'inactifs</option>
+<option value="Faillite">Faillites</option>
+<option value="Liquidation">Liquidations</option>
+<option value="Radiation">Radiations</option>
+<option value="Fusion / absorption">Fusions / absorptions</option>
+<option value="Autre inactif">Autres inactifs</option>
+</select>
+<label class="filter-empty" style="display:flex;align-items:center;gap:6px"><input id="emptyOnly" style="width:auto" type="checkbox"/> Sans catégorie (<b id="kEmpty">0</b>)</label>
+<div class="toolbar-actions">
+<div class="action-group" aria-label="Outils de gestion"><button class="btn-refresh" onclick="loadSuppliersFromD1()" type="button">↻ Actualiser</button><button class="btn-reset" onclick="resetAll()" type="button">Réinitialiser</button></div>
+<div class="action-group" aria-label="Imports et mises à jour"><button class="btn-import" onclick="supplierImportInput.click()" type="button">⇧ Importer fournisseurs</button><button class="btn-update" id="globalArticleImportBtn" onclick="document.getElementById('globalArticleImportInput').click()" type="button">↻ Mettre à jour les articles</button></div>
+<div class="action-group export-group" aria-label="Exports"><button class="btn-export" onclick="exportSuppliersExcel()" type="button">⇩ Base fournisseurs</button><button class="btn-articles-zip" onclick="exportArticlesZip()" type="button">⇩ Base articles ZIP</button></div>
+<div class="action-group" aria-label="Ajout fournisseur"><button class="btn-add" disabled="" id="addSupplier" onclick="openSupplierEditor()" type="button">＋ Nouveau fournisseur</button></div>
+</div><input accept=".xlsx,.xls" hidden="" id="supplierImportInput" type="file"/><input accept=".xlsx,.xls" hidden="" id="globalArticleImportInput" type="file"/>
+</div><div class="stats" id="stats"></div></div>
+<div class="cards" id="cards"></div></div>
+<div aria-hidden="true" id="barcodeModal">
+<div aria-labelledby="barcodeTitle" aria-modal="true" class="barcode-shell" role="dialog">
+<div class="barcode-head"><div class="barcode-title" id="barcodeTitle">Scanner un code-barres</div><button class="barcode-close" onclick="closeBarcodeScanner()" type="button">Fermer ✕</button></div>
+<div class="barcode-body"><div id="barcodeReader"></div><div id="barcodeStatus">Place le code-barres dans le cadre.</div></div>
+</div>
+</div>
+<style id="articles-style">
+.article-btn{margin-top:12px;border:0;border-radius:9px;padding:8px 13px;background:#1f6f5f;color:#fff;font-weight:700;cursor:pointer}.article-btn:hover{filter:brightness(.94)}.article-btn.zero{background:#e5e7eb;color:#6b7280;cursor:default}
+#articleModal{display:none;position:fixed;inset:0;z-index:9999;background:#f6f7f9;overflow:auto}#articleModal.open{display:block}.article-shell{max-width:1500px;margin:auto;padding:20px}.article-top{position:sticky;top:0;z-index:3;background:#f6f7f9;padding:4px 0 14px}.article-head{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}.article-title{font-size:24px;font-weight:800}.article-close{border:0;border-radius:9px;padding:9px 14px;background:#222;color:#fff;cursor:pointer}.article-search{width:100%;box-sizing:border-box;margin-top:12px;padding:12px 14px;border:1px solid #ccd2d8;border-radius:10px;font-size:16px;background:#fff}.article-info{margin:8px 0;color:#667085}.article-table-wrap{overflow:auto;background:#fff;border-radius:12px;border:1px solid #e4e7ec}.article-table{border-collapse:collapse;width:100%;min-width:1180px}.article-table th,.article-table td{padding:9px 10px;border-bottom:1px solid #eceff2;text-align:left;vertical-align:top}.article-table th{position:sticky;top:0;background:#eef2f3;font-size:13px;white-space:nowrap;cursor:pointer}.article-table td{font-size:13px}.article-table tr:hover td{background:#f8fafb}.article-empty{padding:30px;text-align:center;color:#667085}</style>
+<div aria-hidden="true" id="articleModal"><div class="article-shell"><div class="article-top"><div class="article-head"><div><div class="article-title" id="articleTitle">Articles</div><div class="article-info" id="articleInfo"></div></div><div class="article-actions"><button class="import-btn" onclick="articleImportInput.click()">Importer Excel</button><button class="export-btn" onclick="exportCurrentArticlesExcel()">Exporter Excel</button><button class="article-close" onclick="closeArticles()">Fermer ✕</button><input accept=".xlsx,.xls" hidden="" id="articleImportInput" type="file"/></div></div><input class="article-search" id="articleSearch" placeholder="Recherche tolérante : article, référence, désignation, EAN…" type="search"/></div><div class="article-table-wrap"><table class="article-table"><thead><tr><th data-col="0">N° d'article</th><th data-col="1">Num fournisseur</th><th data-col="2">Nomfour</th><th data-col="4">Dénomination</th><th data-col="5">Unité</th><th data-col="6">Emballage</th><th data-col="7">Groupe principal</th><th data-col="8">Sous-groupe</th><th data-col="9">Code EAN</th><th data-col="10">Prix d’achat HTVA</th><th data-col="11">Prix de vente HTVA</th><th data-col="12">Prix de vente TVAC</th></tr></thead><tbody id="articleBody"></tbody></table></div></div></div>
+<style id="tariff-style">
+#tariffModal{display:none;position:fixed;inset:0;z-index:10000;background:#f3f5f6;overflow:auto}
+#tariffModal.open{display:block}
+.tariff-shell{max-width:1250px;margin:auto;padding:18px}
+.tariff-top{position:sticky;top:0;z-index:4;background:#f3f5f6;padding:4px 0 12px}
+.tariff-head{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.tariff-title{font-size:22px;font-weight:800}
+.tariff-sub{margin-top:4px;color:#667085;font-size:11px}
+.file-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.file-upload-btn{height:34px;padding:0 12px;border:0;border-radius:7px;background:#f47b00;color:#fff;font-size:10px;font-weight:800;cursor:pointer}
+.file-upload-btn:hover{background:#dc6f00}
+.article-close{border-radius:6px;padding:7px 10px;font-size:9px;background:#29343d}
+.file-drop{
+  margin:10px 0 12px;padding:28px 18px;border:2px dashed #cfd6dc;border-radius:12px;background:#fff;
+  text-align:center;color:#667085;transition:.15s;cursor:pointer
+}
+.file-drop.drag{border-color:#f47b00;background:#fff8f1}
+.file-drop b{display:block;color:#29343d;font-size:14px;margin-bottom:5px}
+.file-drop small{font-size:10px}
+.file-toolbar{display:flex;gap:8px;align-items:center;margin:8px 0}
+.file-search{flex:1;height:36px;padding:0 11px;border:1px solid #d7dce1;border-radius:7px;font-size:11px;background:#fff}
+.file-info{font-size:10px;color:#667085;white-space:nowrap}
+.file-list{display:grid;gap:7px}
+.file-card{
+  display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:10px;align-items:center;
+  background:#fff;border:1px solid #e1e5e9;border-radius:9px;padding:9px 10px
+}
+.file-icon{width:38px;height:38px;border-radius:8px;background:#eef1f3;display:grid;place-items:center;font-size:10px;font-weight:900;color:#46515a}
+.file-name{font-size:11px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-meta{font-size:9px;color:#7a838d;margin-top:3px}
+.file-buttons{display:flex;gap:5px}
+.file-buttons button,.file-buttons a{
+  height:27px;padding:0 9px;border-radius:6px;border:0;font-size:9px;font-weight:800;
+  text-decoration:none;display:flex;align-items:center;cursor:pointer
+}
+.file-open{background:#2d6b5e;color:#fff}
+.file-download{background:#217346;color:#fff}
+.file-delete{background:#a33b3b;color:#fff}
+.file-empty{background:#fff;border:1px solid #e1e5e9;border-radius:10px;padding:28px;text-align:center;color:#7a838d;font-size:11px}
+.upload-progress{margin:8px 0;font-size:10px;color:#59636d}
+@media(max-width:650px){.file-card{grid-template-columns:36px 1fr}.file-buttons{grid-column:1/-1}.file-toolbar{align-items:stretch;flex-direction:column}.file-info{white-space:normal}}
+</style>
+<div aria-hidden="true" id="tariffModal">
+<div class="tariff-shell">
+<div class="tariff-top">
+<div class="tariff-head">
+<div>
+<div class="tariff-title" id="tariffTitle">Documents fournisseur</div>
+<div class="tariff-sub" id="tariffSupplierInfo"></div>
+</div>
+<div class="file-actions">
+<button class="file-upload-btn" onclick="supplierFileInput.click()" type="button">Ajouter des fichiers</button>
+<button class="article-close" onclick="closeTariffs()">Fermer ✕</button>
+<input hidden="" id="supplierFileInput" multiple="" type="file"/>
+</div>
+</div>
+<div class="file-drop" id="fileDropZone">
+<b>Glissez-déposez vos fichiers ici</b>
+<small>Excel, PDF, Word, images, ZIP, CSV, documents techniques…</small>
+</div>
+<div class="file-toolbar">
+<input class="file-search" id="supplierFileSearch" placeholder="Rechercher un fichier…" type="search"/>
+<div class="file-info" id="supplierFileInfo"></div>
+</div>
+<div class="upload-progress" id="uploadProgress"></div>
+</div>
+<div class="file-list" id="supplierFileList"></div>
+</div>
+</div>
+<style>
+
+.contact-summary{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}.franco-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:#fff4e8;color:#9a4d00;font-size:12px;font-weight:800;border:1px solid #ffd2a6}.contact-btn{background:#29343d!important;color:#fff!important}.contact-btn:hover{filter:brightness(1.08)}
+#contactDialog{width:min(620px,92vw);border:1px solid #dde2e6;border-radius:14px;padding:0;color:#29343d}#contactDialog::backdrop{background:#0008}.contact-head{padding:20px 22px 14px;border-bottom:1px solid #edf0f2}.contact-head h2{margin:0 0 4px}.contact-body{padding:18px 22px;display:grid;gap:14px}.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.contact-box{padding:12px;border:1px solid #e3e7ea;border-radius:10px;background:#fafbfc}.contact-box b{display:block;font-size:11px;text-transform:uppercase;color:#6d7780;margin-bottom:5px}.contact-emails{display:grid;gap:7px}.contact-emails a{display:block;padding:10px 12px;border-radius:8px;background:#fff4e8;color:#9a4d00;text-decoration:none;font-weight:700;border:1px solid #ffd2a6;overflow-wrap:anywhere}.contact-actions{display:flex;justify-content:flex-end;padding:0 22px 20px}.contact-actions button{padding:10px 15px;border:0;border-radius:7px;background:#29343d;color:#fff;cursor:pointer}@media(max-width:600px){.contact-grid{grid-template-columns:1fr}}
+#supplierEditor{width:min(640px,90vw);max-height:85vh;overflow:auto;border:1px solid #dde2e6;border-radius:12px;padding:24px;color:#29343d}
+#supplierEditor::backdrop{background:#0006}#supplierEditor h2{margin-top:0}
+.supplier-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.supplier-fields label{display:grid;gap:5px;font-size:12px}.supplier-fields .wide{grid-column:1/-1}
+.supplier-fields input,.supplier-fields select,.supplier-fields textarea{box-sizing:border-box;width:100%;padding:9px;border:1px solid #cdd3d8;border-radius:6px;font:inherit}
+.supplier-editor-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:15px}.supplier-editor-actions button{padding:10px 15px;border:0;border-radius:6px;cursor:pointer}#saveSupplier{background:#f47b00;color:white}#supplierSaveMessage{color:#9b2c2c;font-size:12px}
+@media(max-width:600px){.supplier-fields{grid-template-columns:1fr}}
+</style>
+<dialog aria-labelledby="contactTitle" id="contactDialog"><div class="contact-head"><h2 id="contactTitle">Contact fournisseur</h2><div id="contactSubtitle"></div></div><div class="contact-body" id="contactBody"></div><div class="contact-actions"><button type="button" id="contactEditBtn">Modifier les coordonnées</button><button type="button" onclick="contactDialog.close()">Fermer</button></div></dialog>
+<dialog aria-labelledby="supplierEditorTitle" id="supplierEditor">
+<h2 id="supplierEditorTitle">Fournisseur</h2>
+<form id="supplierForm">
+<div class="supplier-fields">
+<label class="wide">Nom du fournisseur *<input maxlength="250" name="nom" required=""/></label>
+<label>Nom actuel<input maxlength="250" name="nom_actuel"/></label>
+<label>N° TVA / entreprise<input maxlength="80" name="tva"/></label>
+<label>Pays<input maxlength="100" name="pays"/></label>
+<label>Statut<select name="statut_source"><option>À vérifier</option><option value="Présence trouvée">Actif vérifié</option><option>Changement confirmé</option><option value="Inactif confirmé / signalé">Inactif</option></select></label>
+<label class="wide">Adresse<input maxlength="500" name="adresse"/></label>
+<label>Code postal<input maxlength="20" name="cp"/></label>
+<label>Ville<input maxlength="120" name="ville"/></label>
+<label>Téléphone<input maxlength="80" name="tel"/></label>
+<label>Fax<input maxlength="80" name="fax"/></label>
+<label>Franco (€)<input inputmode="decimal" maxlength="40" name="franco" placeholder="Ex. 500,00"/></label>
+<label class="wide">Adresses e-mail — une par ligne<textarea name="emails" rows="5" placeholder="commandes@fournisseur.be&#10;commercial@fournisseur.be"></textarea></label>
+<label>Type d’inactivité<select name="type_inactif"><option value="">Non applicable</option><option>Faillite</option><option>Liquidation</option><option>Radiation</option><option>Fusion / absorption</option><option>Autre inactif</option></select></label>
+<label>Précision sur le statut<input maxlength="500" name="existence"/></label>
+<label class="wide">Catégories — une par ligne<textarea name="categories" rows="4"></textarea></label>
+<label class="wide">Source de contrôle<input name="source" placeholder="https://…" type="url"/></label>
+<label class="wide">Note<textarea name="note" rows="3"></textarea></label>
+<label class="wide">Mot de passe administrateur *<input autocomplete="current-password" name="password" required="" type="password"/></label>
+</div>
+<p aria-live="polite" id="supplierSaveMessage" role="status"></p>
+<div class="supplier-editor-actions"><button onclick="supplierEditor.close()" type="button">Annuler</button><button id="saveSupplier" type="submit">Enregistrer</button></div>
+</form>
+</dialog>
+<style>
+#supplierMatchDialog{width:min(1050px,96vw);max-height:90vh;border:1px solid #dde2e6;border-radius:12px;padding:20px;color:#29343d}
+#supplierMatchDialog::backdrop{background:#0008}.match-head{position:sticky;top:-20px;background:white;padding:4px 0 12px;z-index:2}.match-list{display:grid;gap:8px}.match-row{display:grid;grid-template-columns:minmax(210px,1fr) 90px minmax(260px,1.2fr) 110px;gap:10px;align-items:center;padding:8px;border:1px solid #e1e5e8;border-radius:7px}.match-row select,.match-row input{width:100%;padding:7px;border:1px solid #cbd4dc;border-radius:7px;font:inherit}.match-count{text-align:right;font-weight:700}.match-create{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:#b35f00;white-space:nowrap}.match-create input{width:auto!important;accent-color:#f47b00}.match-actions{position:sticky;bottom:-20px;background:white;padding:12px 0 4px;display:flex;justify-content:flex-end;gap:10px}.match-actions button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer}.match-apply{background:#f47b00;color:white}@media(max-width:700px){.match-row{grid-template-columns:1fr}.match-count{text-align:left}}
+</style>
+<dialog id="supplierMatchDialog">
+<div class="match-head"><h2 style="margin:0 0 8px">Correspondance des fournisseurs non reconnus</h2><div id="supplierMatchInfo"></div><small>Pour chaque nom du fichier, choisis le fournisseur Cloudflare correspondant. Tape quelques lettres pour rechercher parmi TOUS les fournisseurs Cloudflare (ex. AUBIA → tape MOORIS). Les correspondances validées seront mémorisées pour les prochaines mises à jour. Si le fournisseur n’existe pas, coche « Créer » pour le créer automatiquement dans Cloudflare avant l’import. Laisse vide pour ignorer.</small></div>
+<div class="match-list" id="supplierMatchList"></div>
+<div class="match-actions"><button id="supplierMatchCancel" type="button">Annuler la mise à jour</button><button class="match-apply" id="supplierMatchApply" type="button">Utiliser ces correspondances</button></div>
+</dialog>
+<script>
+const DATA=[];
+const SUPPLIER_CONTACTS=[{"code":"000048","nom":"ACO PASSAVANT SA","adresse":"PREENAKKER 8","cp":"1785","ville":"MERCHTEM","tel":"052-381 770","fax":"052-381 771","tva":"403184458","franco":"750,00","pays":"B","emails":["tl@aco.be","sb@aco.be","oo@aco.be","am@aco.be"]},{"code":"141","nom":"ACOUSTIX SA","adresse":"RUE JOBA 9","cp":"4053","ville":"EMBOURG","tel":"04.362 20 21","fax":"04 362 20 24","tva":"0473.904.485","franco":"0,00","pays":"B","emails":["info@acoustix.be"]},{"code":"181","nom":"ACVK CARRELAGES","adresse":"Hospitaalweg 9","cp":"8510","ville":"KORTRIJK","tel":"056.217 361","fax":"056 202 789","tva":"0405.386.061","franco":"0,00","pays":"B","emails":[]},{"code":"0507","nom":"AERO-LUX","adresse":"rte de Bastogne 51","cp":"6970","ville":"TENNEVILLE","tel":"0844 677 784","fax":"25","tva":"0778.503.687","franco":"0,00","pays":"B","emails":["info@aero-lux.be"]},{"code":"148","nom":"ALBINI& FONTANOT","adresse":"Via P.P.PasolinI6","cp":"47852","ville":"FLOREFFE","tel":"0039 0541 906111","fax":"0039 0541 906124","tva":"01912270400","franco":"0,00","pays":"I","emails":["stephane.boelens@gmail.com"]},{"code":"105","nom":"ALBINTRA sa","adresse":"Bistweg 80","cp":"2520","ville":"VILVOORDE","tel":"03.470.12.12","fax":"03 470.12.00","tva":"0405.993.993","franco":"0,00","pays":"B","emails":[]},{"code":"000211","nom":"ALFA","adresse":"Ferdinand Porschestr 10","cp":"73479","ville":"ELLWANGEN","tel":"25","fax":"25","tva":"248887891","franco":"0,00","pays":"D","emails":[]},{"code":"109","nom":"AMAZON EU SARL","adresse":"25","cp":"25","ville":"25","tel":"25","fax":"25","tva":"19647148","franco":"0,00","pays":"L","emails":[]},{"code":"129","nom":"ARDENNE BETON SA","adresse":"Rue de Tibétême 139","cp":"6800","ville":"LIBRAMONT-RECOGNE","tel":"061 416 829","fax":"061 225 191","tva":"0459.578.278","franco":"0,00","pays":"B","emails":[]},{"code":"0293","nom":"AS. CREATION","adresse":"SUDSTRASSE 47","cp":"51629","ville":"GUMMERSBACH","tel":"02 808 28 68","fax":"25","tva":"122538049","franco":"0,00","pays":"D","emails":["sandrine.rostaing@as-creation.fr","therese.rousseau@as-creation.fr","contact@as-creation.de","roxane.sirejacob@as-creation.de","sales@as-creation.com"]},{"code":"0464","nom":"AUBIA-MPI","adresse":"HOGE MAUW 1070","cp":"2370","ville":"ARENDONK","tel":"014 45 18 80","fax":"25","tva":"0464.371.167","franco":"0,00","pays":"B","emails":[]},{"code":"120","nom":"AVR Tools","adresse":"Meensesteenweg 529-545","cp":"4890","ville":"THIMISTER","tel":"051.24.99.00","fax":"051 24.99.33","tva":"0423.581.677","franco":"0,00","pays":"B","emails":[]},{"code":"1999","nom":"AYOR","adresse":"place Francheville 13","cp":"24052","ville":"PERIGUEUX","tel":"0033 545 666 738","fax":"0033 553 039 448","tva":"09681980033","franco":"0,00","pays":"F","emails":["marie-france.hillaret@ayor.fr","adv.export@ayor.fr","patrick.routier@ayor.fr"]},{"code":"256","nom":"BARBIER HARDWARE","adresse":"rue de l'étoile 46","cp":"1350","ville":"NODUWEZ","tel":"010.45.03.38","fax":"019-656 033","tva":"0426.644.305","franco":"0,00","pays":"B","emails":[]},{"code":"290","nom":"BASIN-CHEMIE SA","adresse":"Gravestraat 7a","cp":"8750","ville":"VILVOORDE","tel":"051.650010","fax":"051 658105","tva":"0403.102.504","franco":"800,00","pays":"B","emails":["frejraji@basin.be","cvg.besttof@gmail.com","info@basin.be"]},{"code":"707","nom":"BATIPRO","adresse":"rue de tibeteme 139","cp":"6800","ville":"LIBRAMONT","tel":"061.22.29.31","fax":"061 22.51.91","tva":"0413.565.735","franco":"0,00","pays":"B","emails":["sf@gerard-gorse.be","jroland@batipro.lu","bcrayon@batipro.lu","fmajerus@batipro.lu","blaroussi@batipro.lu"]},{"code":"285","nom":"BAUMA STONE","adresse":"Heiderfeld 84","cp":"4770","ville":"AMEL","tel":"00352 26 99 78 21","fax":"080 341 819","tva":"0456.409.546","franco":"0,00","pays":"B","emails":["fz@bauma-stone.com","jlg@bauma-stone.com","vl@bauma-stone.com","at@bauma-stone.com","cse@bauma-stone.com","jph@bauma-stone.com"]},{"code":"235","nom":"BAUMA STONE ALSDORF","adresse":"DEPOT DE","cp":"25","ville":"ALSDORF","tel":"080-348350","fax":"080/348359","tva":"271795422","franco":"0,00","pays":"D","emails":[]},{"code":"222","nom":"BEAL INTERNATIONAL","adresse":"rue du Tronquoy 8","cp":"5380","ville":"NOVILLES-LES-BOIS","tel":"081.835 757","fax":"081 835 767","tva":"0414.592.153","franco":"0,00","pays":"B","emails":["belgium@beal.be","w.simon@beal.be","barbara.thiry@beal.be"]},{"code":"000064","nom":"BELGA PLASTICS","adresse":"gontrode heirweg 142","cp":"9090","ville":"MELLE","tel":"09 210 77 60","fax":"25","tva":"0873.290.505","franco":"0,00","pays":"B","emails":["yves@belgaplastics.be"]},{"code":"268","nom":"BERRY ALLOC  NV","adresse":"Industrielaan 100","cp":"8930","ville":"MENEN","tel":"056.52.84.80","fax":"056 52.84.90","tva":"0463.120.461","franco":"350,00","pays":"B","emails":["virginie.bonassi@berryalloc.com"]},{"code":"211","nom":"BETON de la LOMME","adresse":"rue de la dolomie 2","cp":"5580","ville":"ROCHEFORT","tel":"084.21.34.40","fax":"084 211 970","tva":"0401.375.013","franco":"0,00","pays":"B","emails":["info@betondelalomme.be","martin.eugene@betondelalomme.be","corbusier.nathalie@betondelalomme.be"]},{"code":"213","nom":"BEVIL  SPRL","adresse":"rue du Mont des Carliers 26","cp":"7522","ville":"TOURNAI","tel":"0032 (0)69 89 07 70","fax":"069 84 06 39","tva":"0415.837.515","franco":"200,00","pays":"B","emails":[]},{"code":"279","nom":"BIEMAR BOIS SA","adresse":"rue de la clé 57","cp":"4630","ville":"SOUMAGNE","tel":"04.377 94 94","fax":"04 377 23 43","tva":"0454.861.704","franco":"0,00","pays":"B","emails":["marc.guze@biemar.be","laurent@biemar.be","jc.deroo@biemar.be","hanson-jp@skynet.be","olivier.kairis@biemar.be","olivier.loop@biemar.be"]},{"code":"000184","nom":"BIOFIB- CAVAC","adresse":"Le fief chapitre","cp":"85400","ville":"SAINTE-GEMME-LA-PLAINE","tel":"0033 251 309 838","fax":"25","tva":"61509436515","franco":"0,00","pays":"F","emails":[]},{"code":"274","nom":"BONTEXGEO","adresse":"Industrestraat 39","cp":"9240","ville":"ZELE","tel":"052.457487","fax":"052 457495","tva":"0421.053.442","franco":"0,00","pays":"B","emails":["info@bontexgeo.com"]},{"code":"220","nom":"BORALIT","adresse":"Nijverheidslaan 12","cp":"9880","ville":"RESSAIX","tel":"09.375.11.11","fax":"09 375.22.22","tva":"0422.863.184","franco":"0,00","pays":"B","emails":["sales@boralit.be"]},{"code":"3200","nom":"BTC BOUW TECHNIEK COMPAKTA","adresse":"Heirweg 196","cp":"9270","ville":"LAARNE","tel":"09.355 87 27","fax":"09 355 30 87","tva":"0439.304.882","franco":"650,00","pays":"B","emails":[]},{"code":"232","nom":"BUZON PEDESTAL INTERN.","adresse":"RUE DE L'ABBAYE 134","cp":"4040","ville":"HERSTAL","tel":"042 483 983","fax":"04-2648238","tva":"0430.058.210","franco":"800,00","pays":"B","emails":[]},{"code":"301","nom":"CALODAR","adresse":"Ferd Coosemanstrrat 66","cp":"2600","ville":"ANVERS","tel":"013.66.25.11","fax":"013 67.26.66","tva":"0404.289.268","franco":"250,00","pays":"B","emails":["orders@calodar.be","cedric.gillard@calodar.be"]},{"code":"395","nom":"CAME BELGIUM SA","adresse":"Zoning Ouest 7","cp":"7860","ville":"LESSINES","tel":"068.333014","fax":"068 338019","tva":"0451.812.340","franco":"0,00","pays":"B","emails":["info@came.be"]},{"code":"317","nom":"CARLIER BOIS","adresse":"AV.ALBERT 1ER  255","cp":"5000","ville":"NAMUR","tel":"081-250320","fax":"081-230161","tva":"0456.910.085","franco":"0,00","pays":"B","emails":[]},{"code":"305","nom":"CARRIERES DE LA FLECHE","adresse":"WEZ DES RULES 17","cp":"6880","ville":"BERTRIX","tel":"061.41.31.73","fax":"061 41.40.93","tva":"0427.560.360","franco":"0,00","pays":"B","emails":[]},{"code":"307","nom":"CARRIERES du Fonds des Vaulx","adresse":"25","cp":"6920","ville":"SINT PIETERS LEEUW","tel":"084 388 628","fax":"084 389 560","tva":"0404.386.862","franco":"0,00","pays":"B","emails":[]},{"code":"306","nom":"Carrière des Limites","adresse":"Rue du Sourd-d'Ave,Ave 1B","cp":"5580","ville":"ROCHEFORT","tel":"084 388 485","fax":"084 388 794","tva":"0404.365.086","franco":"0,00","pays":"B","emails":["esther.boemer@limites.be"]},{"code":"308","nom":"CASSART","adresse":"Schockaertstraat 55","cp":"1600","ville":"KUURNE","tel":"02.377.50.76","fax":"02 378.19.49","tva":"0402.944.928","franco":"600,00","pays":"B","emails":["ncu@cassart.eu"]},{"code":"344","nom":"CCB CIE CIMENTS BELGES","adresse":"Grand route 260","cp":"7530","ville":"GAURAIN-RAMECROIX","tel":"0800 13 657","fax":"069-252590","tva":"0419.445.816","franco":"0,00","pays":"B","emails":[]},{"code":"1051","nom":"CHACON","adresse":"Av. Mercator 2","cp":"1300","ville":"WAVRE","tel":"010 68 71 80","fax":"25","tva":"0417.371.006","franco":"0,00","pays":"B","emails":[]},{"code":"0276","nom":"CHARBONNEAUX-BRABANT","adresse":"rue de la justice 52","cp":"51722","ville":"REIMS","tel":"0033 326 495 870","fax":"25","tva":"81335782207","franco":"0,00","pays":"F","emails":[]},{"code":"359","nom":"COECK NV","adresse":"De Laetstraat 6","cp":"2845","ville":"NIEL","tel":"03.880.75.00","fax":"03 880.75.10","tva":"0403.665.795","franco":"0,00","pays":"B","emails":["sb@coeck.be","info@coeck.be"]},{"code":"390","nom":"COMPAKTUNA POLYTECHNISCH BEDRI","adresse":"Industriepark-Zwijnaarde 6","cp":"9052","ville":"GENT","tel":"09.221 11 16","fax":"09 221 85 01","tva":"0400.166.768","franco":"300,00","pays":"B","emails":[]},{"code":"0355","nom":"COMPANYWEB BV","adresse":"Leuvensesteenweg 248D","cp":"1800","ville":"VILVOORDE","tel":"25","fax":"25","tva":"0869.703.978","franco":"0,00","pays":"B","emails":[]},{"code":"342","nom":"COMPTOIR CHIMIQUE NORD EST","adresse":"RUE DE LA ROCHE 7","cp":"08800","ville":"THILAY","tel":"0033 324 324 947","fax":"25","tva":"02753671890","franco":"0,00","pays":"F","emails":["j.lamoureux08@orange.fr"]},{"code":"0420","nom":"COMPTOIR DE PICARDIE","adresse":"quartier Bellevue","cp":"80400","ville":"AULT","tel":"0033 322 602 260","fax":"25","tva":"05798751962","franco":"2.000,00","pays":"F","emails":["contact@comptoirdepicardie.com"]},{"code":"1000","nom":"COPACO","adresse":"Rijksweg 125","cp":"8531","ville":"BAVIKHOVE","tel":"056 353 533","fax":"056 358 048","tva":"0405.396.949","franco":"0,00","pays":"B","emails":["fs@copaco.be"]},{"code":"310","nom":"COULON SA","adresse":"avenue de la Mutualité 116","cp":"7100","ville":"LA LOUVIERE","tel":"064 27.37.27","fax":"064/27.37.28","tva":"0401.755.093","franco":"200,00","pays":"B","emails":[]},{"code":"000098","nom":"COWALCA","adresse":"Rue des Pieds d'Alouette, 18","cp":"5100","ville":"NANINNE","tel":"081 140 600","fax":"25","tva":"0421.052.452","franco":"300,00","pays":"B","emails":["antoine.peugnieu@cowalca.be","benoit.scaillet@cowalca.be","david.debaere@cowalca.be","logmag@cowalca.be"]},{"code":"0499","nom":"CRUSOE Pompen","adresse":"Dreefvelden 11A","cp":"2860","ville":"SINT-KATELIJNE-WAVER","tel":"015 64 50 66","fax":"25","tva":"0548.992.581","franco":"0,00","pays":"B","emails":["administratie@crusoepompen.be"]},{"code":"0400","nom":"CUTZ","adresse":"rue de louveigné 112","cp":"4052","ville":"BEAUFAYS","tel":"0470 983 989","fax":"25","tva":"0798.522.212","franco":"0,00","pays":"B","emails":["teclibramont@vanmarcke.be","diy@vanmarcke.be"]},{"code":"459","nom":"DAERDEN & CO  SPRL","adresse":"Reeckervelt 9","cp":"3770","ville":"RIEMST","tel":"012.451453","fax":"012 455556","tva":"0415.615.207","franco":"0,00","pays":"B","emails":[]},{"code":"000080","nom":"DAUTZENBERG","adresse":"Nijverheidslaan 1539","cp":"3660","ville":"OUDSBERGEN","tel":"089 85 38 62","fax":"25","tva":"0442.640.395","franco":"0,00","pays":"B","emails":["orders@dautzenberg.be","info@dautzenberg.be"]},{"code":"488","nom":"DECAYEUX FRANCE","adresse":"RUE JULES GUESDE 24","cp":"80210","ville":"FEUQUIERES-EN-VIMEU","tel":"0033 322 602 545","fax":"25","tva":"57005720784","franco":"0,00","pays":"F","emails":[]},{"code":"404","nom":"DECEUNINCK Plastics ind. sa","adresse":"bruggesteenweg 164","cp":"8830","ville":"HOOGLEDE-GITS","tel":"051 239 250","fax":"051 239 261","tva":"0405.548.486","franco":"1.000,00","pays":"B","emails":["giovanni.guidi@deceuninck.com"]},{"code":"417","nom":"DECRUY NV","adresse":"Poelkapellestrat 40","cp":"8650","ville":"HOUTHULST","tel":"051-708570","fax":"051-702801","tva":"0407.172.049","franco":"0,00","pays":"B","emails":[]},{"code":"1002","nom":"DELIHOME","adresse":"Industriezone III","cp":"9320","ville":"EREMBODEGEM","tel":"053.647 670","fax":"053 663 189","tva":"0415.531.667","franco":"650,00","pays":"B","emails":["j.schyns@deli-home.com","orders.products.be@deli-home.com"]},{"code":"1913","nom":"DEMOL SPHINX","adresse":"Zennelaan 23","cp":"1800","ville":"VILVORDE","tel":"02.251 43 60","fax":"02 252 24 27","tva":"0400.675.722","franco":"350,00","pays":"B","emails":["info@demol-sphinx.be"]},{"code":"483","nom":"DEPRO PROFILES","adresse":"Kazerneweg 10","cp":"7780","ville":"KOMEN","tel":"056.554343","fax":"056 554345","tva":"0448.668.748","franco":"0,00","pays":"B","emails":["debora.leclercq@depro-profiles.com"]},{"code":"412","nom":"DESCHACHT PLASTICS","adresse":"ANTWERPSESTEENWEG 1068","cp":"9041","ville":"OOSTAKKER","tel":"09-3557454","fax":"09-3557679","tva":"0863.771.043","franco":"500,00","pays":"B","emails":[]},{"code":"416","nom":"DESCO  SA","adresse":"BIJKHOEVELAAN 2","cp":"2110","ville":"WIJNEGEM","tel":"063 215 070","fax":"03-3262607","tva":"0404.105.166","franco":"0,00","pays":"B","emails":["comptoir.habay@desco.be","habay@desco.be"]},{"code":"000160","nom":"DETANDT","adresse":"rue d'herchies 37","cp":"7011","ville":"GHLIN","tel":"0800 99 655","fax":"25","tva":"0435.712.815","franco":"150,00","pays":"B","emails":["detandt@detandt.com","a.ayari@detandt.com"]},{"code":"463","nom":"DIAMUR NV","adresse":"Zwarte Weg 47 kade 367","cp":"2030","ville":"ANTWERPEN","tel":"03 544 15 20","fax":"25","tva":"0466.101.826","franco":"0,00","pays":"B","emails":["houcine.gourja@diamur.be"]},{"code":"0283","nom":"DIESSNER","adresse":"Tempelhofer Weg 38-42","cp":"12347","ville":"BERLIN","tel":"25","fax":"25","tva":"136648870","franco":"2.000,00","pays":"D","emails":["guiseppe.dilauro@sakret-ndh.de","lev@diessner-farben.de"]},{"code":"422","nom":"DISTRIQUIN","adresse":"rue Champeau 3","cp":"6061","ville":"MONTIGNIES S/SAMBRE","tel":"071.20.72.40","fax":"071 20.72.49","tva":"0441.185.593","franco":"0,00","pays":"B","emails":[]},{"code":"424","nom":"DISTRITANK EUROPE","adresse":"Rue de la Spinette, Boig. 5","cp":"5140","ville":"SOMBREFFE","tel":"25","fax":"25","tva":"0474.635.054","franco":"0,00","pays":"B","emails":[]},{"code":"0332","nom":"DOMS","adresse":"Brusselsesteenwrg 220","cp":"1785","ville":"BRUSSEGEM","tel":"02 269 43 77","fax":"02 269 59 35","tva":"0434.358.575","franco":"1.000,00","pays":"B","emails":[]},{"code":"000132","nom":"DRAGO PAINT","adresse":"rue de l'europe 42","cp":"7080","ville":"FRAMERIES","tel":"065 671 600","fax":"25","tva":"0460.676.754","franco":"0,00","pays":"B","emails":["julien.vm@dragopaint.be","contact@dragopaint.be"]},{"code":"481","nom":"DS PLASTICS","adresse":"Mosten 18","cp":"9160","ville":"OKEREN","tel":"09.280788","fax":"09 2807889","tva":"0445.771.715","franco":"0,00","pays":"B","emails":["jean-philippe.sluys@dsplastics.be","bruno@leplang.be","atelier@leplang.be"]},{"code":"411","nom":"DURCOLO","adresse":"INDUSTRIEDIJK 36","cp":"2300","ville":"TURNHOUT","tel":"014-448888","fax":"014-422588","tva":"0426.915.212","franco":"0,00","pays":"B","emails":[]},{"code":"460","nom":"DYKA PLASTIC","adresse":"Nolimpark 4004","cp":"3900","ville":"PELT","tel":"04 239 04 90","fax":"04 246 49 52","tva":"0414.467.340","franco":"0,00","pays":"B","emails":["stephan.lienard@dyka.be"]},{"code":"528","nom":"EBEMA NV","adresse":"Dijkstraat 3","cp":"3690","ville":"ZUTENDAAL","tel":"089.610 062","fax":"089 613 143","tva":"0435.450.717","franco":"0,00","pays":"B","emails":[]},{"code":"517","nom":"ECOBATI MATERIAUX LUXEMBOURG","adresse":"RUE DE LA SEMOIS 119","cp":"6700","ville":"ARLON","tel":"063-393 039","fax":"25","tva":"0550.566.258","franco":"0,00","pays":"B","emails":[]},{"code":"0390","nom":"ECOSENSE","adresse":"Smalle Weegbree 5","cp":"2580","ville":"PUTTE","tel":"25","fax":"25","tva":"0895.686.419","franco":"0,00","pays":"B","emails":[]},{"code":"0425","nom":"ECOTANKS DBC","adresse":"Diesterstraat 34","cp":"3800","ville":"SINT-TRUIDEN","tel":"0478 931 584","fax":"25","tva":"0782.222.846","franco":"0,00","pays":"B","emails":["cederic@ecotanks.be"]},{"code":"0509","nom":"ELECTON","adresse":"Brixtonlaan 2g","cp":"1930","ville":"ZAVENTEM","tel":"0472 77 24 79","fax":"25","tva":"0772.538.385","franco":"250,00","pays":"B","emails":["info@electon.com"]},{"code":"500","nom":"ELEM SA","adresse":"rue de Gozée 81","cp":"6110","ville":"MONTIGNY-LE-TILLEUL","tel":"071.297.070","fax":"071 297 099","tva":"0420.994.450","franco":"0,00","pays":"B","emails":["sebastien.leblicq@elemtechnic.com","info@elemtechnic.com","lmoor@fjschuette.de"]},{"code":"0301","nom":"ELOY WATER SA","adresse":"Zoning de Damré","cp":"4140","ville":"SPRIMONT","tel":"04 382 44 02","fax":"25","tva":"0806.597.857","franco":"0,00","pays":"B","emails":[]},{"code":"527","nom":"ELTRA SA","adresse":"Pachtgoedstraat 2","cp":"9140","ville":"TEMSE","tel":"03.780673","fax":"03 7806740","tva":"0404.637.577","franco":"0,00","pays":"B","emails":["info@eltra.be"]},{"code":"1316","nom":"EMG ERICH MEYER","adresse":"rektor cermer strasse 39","cp":"4780","ville":"SAINT VITH-EMMELS","tel":"080.22.74.80","fax":"080 22.63.16","tva":"0418.963.883","franco":"1.200,00","pays":"B","emails":[]},{"code":"2209","nom":"Ets W.VAN OEKEL sa","adresse":"Eigenlostraat 23-25","cp":"9100","ville":"ST-NIKLAAS","tel":"03.766.69.59","fax":"03 766.65.95","tva":"0439.210.654","franco":"0,00","pays":"B","emails":[]},{"code":"514","nom":"EUROBLOC","adresse":"RUE DE TIBETEME 139","cp":"6800","ville":"LIBRAMONT-RECOGNE","tel":"061 27 11 87","fax":"061 225 191","tva":"0442.914.371","franco":"0,00","pays":"B","emails":["gaspard@lucdevos.be","lionel.gerard@eurobloc.be"]},{"code":"529","nom":"EUROGAUME LUX","adresse":"Rue Neuve 5","cp":"8824","ville":"PERLE","tel":"00352.26305781","fax":"00352 26305761","tva":"20724149","franco":"0,00","pays":"L","emails":[]},{"code":"620","nom":"FAMAPLAST  SA","adresse":"rue de Sanem 47a","cp":"4485","ville":"SOLEUVRE","tel":"00 352 593 04 61","fax":"00 352 592 928","tva":"11187603","franco":"0,00","pays":"L","emails":[]},{"code":"749","nom":"GARDEN TRADE INTERNATIONAL","adresse":"Deense Wijersstraat 6","cp":"3740","ville":"MUNSTERBILZEN","tel":"089 510 360","fax":"089 510 365","tva":"0441.446.505","franco":"2,00","pays":"B","emails":["info@giardino-online.com","michel.troilo@giardimichel.troilo"]},{"code":"1053","nom":"GARDENA sa","adresse":"leuvensesteeweg 542","cp":"1930","ville":"ZAVENTEM","tel":"02 720 92 12","fax":"25","tva":"0418.606.468","franco":"0,00","pays":"B","emails":[]},{"code":"0391","nom":"GIGATEK - CARBOMAT","adresse":"Roggemanskaai (Felix) 7","cp":"1501","ville":"HALLE","tel":"25","fax":"25","tva":"0880.971.717","franco":"0,00","pays":"B","emails":["info@cartri.be"]},{"code":"0285","nom":"GILLET carrelages","adresse":"Luzery 167","cp":"6600","ville":"BASTOGNE","tel":"25","fax":"25","tva":"0433.826.659","franco":"0,00","pays":"B","emails":[]},{"code":"0362","nom":"GLAESENER-BETZ SA","adresse":"82, GRAND-RUE","cp":"8510","ville":"L-REDANGE-SUR-ATTERT","tel":"00352 23 64 64 904","fax":"25","tva":"15888924","franco":"0,00","pays":"L","emails":[]},{"code":"701","nom":"GLEN DIMPLEX BENELUX","adresse":"POSTBUS 219","cp":"8440","ville":"AE HEERENVEEN","tel":"0031-513789840","fax":"0031-513789841","tva":"007680600B01","franco":"0,00","pays":"NL","emails":[]},{"code":"760","nom":"GOVAERTS  NV","adresse":"Kolmenstraat 1324","cp":"3570","ville":"ALKEN","tel":"011.590 160","fax":"011 314 303","tva":"0464.130.449","franco":"0,00","pays":"B","emails":["inge.swinnen@govaertsrecycling.com"]},{"code":"747","nom":"GRANIT INTER SA","adresse":"Nationale 5 - rue Robesse 2","cp":"6041","ville":"GOSSELIES","tel":"071.850 305","fax":"071 850 306","tva":"0433.334.038","franco":"0,00","pays":"B","emails":["salvatore.messina@granitinter.com","arnaud.roulet@granitinter.com","bruno.marin@granitinter.com","didier.mustin@granitinter.com","olivier.wattiaux@granitinter.com","eric.vangoethem@granitinter.com"]},{"code":"713","nom":"GROHE","adresse":"Diependaalweg 4a","cp":"3020","ville":"WINKSELE","tel":"016.23.15.60","fax":"016 23.69.70","tva":"0445.870.594","franco":"0,00","pays":"B","emails":["stephane.remacle@grohe.com"]},{"code":"766","nom":"GSV  SPRL","adresse":"KANAALDIJK 255","cp":"2900","ville":"SCHOTEN","tel":"03.3265077","fax":"03 3264923","tva":"0427.142.369","franco":"450,00","pays":"B","emails":["info@gsv.be","sales2@gsv.be"]},{"code":"839","nom":"H+H BENELUX","adresse":"MAGNESIUMSTRAAT 1A","cp":"6031","ville":"RV NEDERWEERT","tel":"0031-495450169","fax":"0031-495450069","tva":"819927302B01","franco":"0,00","pays":"NL","emails":[]},{"code":"802","nom":"HDM","adresse":"Kiezel op kleine brogel 57","cp":"3990","ville":"PEER","tel":"011.610 130","fax":"011 63.50.73","tva":"0438.115.346","franco":"250,00","pays":"B","emails":["philippe.campioli@hdm.be","info@hdm.be"]},{"code":"816","nom":"HEDRA-BETON SA","adresse":"Maastrichterstraat","cp":"3770","ville":"RIEMST(HERDEREN)","tel":"012.452 162","fax":"012 455 495","tva":"0432.924.856","franco":"0,00","pays":"B","emails":[]},{"code":"831","nom":"HYMER-LEICHTMETALLBAU","adresse":"kaferhofen","cp":"88239","ville":"ANGEN","tel":"06 78 43 82 67","fax":"25","tva":"147359150","franco":"0,00","pays":"D","emails":["xavier.landry@hymer-alu.de"]},{"code":"0506","nom":"Idelco Insulation","adresse":"Hooiemeersstraat(S.B.V.) 1","cp":"8710","ville":"WIELSBEKE","tel":"+32(0)56 960710","fax":"25","tva":"0475.267.930","franco":"0,00","pays":"B","emails":["tiana.troch@eccoproducts.eu","info@eccoproducts.eu","tiana.troch@ecoproducts.eu"]},{"code":"118","nom":"IKO   (ATAB SA)","adresse":"D'HerbouvillekaaI80","cp":"2020","ville":"ROESELARE","tel":"03.248 30.00","fax":"03 248.37.77","tva":"0406.317.459","franco":"0,00","pays":"B","emails":[]},{"code":"903","nom":"IMPERBEL sa","adresse":"Bergensesteenweg 32","cp":"1651","ville":"LOT","tel":"02 334 87 00","fax":"02 378 14 69","tva":"0400.484.591","franco":"0,00","pays":"B","emails":[]},{"code":"0326","nom":"IMPERIAL HOUSE","adresse":"rue de la liberation 19","cp":"8245","ville":"MAMER","tel":"00352 691 305 770","fax":"25","tva":"27749178","franco":"0,00","pays":"L","emails":["sebastien.b@imperialhouse.lu"]},{"code":"907","nom":"INSULCO  SPRL","adresse":"RUE BUISSON AU LOUPS 1A Z.I.SU","cp":"1400","ville":"NIVELLES","tel":"067-411610","fax":"067-411616","tva":"0405.642.815","franco":"0,00","pays":"B","emails":["insulco@insulco.be"]},{"code":"905","nom":"INTERBLOCS SA","adresse":"Rue de Tibêtêne 129-ZI","cp":"6880","ville":"RECOGNE","tel":"061.224.935","fax":"061 22.37.69","tva":"0418.689.909","franco":"0,00","pays":"B","emails":["christine.puche@interblocs.com","jeanguy.delhaise@interblocs.com","sebastien.breithof@interblocs.com"]},{"code":"933","nom":"ISOLAVA","adresse":"Ooigemstraat 12","cp":"8710","ville":"WIELSBEKE","tel":"056.674401","fax":"056 674459","tva":"0405.422.485","franco":"0,00","pays":"B","emails":["koen.deldaele@knauf.com"]},{"code":"927","nom":"ISOWILL  NV","adresse":"Smallandlaan 15","cp":"2660","ville":"HOBOKEN","tel":"03.8302191","fax":"03 8302639","tva":"0428.053.773","franco":"0,00","pays":"B","emails":["m.ravinet@isowill.be"]},{"code":"1061","nom":"JANSSEN SPRL","adresse":"rue des rotons 18","cp":"1495","ville":"VILLERS-LA-VILLE","tel":"071-885068","fax":"071-885069","tva":"0448.531.661","franco":"0,00","pays":"B","emails":[]},{"code":"0443","nom":"KEMIROC","adresse":"Rue de l'Artisanat 13","cp":"67340","ville":"INGWILLER","tel":"0033 678 47 93 00","fax":"25","tva":"78789054608","franco":"0,00","pays":"F","emails":[]},{"code":"1117","nom":"KINGSPAN INSULATION","adresse":"postbus 198","cp":"7100","ville":"AD WINTERSWIJK","tel":"0031.543 543 210","fax":"0031 543 530 844","tva":"810909881B01","franco":"0,00","pays":"NL","emails":["bart.lauryssen@sfic.be"]},{"code":"1102","nom":"KINGSPAN UNIDEK BV","adresse":"SCHEIWEG 26","cp":"5421XL","ville":"GEMERT","tel":"014 247 010","fax":"25","tva":"804790358B01","franco":"0,00","pays":"NL","emails":[]},{"code":"1103","nom":"KNAUF","adresse":"Zone industrielle","cp":"4132","ville":"ENGIS","tel":"04.273.83.11","fax":"04 273.83.30","tva":"0413.479.821","franco":"900,00","pays":"B","emails":["jean-pol.delre@knauf.be","patricia.petre@knauf.be","jonathan.lietard@knauf.com","laurent.rhainotte@knauf.com","olivia.carrier@knauf.be","order.fr@knauf.be","raphael.acunzo@knauf.com","sales@knauf.be"]},{"code":"0491","nom":"KRONOSPAN TRADING NV","adresse":"Eurozonelaan 100","cp":"7700","ville":"MOUSCRON","tel":"056 67 13 50","fax":"25","tva":"0547.851.149","franco":"0,00","pays":"B","emails":["l.figueiredo@kronospan-trading.be","sales@kronospan-trading.be"]},{"code":"0426","nom":"LALUNET","adresse":"25","cp":"38960","ville":"SAINT-AUPRE","tel":"25","fax":"25","tva":"56820640126","franco":"0,00","pays":"F","emails":[]},{"code":"1271","nom":"LAMBRECHTS-NICOLAERS SA","adresse":"Chaussée de Liège 222","cp":"3700","ville":"TONGRES","tel":"012.231 234","fax":"012 238 847","tva":"0418.048.818","franco":"0,00","pays":"B","emails":[]},{"code":"0452","nom":"LAROB","adresse":"Bosstraat 3","cp":"2960","ville":"BRECHT","tel":"03 313 64 74","fax":"25","tva":"0428.126.326","franco":"0,00","pays":"B","emails":["jef@larob.be"]},{"code":"1257","nom":"LC PACKAGING","adresse":"Mechelsteenweg 122","cp":"2860","ville":"INT-KATELIJNE-WAVER","tel":"015.55681","fax":"015 558463","tva":"0444.521.997","franco":"0,00","pays":"B","emails":["jnijs@lcpackaging.com"]},{"code":"0300","nom":"LES HAUTES ARDENNES","adresse":"Place des chasseurs ardennais","cp":"6690","ville":"VIELSALM","tel":"080 292 555","fax":"25","tva":"0407.574.994","franco":"0,00","pays":"B","emails":["eta@leshautesardennes.be"]},{"code":"0269","nom":"LIKOV","adresse":"Blanenská 1859/14","cp":"66434","ville":"KURIM","tel":"25","fax":"25","tva":"60697598","franco":"1.500,00","pays":"CZ","emails":["hana.kolarova@likov.com"]},{"code":"000237","nom":"LUXMARBRE","adresse":"chemin de la terre franche 70","cp":"6840","ville":"NEUFCHATEAU","tel":"0460 95 25 67","fax":"25","tva":"0704.932.553","franco":"0,00","pays":"B","emails":["info@luxmarbre.be"]},{"code":"1352","nom":"MAESTRO","adresse":"Kazerneweg 10","cp":"7780","ville":"KOMEN","tel":"056.55 43 43","fax":"056 554345","tva":"0448.668.748","franco":"400,00","pays":"B","emails":["orders_maestro@depro-profiles.com"]},{"code":"0369","nom":"MAGEQUIP","adresse":"25","cp":"03680","ville":"BORDEAUX","tel":"25","fax":"25","tva":"07518504154","franco":"0,00","pays":"F","emails":[]},{"code":"000007","nom":"MARTENS","adresse":"stadendamweg 75","cp":"4900 AA","ville":"OOSTERHOUT","tel":"0031-162422900","fax":"0031-162452464","tva":"002065162B01","franco":"0,00","pays":"NL","emails":[]},{"code":"1357","nom":"MASTERCARD-BANK CARD CIE","adresse":"Bld du RoIAlbert II9","cp":"1210","ville":"BRUXELLES","tel":"0800.9202","fax":"25","tva":"0468.380.237","franco":"0,00","pays":"B","emails":[]},{"code":"1336","nom":"MATEGRO SA","adresse":"rue du Rivage 35","cp":"4040","ville":"HERSTAL","tel":"04.248 39 51","fax":"04 240 04 22","tva":"0422.859.127","franco":"0,00","pays":"B","emails":["fabian.lavigne@mategro.com"]},{"code":"1340","nom":"MATELGRO","adresse":"rue du Pont Léopold 1-7","cp":"4800","ville":"VERVIERS","tel":"087.30.72.11","fax":"087 31.06.79","tva":"0402.292.652","franco":"0,00","pays":"B","emails":[]},{"code":"1363","nom":"MBI BETON BE","adresse":"TAYLORWEG 10 POSTBUS 259","cp":"5460","ville":"AG VEGHEL","tel":"09-2254032","fax":"09-2234304","tva":"0833.477.052","franco":"0,00","pays":"B","emails":[]},{"code":"000101","nom":"MDB PROFIL","adresse":"Quai Vercour 98","cp":"4000","ville":"LIEGE 1","tel":"042 52 70 35","fax":"042 52 11 03","tva":"0403.967.089","franco":"1.200,00","pays":"B","emails":[]},{"code":"1313","nom":"MENOVA","adresse":"STEINERBERG 2","cp":"4780","ville":"SAINT VITH","tel":"080 280 663","fax":"25","tva":"0860.081.578","franco":"0,00","pays":"B","emails":["roger.gillessen@menova.be","virginie.grosjean@menova.be","alex.muller@menova.be","frederic.rozein@menova.be","info@menova.be","maxime.ventura@menova.be"]},{"code":"1314","nom":"METAFRANC SA","adresse":"Rue des Prés communs 111","cp":"1120","ville":"BRUXELLES","tel":"02.216.36.60","fax":"02 242.55.78","tva":"0433.910.989","franco":"310,00","pays":"B","emails":["info@metafranc.com"]},{"code":"1329","nom":"MOUZELARD Scierie","adresse":"rue du Bois Bolle 12","cp":"6880","ville":"JEHONVILLE","tel":"061.534.975","fax":"061 534.975","tva":"0718.549.571","franco":"0,00","pays":"B","emails":["scierie.mouzelard.jy@skynet.be"]},{"code":"1423","nom":"NELISSEN","adresse":"Kiezelweg 460","cp":"3620","ville":"KESSELT LANAKEN","tel":"012 440 244","fax":"012 455 389","tva":"0401.362.541","franco":"0,00","pays":"B","emails":["herve.seleck@nelissen.be","melanie.furnemont@nelissen.be","sales.wallonie@nelissen.be"]},{"code":"1421","nom":"NORLAND","adresse":"Rue de Reppe 20b","cp":"5300","ville":"SEILLES","tel":"085.82329","fax":"085 828340","tva":"0449.333.395","franco":"0,00","pays":"B","emails":[]},{"code":"1523","nom":"OEG  Gmbh","adresse":"Industriesqtr.1","cp":"31840","ville":"ESS.OLDENDORF","tel":"0800.6343662","fax":"00800 63432924","tva":"126118390","franco":"150,00","pays":"D","emails":["vente@oeg.net"]},{"code":"1516","nom":"OMNIPLEX NV","adresse":"Schomhoeveweg 13 bus 6","cp":"2030","ville":"ANTWERPEN","tel":"056.723 000","fax":"056 71 31 21","tva":"0455.957.408","franco":"0,00","pays":"B","emails":[]},{"code":"1514","nom":"OPSINOX  NV","adresse":"Venecoweg 22","cp":"9810","ville":"NAZARETH","tel":"09.381 09 40","fax":"09 380 40 22","tva":"0456.154.673","franco":"500,00","pays":"B","emails":[]},{"code":"1506","nom":"OTTO WOLFF THYSSENKRUPP","adresse":"Dellingstraat 57","cp":"2800","ville":"MECHELEN","tel":"015 453 212","fax":"015 411 787","tva":"0402.958.388","franco":"0,00","pays":"B","emails":["sigrid.gomand@thyssenkrupp-materials.com","rene.valcke@thyssenkrupp.com"]},{"code":"0376","nom":"OX TOOLS","adresse":"oud camp 22","cp":"3155 DL","ville":"MAASLAND","tel":"+31 886 972 537","fax":"25","tva":"859932655B01","franco":"0,00","pays":"NL","emails":["sales.nl@oxtools.com"]},{"code":"0363","nom":"PAULI Beheer","adresse":"Industrielaan 19","cp":"3730","ville":"HOESELT","tel":"089 41 13 00","fax":"25","tva":"0436.373.504","franco":"0,00","pays":"B","emails":[]},{"code":"1603","nom":"PAULMANN Light","adresse":"Quezinger Feld 2","cp":"31832","ville":"SPRINGE-VOLKSEN","tel":"03 480 03 80","fax":"03 480 92 64","tva":"115509096","franco":"0,00","pays":"D","emails":["sales@paulmann.be"]},{"code":"000045","nom":"PEREIRA FERREIRA GOMES","adresse":"Achter Der Borg 20","cp":"59755","ville":"ARNSBERG","tel":"25","fax":"25","tva":"123913152","franco":"0,00","pays":"D","emails":[]},{"code":"1635","nom":"PEREL TOOLS","adresse":"Digue du canal 6-8","cp":"1070","ville":"BRUXELLES","tel":"02.520.80.55","fax":"02 522.99.04","tva":"0471.494.333","franco":"0,00","pays":"B","emails":[]},{"code":"1646","nom":"PEREN-BREUER SPRL","adresse":"Route de Luxembourg 73","cp":"4780","ville":"ST VITH","tel":"080.228522","fax":"080 226801","tva":"0411.955.337","franco":"0,00","pays":"B","emails":[]},{"code":"1677","nom":"PIKT-O-NORM NV","adresse":"Van Stralenlei 74a","cp":"2170","ville":"MERKSEM","tel":"03.6469559","fax":"03 6448508","tva":"0420.827.471","franco":"0,00","pays":"B","emails":[]},{"code":"1669","nom":"PITTSBURGH CORNING EUROPE SA","adresse":"Albertkade 1","cp":"3980","ville":"TESSENDERLO","tel":"02.351.02.30","fax":"02 353.10.63","tva":"0401.338.785","franco":"0,00","pays":"B","emails":[]},{"code":"1645","nom":"PLAKABETON  SA","adresse":"Industrielaan 2","cp":"1740","ville":"TERNAT","tel":"02.582 29 45","fax":"02 582 19 62","tva":"0402.642.545","franco":"0,00","pays":"B","emails":["info@plakagroup.be","info.be@leviat.com"]},{"code":"1623","nom":"PLASTISERVICE","adresse":"allée centrale","cp":"6040","ville":"JUMET","tel":"071 35 95 82","fax":"071 35 98 69","tva":"0434.767.460","franco":"0,00","pays":"B","emails":[]},{"code":"1612","nom":"PLASTIVAN","adresse":"wantestraat 3","cp":"8780","ville":"OOSTROZEBEKE","tel":"056.66.75.51","fax":"056.66.91.18","tva":"0412.558.024","franco":"500,00","pays":"B","emails":["eric.rousseaux@plastivan.com","bart.vervaecke@plastivan.com","ulriche.werbrouck@plastivan.com","orders@plastivan.com"]},{"code":"0357","nom":"POMPE A EAU","adresse":"rue de la gare 3087","cp":"59299","ville":"BOESCHEPE","tel":"25","fax":"25","tva":"853048423","franco":"0,00","pays":"F","emails":["contact@pompeaeau.fr"]},{"code":"000088","nom":"POUJOULAT","adresse":"Rue De L'Industrie 39","cp":"1400","ville":"NIVELLES","tel":"25","fax":"25","tva":"0418.363.572","franco":"550,00","pays":"B","emails":["n.distefano@poujoulat.be"]},{"code":"1607","nom":"PROBEMAL","adresse":"route de luxembourg 16","cp":"4960","ville":"MALMEDY","tel":"080-791220","fax":"080-791229","tva":"0429.052.675","franco":"0,00","pays":"B","emails":[]},{"code":"0349","nom":"PROFILS-ALU","adresse":"rue de l'alzette 14","cp":"4010","ville":"ESCH SUR ALZETTE","tel":"06 70 16 43 51","fax":"25","tva":"20834383","franco":"450,00","pays":"L","emails":["yves.fraiture@create.be","contact@profils-alu.com"]},{"code":"1654","nom":"PROXXON  GMBH","adresse":"IM SPANISCHEN 18-24","cp":"54518","ville":"NIERSBACH","tel":"0049 06575780","fax":"0049 06575696","tva":"47896957","franco":"250,00","pays":"D","emails":["filip.noben@profino.be"]},{"code":"1032","nom":"PSD","adresse":"rue camusel 57","cp":"1000","ville":"BRUXELLES","tel":"02 514 05 15","fax":"02 514 04 24","tva":"0427.769.208","franco":"0,00","pays":"B","emails":[]},{"code":"1985","nom":"QUALYCORK","adresse":"Wolfsakker 3 I.Z. E17/2003","cp":"9160","ville":"LOKEREN","tel":"09.3481577","fax":"09 3490440","tva":"0426.740.711","franco":"0,00","pays":"B","emails":["gregory@qualycork.be"]},{"code":"1023","nom":"RAVAGO PLASTICS","adresse":"Moerenstraat 89","cp":"2370","ville":"ARENDONK","tel":"014 672 001","fax":"25","tva":"0404.169.405","franco":"700,00","pays":"B","emails":[]},{"code":"1824","nom":"RECTOR KORATON SA","adresse":"VisserskaaI26","cp":"8500","ville":"KORTRIJK","tel":"056.23.07.11","fax":"056 22.79.63","tva":"0424.217.424","franco":"0,00","pays":"B","emails":[]},{"code":"1804","nom":"REMACLE sa","adresse":"Rue sous la Ville 8","cp":"5150","ville":"FLORIFFOUX","tel":"081.44.88.88","fax":"081 44.88.99","tva":"0402.569.893","franco":"0,00","pays":"B","emails":[]},{"code":"1801","nom":"RENSON SA","adresse":"MAALBEEKSTRAAT 10","cp":"8790","ville":"WAREGEM","tel":"056-627111","fax":"056-602851","tva":"0462.152.837","franco":"0,00","pays":"B","emails":[]},{"code":"0473","nom":"RIBIMEX SARL","adresse":"56 RTE NATIONALE 4","cp":"56","ville":"PONTAULT-COMBAULT","tel":"25","fax":"25","tva":"12712045863","franco":"700,00","pays":"F","emails":[]},{"code":"0436","nom":"RIGID FLOORS","adresse":"Sprietestraat 326","cp":"8792","ville":"WAREGEM","tel":"056 54 01 60","fax":"25","tva":"0717.940.154","franco":"750,00","pays":"B","emails":[]},{"code":"1842","nom":"RINCON LIGHT SA","adresse":"Gallaitstraat 138","cp":"1030","ville":"BRUXELLES","tel":"02.2401911","fax":"02 2401910","tva":"0441.503.418","franco":"0,00","pays":"B","emails":[]},{"code":"000129","nom":"RKW HYPLAST","adresse":"Sint-Lenaartseweg 26","cp":"2320","ville":"HOOGSTRATEN","tel":"03 340 25 55","fax":"03 314 23 72","tva":"0415.428.927","franco":"0,00","pays":"B","emails":[]},{"code":"1819","nom":"ROOSENS BETONS SA","adresse":"Rue de Familleureux 152","cp":"7170","ville":"BOIS-D'HAINE","tel":"064.556307","fax":"064 557709","tva":"0417.732.082","franco":"0,00","pays":"B","emails":[]},{"code":"1829","nom":"ROSCO  NV","adresse":"Wayenborgstraat 16","cp":"2800","ville":"MECHELEN","tel":"015.293020","fax":"015 293025","tva":"0438.803.947","franco":"150,00","pays":"B","emails":[]},{"code":"1054","nom":"RV DISTRIBUTION","adresse":"rue de neuville 2","cp":"5600","ville":"PHILIPPEVILLE","tel":"060 390 630","fax":"060 390 831","tva":"0477.536.245","franco":"0,00","pays":"B","emails":[]},{"code":"1045","nom":"SAFETIMO","adresse":"Chemin de Tout Ventv 10","cp":"1325","ville":"BONLEZ","tel":"010.688927","fax":"010 688556","tva":"0459.558.284","franco":"0,00","pays":"B","emails":[]},{"code":"0312","nom":"SANITINO","adresse":"MORAVSKA 1259","cp":"57001","ville":"LITOMYSL MESTO","tel":"25","fax":"25","tva":"27545423","franco":"0,00","pays":"CZ","emails":[]},{"code":"000110","nom":"SANUTAL","adresse":"Herentalsesteenweg 85","cp":"2280","ville":"GROBBENDONK","tel":"03 355 21 00","fax":"03 355 21 09","tva":"0450.751.773","franco":"700,00","pays":"B","emails":["nicolas@sanutal.be","orders@sanutal.be"]},{"code":"0414","nom":"SCALP","adresse":"Allée de Bruxelles 8","cp":"83320","ville":"PAVILLON SOUS BOIS","tel":"0475 567 513","fax":"25","tva":"35562112227","franco":"300,00","pays":"F","emails":[]},{"code":"000059","nom":"SCHLUTER SYSTEMS","adresse":"Schmolestrasse 7","cp":"58640","ville":"ISERLOHN","tel":"014 443 080","fax":"0049-2371971111","tva":"813037397","franco":"750,00","pays":"D","emails":["meike_huettel@schlueter.de","meike_arndt@schlueter.de","rudy_genon@schlueter.de"]},{"code":"0350","nom":"SETIM","adresse":"au village 2","cp":"6717","ville":"ATTERT","tel":"063 22 51 19","fax":"25","tva":"0474.307.036","franco":"0,00","pays":"B","emails":["info@setim.be"]},{"code":"190","nom":"SFIC","adresse":"Rue des Nouvelles Technologies","cp":"4460","ville":"GRâCE-HOLLOGNE","tel":"011264750","fax":"25","tva":"0400.953.260","franco":"0,00","pays":"B","emails":["gaetan.avanzato@sfic.be"]},{"code":"1930","nom":"SIDEC","adresse":"INDUSTRIEWEG 10","cp":"2490","ville":"BALEN","tel":"014 815 001","fax":"25","tva":"0429.294.581","franco":"0,00","pays":"B","emails":["christina.vanclemen@sidec.be","sales@sidec.be"]},{"code":"1950","nom":"SIGMA COATING SA","adresse":"Genkersteenweg 311","cp":"3500","ville":"HASSELT","tel":"011 278 701","fax":"25","tva":"0401.069.759","franco":"0,00","pays":"B","emails":[]},{"code":"0387","nom":"SIMON & ZONEN","adresse":"astridlaan 167","cp":"9500","ville":"GERAARDSBERGEN","tel":"054 500 243","fax":"25","tva":"0400.248.526","franco":"0,00","pays":"B","emails":[]},{"code":"136","nom":"SKYLUX","adresse":"Boerderijstraat 5","cp":"8530","ville":"STASEGEM","tel":"056 200 000","fax":"056 219599","tva":"0416.659.342","franco":"0,00","pays":"B","emails":["com.coupoles@skylux.be","com.veranda@skylux.be","info@skylux.be"]},{"code":"1990","nom":"SOLID BVBA CHALETS","adresse":"Industriepark-Ijzeren Baezzl 8","cp":"8587","ville":"SPIERE-ESPIERRES","tel":"056.461 616","fax":"056 461617","tva":"0475.877.446","franco":"1.000,00","pays":"B","emails":["cecile.degois@solid.eu"]},{"code":"1918","nom":"SOLID INTERNATIONAL  NV","adresse":"Pathoekeweg 130","cp":"8000","ville":"BRUGGE","tel":"050-31 36 80","fax":"051-311101","tva":"0472.587.562","franco":"850,00","pays":"B","emails":["info@solidintl.com"]},{"code":"0412","nom":"SOLYD","adresse":"Luxemburgstraat 20","cp":"9140","ville":"TEMSE","tel":"25","fax":"25","tva":"0734.484.790","franco":"0,00","pays":"B","emails":["info@solyd.be"]},{"code":"000143","nom":"SOPREMA","adresse":"INDUSTRIE ZONE KLEIN GENT","cp":"2280","ville":"GROBBENDONK","tel":"014-230 707","fax":"014-230 777","tva":"0459.031.615","franco":"1.500,00","pays":"B","emails":["info@agrifer.be","averwilt@soprema.be","esoetemans@soprema.be","sales@soprema.be","slempereur@soprema.be"]},{"code":"000239","nom":"STIENS FERRONNERIE","adresse":"PARC INDUSTRIEL(W-B) 29","cp":"1440","ville":"BRAINE-LE-CHÂTEAU","tel":"02 384 46 76","fax":"25","tva":"0465.197.548","franco":"0,00","pays":"B","emails":[]},{"code":"1956","nom":"SUPERPLASTIC","adresse":"QuaITimmermans 44","cp":"4000","ville":"LIEGE","tel":"04.252 98 70","fax":"04 2523064","tva":"0450.495.714","franco":"0,00","pays":"B","emails":["david.stassen@superplastic.be","vente@superplastic.be"]},{"code":"2023","nom":"T.S.LUX  SA","adresse":"Z.A.R.E. EST 12","cp":"4385","ville":"EHLERANGE","tel":"00352 314502","fax":"00352 311790","tva":"15856152","franco":"0,00","pays":"L","emails":[]},{"code":"000102","nom":"TARKETT BELUX sprl","adresse":"wingeoark 27c","cp":"3110","ville":"ROTSELAAR","tel":"052 26 24 99","fax":"016 571 281","tva":"0400.289.801","franco":"0,00","pays":"B","emails":[]},{"code":"2033","nom":"TECHNICHEM SA","adresse":"rue de fontenelle - P.I.FLEURU","cp":"6240","ville":"FARCIENNES","tel":"071.813234","fax":"071 810247","tva":"0427.233.233","franco":"0,00","pays":"B","emails":[]},{"code":"1368","nom":"THEUNIS (MAMAN)  SA","adresse":"chaussee de Hannut 7","cp":"1357","ville":"HELECINE","tel":"019.655 138","fax":"019 656 166","tva":"0413.481.306","franco":"0,00","pays":"B","emails":["carine@mamantheunis.be","order@mamantheunis.be"]},{"code":"000225","nom":"TOUPRET Benelux","adresse":"Dreef 7a","cp":"1740","ville":"TERNAT","tel":"02 223 39 02","fax":"25","tva":"0885.226.057","franco":"500,00","pays":"B","emails":["info@boisetfleurs.be"]},{"code":"2042","nom":"TVB TECHNIQUE ET VALORISATION","adresse":"Z.I.1 rue de l'Arbre 20","cp":"6600","ville":"BASTOGNE","tel":"061.213631","fax":"061 216839","tva":"0454.827.357","franco":"0,00","pays":"B","emails":[]},{"code":"2107","nom":"UNIDEK  NV","adresse":"Industriezone 39A","cp":"2250","ville":"OLEN","tel":"014.247010","fax":"014 247019","tva":"0402.031.148","franco":"0,00","pays":"B","emails":[]},{"code":"2102","nom":"UNILIN FLOORING","adresse":"Ooiegemstraat 3","cp":"8710","ville":"WIELSBEKE","tel":"056 675 213","fax":"056 675 212","tva":"0405.414.072","franco":"0,00","pays":"B","emails":["frederic.blanchart@unilin.com","service.belux@unilin.com","gery.bakutu@unilin.com"]},{"code":"1637","nom":"URSA - ETEX","adresse":"Pitantiestraat 127","cp":"8792","ville":"WAREGEM-DESSELGEM","tel":"056.73.85.14","fax":"056 70.33.74","tva":"0437.667.661","franco":"0,00","pays":"B","emails":[]},{"code":"1024","nom":"V33","adresse":"av des arts 8","cp":"1210","ville":"BRUXELLES","tel":"016 629 292","fax":"016 621 970","tva":"0402.003.236","franco":"0,00","pays":"B","emails":["marc.gallemaers@v33.com"]},{"code":"2201","nom":"VAN AVERMAET","adresse":"Industriezone E17/2","cp":"9160","ville":"LOKEREN","tel":"09 348 15 77","fax":"09 349 04 40","tva":"0415.155.743","franco":"0,00","pays":"B","emails":[]},{"code":"000091","nom":"VAN HOOREBEKE TIMBER","adresse":"kluisensesteenweg 1","cp":"9000","ville":"GENT","tel":"09 253 86 61","fax":"09 253 98 16","tva":"0400.114.805","franco":"0,00","pays":"B","emails":[]},{"code":"2210","nom":"VAN OPSTAL","adresse":"Boomsesteenweg 34","cp":"2630","ville":"AARTSELAAR","tel":"03.887.40.48","fax":"03 887.76.06","tva":"0404.996.081","franco":"0,00","pays":"B","emails":["carol.bastin@vanopstal.be"]},{"code":"000040","nom":"VAN VUGT","adresse":"bd de smet denaayer 585","cp":"1020","ville":"BRUXELLES 2","tel":"02 478 64 24","fax":"25","tva":"0421.307.523","franco":"250,00","pays":"B","emails":["david.timmermans@vanvugt.be","info@vanvugt.be"]},{"code":"1035","nom":"VANCA BELGIUM","adresse":"Drieslaan 25","cp":"9620","ville":"ZOTTEGEM","tel":"056.402655","fax":"056 403842","tva":"0442.917.143","franco":"500,00","pays":"B","emails":[]},{"code":"2231","nom":"VANDERSANDEN","adresse":"Riemsterweg 300","cp":"3740","ville":"BILZEN","tel":"089 510 140","fax":"089 492 845","tva":"0441.625.063","franco":"0,00","pays":"B","emails":["info@vandersanden.com","r.vanopdenbosch@vandersanden.com","d.avci@vandersanden.com"]},{"code":"2213","nom":"VASCO","adresse":"Kruishoefstraat 50","cp":"3650","ville":"DILSEN","tel":"011.75.61.93","fax":"011 75.61.62","tva":"0428.107.718","franco":"0,00","pays":"B","emails":["jil.salemi@vasco.eu"]},{"code":"2240","nom":"VASSART & CO","adresse":"Rrue de la Teinturerie 11","cp":"1190","ville":"BRUXELLES","tel":"02.332213","fax":"25","tva":"0579.634.782","franco":"0,00","pays":"B","emails":[]},{"code":"2236","nom":"VB BETON  VANBOCKRIJCK BETON","adresse":"Industrieweg 10","cp":"3840","ville":"BORGLOON","tel":"012-744886","fax":"012-745559","tva":"0430.637.537","franco":"0,00","pays":"B","emails":[]},{"code":"2235","nom":"VELLEMAN  SA","adresse":"Legen Heinweg 33","cp":"9890","ville":"GAVERE","tel":"09.384.36.11","fax":"09 384.67.02","tva":"0768.858.127","franco":"0,00","pays":"B","emails":["customercare@velleman.eu"]},{"code":"2216","nom":"VELUX BELGIUM sa","adresse":"Bd de l'Europe 121","cp":"1301","ville":"WAVRE","tel":"010.42.09.10-22","fax":"010 41.68.02","tva":"0412.621.370","franco":"0,00","pays":"B","emails":["velux-be@velux.com","info-be@velux.com","instal-be@velux.com"]},{"code":"2246","nom":"VERGO INOX NV","adresse":"Meetselstraat 78","cp":"3200","ville":"AARSCHOT","tel":"016.565 994","fax":"016 570449","tva":"0447.339.056","franco":"0,00","pays":"B","emails":["sabineverdonck@vergo-inox.com"]},{"code":"2219","nom":"VERMICULITE","adresse":"quaIde Rome 30","cp":"5300","ville":"ANDENNE","tel":"085.84.11.43","fax":"085 84.49.43","tva":"0402.433.105","franco":"0,00","pays":"B","emails":[]},{"code":"906","nom":"VM BUILDING SOLUTIONS","adresse":"EUROPALAAN 73","cp":"9800","ville":"DEINZE","tel":"09 321 99 21","fax":"25","tva":"0434.559.604","franco":"850,00","pays":"B","emails":["olivier.sermon@irs-btech.be"]},{"code":"2307","nom":"WAGENER EUPEN","adresse":"Route de Herbesthal 303","cp":"4700","ville":"EUPEN","tel":"087.321 113","fax":"087 881 461","tva":"0406.921.829","franco":"0,00","pays":"B","emails":[]},{"code":"000063","nom":"WALRAVEN","adresse":"ambachtenlaan 30","cp":"3300","ville":"TIENEN","tel":"016 808 867","fax":"016 820 186","tva":"0420.709.883","franco":"0,00","pays":"B","emails":["vincent.peeters@walraven.com","info@walraven.be"]},{"code":"0358","nom":"WARZEE Camille","adresse":"Chaussée d'ardennes 11","cp":"5363","ville":"EMPTINNE","tel":"25","fax":"25","tva":"0688.140.269","franco":"0,00","pays":"B","emails":[]},{"code":"0493","nom":"WATERFRONT BV","adresse":"Antwerpsesteenweg 211","cp":"2070","ville":"ZWIJNDRECHT","tel":"25","fax":"25","tva":"0890.616.386","franco":"0,00","pays":"B","emails":["finance@waterfrontbenelux.com"]},{"code":"2305","nom":"WATTIAUX","adresse":"Av de Bouillon 60a","cp":"6800","ville":"LIBRAMONT-CHEVIGNY","tel":"061 224 391","fax":"25","tva":"0428.712.284","franco":"0,00","pays":"B","emails":["christoph.vanooteghem@wattiaux.be","compta@wattiaux.be","muralis.pro@wattiaux.be"]},{"code":"212","nom":"WEBER BELGIUM sa","adresse":"Oostvaartdijk 10","cp":"1850","ville":"GRIMBERGEN","tel":"02.254 78 54","fax":"02 254.78 55","tva":"0400.865.465","franco":"0,00","pays":"B","emails":["info@weber-belgium.be","gregory.vannerum@weber-belgium.be","an.mertens@weber-belgium.be","cedric.bertinchamps@weber-belgium.be"]},{"code":"2306","nom":"Wenkin Emmanuel","adresse":"Rue Notre-Dame Orgeo Sn","cp":"6880","ville":"BERTRIX","tel":"25","fax":"25","tva":"0899.806.345","franco":"0,00","pays":"B","emails":[]},{"code":"2317","nom":"WIENERBERGER","adresse":"Kapel ter Bede 86","cp":"8500","ville":"KORTRIJK","tel":"056.249635","fax":"056 519275","tva":"0448.850.870","franco":"0,00","pays":"B","emails":["greet.vandijck@wienerberger.com"]},{"code":"2311","nom":"WILLE CHARLES ETS.","adresse":"av.Mozartlaan 46","cp":"7700","ville":"MOUSCRON","tel":"056 859 494","fax":"056 344 077","tva":"0401.267.620","franco":"0,00","pays":"B","emails":["catherine.camerlynck@wille.be"]},{"code":"000208","nom":"WILO","adresse":"Rusatiralaan 2","cp":"1083","ville":"GANSHOREN","tel":"25","fax":"25","tva":"0402.903.851","franco":"0,00","pays":"B","emails":["brian.vercruysse@bermabru.be","laurent.guenar@wilo.com","info@bermabru.be","steven.vanes@bermabru.be"]},{"code":"2401","nom":"XANLITE INTERNATIONNAL","adresse":"av.Louise 65 bte 11","cp":"1000","ville":"BRUXELLES","tel":"02/378 1642","fax":"02/331 0094","tva":"0831.050.171","franco":"499,00","pays":"B","emails":["adv@yantec.com","syvon@yantec.fr"]},{"code":"000042","nom":"XENEX","adresse":"Oudenaardsesteeweg 397","cp":"8581","ville":"Avelgem","tel":"055/232 350","fax":"055/232 351","tva":"0455.739.652","franco":"0,00","pays":"B","emails":["info@xenex.be","xavier.deleener@xenex.be"]},{"code":"2500","nom":"YTONG sa","adresse":"Kruibeeksesteenweg 24","cp":"2070","ville":"BURCHT","tel":"03.250 47 00","fax":"03 2504701","tva":"0429.922.905","franco":"0,00","pays":"B","emails":[]},{"code":"2603","nom":"ZEHNDER GROUP BELGIUM","adresse":"stephenson plaza","cp":"2800","ville":"MECHELEN","tel":"015 280 510-2","fax":"015 280 511","tva":"0832.645.624","franco":"250,00","pays":"B","emails":["cathy.gogaert@zehndergroup.com","stefanie.nortes@zehndergroup.com"]}];
+const CONTACT_OVERRIDE_KEY="outilsud_supplier_contact_overrides_v1";
+function readContactOverrides(){try{return JSON.parse(localStorage.getItem(CONTACT_OVERRIDE_KEY)||"{}")||{}}catch{return {}}}
+function saveContactOverride(id,data){const all=readContactOverrides();all[String(id)]={...data,updated_at:new Date().toISOString()};localStorage.setItem(CONTACT_OVERRIDE_KEY,JSON.stringify(all))}
+function contactNorm(v){return n(String(v||"")).replace(/[^a-z0-9]/g,"")}
+function vatNorm(v){return String(v||"").replace(/\D/g,"").replace(/^0+(?=\d)/,"")}
+function supplierContact(x){
+ if(!x)return null;
+ const ov=readContactOverrides()[String(x._d1_id)]||{};
+ const direct={code:x.code||"",nom:x.fournisseur_source||x.nom_actuel||"",adresse:x.adresse||"",cp:x.code_postal||x.cp||"",ville:x.ville||"",tel:x.telephone||x.tel||"",fax:x.fax||"",tva:x.tva||"",franco:x.franco||"",pays:x.pays||"",emails:Array.isArray(x.emails)?x.emails:[]};
+ const hasDirect=[direct.adresse,direct.cp,direct.ville,direct.tel,direct.fax,direct.franco,...direct.emails].some(Boolean);
+ let base=null;
+ const vt=vatNorm(x.tva);
+ if(vt)base=SUPPLIER_CONTACTS.find(c=>vatNorm(c.tva)===vt)||null;
+ if(!base){const names=[x.fournisseur_source,x.nom_actuel].filter(Boolean).map(contactNorm);base=SUPPLIER_CONTACTS.find(c=>names.includes(contactNorm(c.nom)))||null}
+ if(!base&&!hasDirect&&!Object.keys(ov).length)return null;
+ return {...(base||{}),...(hasDirect?direct:{}),...ov,emails:Array.isArray(ov.emails)?ov.emails:(hasDirect&&direct.emails.length?direct.emails:((base&&base.emails)||[]))};
+}
+function francoLabel(c){if(!c||c.franco==="")return "Franco non renseigné";let v=String(c.franco).trim();return "Franco : "+v+(v.includes("€")?"":" €")}
+function openContact(ix){
+ const x=DATA[ix],c=supplierContact(x),dlg=document.getElementById("contactDialog"),body=document.getElementById("contactBody");
+ document.getElementById("contactTitle").textContent="Contact — "+(x.fournisseur_source||x.nom_actuel||"Fournisseur");
+ document.getElementById("contactSubtitle").textContent=c?francoLabel(c):"Aucune coordonnée complémentaire trouvée dans le fichier fournisseurs.";
+ if(!c)body.innerHTML='<div class="contact-box">Aucune information de contact complémentaire disponible.</div>';
+ else{
+  const addr=[c.adresse,[c.cp,c.ville].filter(Boolean).join(" ")].filter(Boolean).join("<br>");
+  const mails=c.emails.length?c.emails.map(e=>`<a href="mailto:${esc(e)}">✉ ${esc(e)}</a>`).join(""):'<span>Aucune adresse e-mail renseignée</span>';
+  body.innerHTML=`<div class="contact-grid"><div class="contact-box"><b>Adresse</b>${addr||"Non renseignée"}</div><div class="contact-box"><b>Téléphone</b>${esc(c.tel||"Non renseigné")}${c.fax?`<br><small>Fax : ${esc(c.fax)}</small>`:""}</div><div class="contact-box"><b>N° TVA</b>${esc(c.tva||x.tva||"Non renseigné")}</div><div class="contact-box"><b>Franco</b>${esc(c.franco||"Non renseigné")}${c.franco&&!String(c.franco).includes("€")?" €":""}</div></div><div><b>Adresses e-mail</b><div class="contact-emails" style="margin-top:7px">${mails}</div></div>`;
+ }
+ document.getElementById("contactEditBtn").onclick=()=>{dlg.close();openSupplierEditor(ix)};
+ dlg.showModal();
+}
+
+const ARTICLES={};
+
+const n=s=>(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+
+const SEARCH_STOP=new Set(["a","au","aux","de","du","des","d","la","le","les","un","une","et","en","pour","sur","avec"]);
+function searchWords(v){
+ return n(v).replace(/[^a-z0-9]+/g," ").trim().split(/\s+/).filter(Boolean)
+   .filter(w=>!SEARCH_STOP.has(w) && w.length>=2)
+   .map(w=>{
+      // Tolérance simple singulier/pluriel : pompe/pompes, rouleau/rouleaux, etc.
+      if(w.length>4 && w.endsWith("s")) w=w.slice(0,-1);
+      return w;
+   });
+}
+function lev(a,b){
+ if(a===b)return 0;
+ if(!a.length)return b.length;if(!b.length)return a.length;
+ let prev=Array.from({length:b.length+1},(_,i)=>i),cur=new Array(b.length+1);
+ for(let i=1;i<=a.length;i++){
+   cur[0]=i;
+   let rowMin=cur[0];
+   for(let j=1;j<=b.length;j++){
+     cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+     if(cur[j]<rowMin)rowMin=cur[j];
+   }
+   [prev,cur]=[cur,prev];
+ }
+ return prev[b.length];
+}
+function wordClose(q,w){
+ if(q===w)return true;
+ // Les recherches partielles restent pratiques: "pom" trouve "pompe".
+ if(q.length>=3 && w.length>=3 && (w.startsWith(q)||q.startsWith(w)))return true;
+ // Faute de frappe légère : peau/eau, pompee/pompe, etc.
+ const max=Math.max(q.length,w.length);
+ const tol=max<=4?1:max<=8?1:2;
+ return Math.abs(q.length-w.length)<=tol && lev(q,w)<=tol;
+}
+function smartMatch(query,text){
+ const qs=searchWords(query);
+ if(!qs.length)return true;
+ const ws=searchWords(text);
+ if(!ws.length)return false;
+ return qs.every(q=>ws.some(w=>wordClose(q,w)));
+}
+const ARTICLE_SEARCH_COLS=[0,1,2,4,5,6,7,8,9];
+let PRODUCT_SEARCH_UNITS=DATA.map((x,ix)=>{
+ const units=[];
+ // Chaque catégorie est une unité indépendante.
+ for(const c of (x.categories||[])) if(c) units.push(c);
+
+ // Chaque ligne article est une unité indépendante.
+ // On regroupe les colonnes utiles d'un même article ensemble.
+ const ar=ARTICLES[String(ix)]||[];
+ for(const r of ar){
+   const u=ARTICLE_SEARCH_COLS.map(c=>r[c]||"").join(" ");
+   if(u.trim()) units.push(u);
+ }
+ return units;
+});
+
+let SERVER_PRODUCT_SUPPLIER_IDS=new Set();
+let SERVER_PRODUCT_RESULTS=[];
+let SERVER_PRODUCT_SEARCHING=false;
+let SERVER_PRODUCT_SEARCH_ERROR=false;
+let SERVER_PRODUCT_SEARCH_SEQ=0;
+let SERVER_PRODUCT_TIMER=null;
+
+function productMatch(query,ix){
+ const raw=String(query||"").trim();
+ if(!raw)return true;
+ const x=DATA[ix];
+ if(x && SERVER_PRODUCT_SUPPLIER_IDS.has(Number(x._d1_id)))return true;
+ // Les catégories restent recherchées localement, sans charger tous les articles.
+ return (x?.categories||[]).some(c=>smartMatch(raw,c));
+}
+
+
+function updateKpis(){
+ const inactive=DATA.filter(x=>x.statut_source==="Inactif confirmé / signalé");
+ document.getElementById("kTotal").textContent=DATA.length;
+ document.getElementById("kActive").textContent=DATA.filter(x=>x.statut_source==="Présence trouvée").length;
+ document.getElementById("kChanged").textContent=DATA.filter(x=>x.statut_source==="Changement confirmé").length;
+ document.getElementById("kInactive").textContent=inactive.length;
+ document.getElementById("kBankrupt").textContent=inactive.filter(x=>x.type_inactif==="Faillite").length;
+ document.getElementById("kLiquidation").textContent=inactive.filter(x=>x.type_inactif==="Liquidation").length;
+ document.getElementById("kRadiation").textContent=inactive.filter(x=>x.type_inactif==="Radiation").length;
+ document.getElementById("kFusion").textContent=inactive.filter(x=>x.type_inactif==="Fusion / absorption").length;
+ document.getElementById("kOtherInactive").textContent=inactive.filter(x=>x.type_inactif==="Autre inactif").length;
+ document.getElementById("kEmpty").textContent=DATA.filter(x=>!x.categories||x.categories.length===0).length;
+}
+function esc(s){return (s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;")}
+function cls(s){return s==="Présence trouvée"?"ok":s==="Inactif confirmé / signalé"?"bad":s==="Changement confirmé"?"warn":"neutral"}
+
+function syncFilterHighlights(){
+ document.querySelectorAll(".kpi").forEach(el=>el.classList.toggle("active-filter",el.dataset.status===sq.value && inactiveFilter.value===""));
+ document.querySelectorAll(".mini-filter").forEach(el=>el.classList.toggle("active-filter",el.dataset.inactive===inactiveFilter.value));
+}
+function statusLabel(x){
+ if(x.statut_source==="Présence trouvée") return "Actif";
+ if(x.statut_source==="Changement confirmé") return "Changement confirmé";
+ if(x.statut_source==="Inactif confirmé / signalé") return "Inactif";
+ return x.statut_source||"Statut non renseigné";
+}
+function serverArticleExactValues(a){
+ return [a?.numero_article,a?.num_fournisseur,a?.ean].map(v=>String(v||"").trim());
+}
+function serverArticleExactMatches(raw){
+ const q=String(raw||"").trim().toLowerCase();
+ if(!q)return [];
+ return SERVER_PRODUCT_RESULTS.filter(a=>serverArticleExactValues(a).some(v=>v.toLowerCase()===q));
+}
+function articleResultAllowed(a,fqv,sqv,iv,empty){
+ const ix=DATA.findIndex(x=>Number(x._d1_id)===Number(a.fournisseur_id));
+ if(ix<0)return false;
+ const x=DATA[ix];
+ return (!fqv||n(x.fournisseur_source+" "+x.nom_actuel).includes(fqv)) &&
+        (!sqv||x.statut_source===sqv) &&
+        (!iv||(x.statut_source==="Inactif confirmé / signalé"&&x.type_inactif===iv)) &&
+        (!empty||!x.categories||x.categories.length===0);
+}
+function renderServerArticleResults(fqv,sqv,iv,empty){
+ const raw=String(pq.value||"").trim();
+ const exact=serverArticleExactMatches(raw);
+ const source=exact.length?exact:SERVER_PRODUCT_RESULTS;
+ const rows=source.filter(a=>articleResultAllowed(a,fqv,sqv,iv,empty));
+ stats.textContent=rows.length+" article(s) trouvé(s)"+(SERVER_PRODUCT_SEARCHING?" — recherche Cloudflare en cours…":"");
+ if(SERVER_PRODUCT_SEARCH_ERROR)stats.textContent+=" — recherche articles impossible. Réessaie.";
+ cards.innerHTML=rows.length?rows.map((a,i)=>`<div class="product-result" role="button" tabindex="0" onclick="openServerArticleByData(${Number(a.fournisseur_id)},${JSON.stringify(String(a.numero_article||"")).replace(/</g,"\\u003c")},${JSON.stringify(String(a.num_fournisseur||"")).replace(/</g,"\\u003c")},${JSON.stringify(String(a.ean||"")).replace(/</g,"\\u003c")})" onkeydown="if(event.key==='Enter')this.click()">
+   <div class="product-result-top">
+    <div class="product-result-title">${esc(a.numero_article||"Sans n° article")} — ${esc(a.denomination||"Sans dénomination")}</div>
+    <div class="product-result-supplier">${esc(a.fournisseur||a.nom_fournisseur||"")}</div>
+   </div>
+   <div class="product-result-meta">
+    ${a.num_fournisseur?`<span><b>Réf. fournisseur :</b> ${esc(a.num_fournisseur)}</span>`:""}
+    ${a.ean?`<span><b>EAN :</b> ${esc(a.ean)}</span>`:""}
+    ${a.groupe_principal?`<span>${esc(a.groupe_principal)}</span>`:""}
+    ${a.sous_groupe?`<span>${esc(a.sous_groupe)}</span>`:""}
+    <span class="product-result-open">Ouvrir l’article →</span>
+   </div>
+  </div>`).join(""):`<div class="file-empty">${SERVER_PRODUCT_SEARCHING?"Recherche des articles…":"Aucun article trouvé."}</div>`;
+ syncFilterHighlights();
+}
+async function openServerArticleByData(fournisseurId,numeroArticle,numFournisseur,ean){
+ const ix=DATA.findIndex(x=>Number(x._d1_id)===Number(fournisseurId));
+ if(ix<0)return;
+ await openArticles(ix);
+ const exactKey=String(numeroArticle||numFournisseur||ean||"").trim();
+ articleSearch.value=exactKey;
+ renderArticles();
+}
+
+function render(){
+ const fqv=n(fq.value),pqv=n(pq.value),sqv=sq.value,iv=inactiveFilter.value,empty=emptyOnly.checked;
+ if(pqv && (SERVER_PRODUCT_RESULTS.length || SERVER_PRODUCT_SEARCHING || SERVER_PRODUCT_SEARCH_ERROR)){
+  renderServerArticleResults(fqv,sqv,iv,empty);
+  return;
+ }
+ let r=DATA.filter(x=>
+   (!fqv||n(x.fournisseur_source+" "+x.nom_actuel).includes(fqv)) &&
+   (!pqv||productMatch(pq.value,DATA.indexOf(x))) &&
+   (!sqv||x.statut_source===sqv) &&
+   (!iv||(x.statut_source==="Inactif confirmé / signalé" && x.type_inactif===iv)) &&
+   (!empty||!x.categories||x.categories.length===0)
+ );
+ stats.textContent=r.length+" fournisseur(s) affiché(s) sur "+DATA.length;
+ if(pq.value.trim()&&SERVER_PRODUCT_SEARCHING)stats.textContent+=" — recherche Cloudflare en cours…";
+ else if(pq.value.trim()&&SERVER_PRODUCT_SEARCH_ERROR)stats.textContent+=" — recherche articles impossible. Réessaie.";
+ cards.innerHTML=r.map(x=>{const ix=DATA.indexOf(x),ac=Number.isFinite(x._d1_nb_articles)?x._d1_nb_articles:(ARTICLES[String(ix)]||[]).length;return `<div class="card">
+ <div class="name">${esc(x.fournisseur_source)}</div>
+ ${x.nom_actuel!==x.fournisseur_source?`<div class="current"><b>Nom actuel :</b> ${esc(x.nom_actuel)}</div>`:""}
+ <div class="meta"><span class="badge ${cls(x.statut_source)} status-main">${esc(statusLabel(x))}</span>${x.type_inactif?`<span class="badge bad">${esc(x.type_inactif)}</span>`:""}</div>
+ <div class="identity">
+   <div><b>N° TVA / entreprise</b>${esc(x.tva||"Non renseigné")}</div>
+   <div><b>Pays</b>${esc(x.pays||"Non renseigné")}</div>
+   <div><b>Adresse</b>${esc(x.adresse||"Non renseignée")}</div>
+ </div>
+ <div class="contact-summary">${supplierContact(x)?`<span class="franco-pill">🚚 ${esc(francoLabel(supplierContact(x)))}</span>`:`<span class="franco-pill">🚚 Franco non renseigné</span>`}</div>
+ <div class="tags">${x.categories&&x.categories.length?x.categories.map(c=>`<span class="tag">${esc(c)}</span>`).join(""):`<span class="badge neutral">Aucune catégorie renseignée</span>`}</div>
+ ${x.note?`<div class="note">${esc(x.note)}</div>`:""}
+ ${safeSourceUrl(x.source)?`<div class="note"><a href="${esc(safeSourceUrl(x.source))}" target="_blank" rel="noopener">Source de contrôle</a></div>`:""}
+ <div class="supplier-actions"><button class="article-btn contact-btn" onclick="openContact(${ix})">Contact</button><button class="article-btn" onclick="openSupplierEditor(${ix})">Modifier</button><button class="article-btn" onclick="openArticles(${ix})">Articles (${ac})</button><button class="tariff-btn" onclick="openTariffs(${ix})">Documents</button></div>
+ </div>`}).join("");
+ syncFilterHighlights();
+}
+function resetAll(){
+ fq.value="";pq.value="";sq.value="";inactiveFilter.value="";emptyOnly.checked=false;render();
+}
+document.querySelectorAll(".kpi").forEach(el=>el.addEventListener("click",()=>{
+ sq.value=el.dataset.status||"";
+ inactiveFilter.value="";
+ emptyOnly.checked=false;
+ render();
+}));
+document.querySelectorAll(".mini-filter").forEach(el=>el.addEventListener("click",()=>{
+ sq.value="Inactif confirmé / signalé";
+ inactiveFilter.value=el.dataset.inactive;
+ emptyOnly.checked=false;
+ render();
+}));
+fq.addEventListener("input",render);
+pq.addEventListener("input",()=>{const clean=pq.value.replace(/#/g,"");if(clean!==pq.value)pq.value=clean;render()});
+sq.addEventListener("change",()=>{if(sq.value!=="Inactif confirmé / signalé")inactiveFilter.value="";render()});
+inactiveFilter.addEventListener("change",()=>{if(inactiveFilter.value)sq.value="Inactif confirmé / signalé";render()});
+emptyOnly.addEventListener("change",render);
+
+
+/* ===== Scanner code-barres mobile ===== */
+let barcodeScanner=null,barcodeStarting=false,barcodeDetected=false;
+
+const BARCODE_FORMATS=()=>{
+ if(typeof Html5QrcodeSupportedFormats==="undefined")return undefined;
+ return [
+  Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,
+  Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,
+  Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,
+  Html5QrcodeSupportedFormats.ITF
+ ];
+};
+
+function barcodeErrorMessage(err){
+ const name=String(err?.name||"");
+ const message=String(err?.message||err||"");
+ if(location.protocol!=="https:" && location.hostname!=="localhost")
+  return "La caméra nécessite une page HTTPS.";
+ if(name==="NotAllowedError" || /permission|denied|notallowed/i.test(message))
+  return "L’accès à la caméra est refusé. Vérifie l’autorisation caméra du navigateur pour ce site.";
+ if(name==="NotFoundError" || /not.?found|no camera|device.*found/i.test(message))
+  return "Aucune caméra utilisable n’a été détectée sur ce téléphone.";
+ if(name==="NotReadableError" || /not.?readable|could not start|trackstart|in use/i.test(message))
+  return "La caméra est déjà utilisée ou momentanément indisponible. Ferme les autres applications utilisant la caméra puis réessaie.";
+ if(name==="OverconstrainedError" || /constraint|overconstrained/i.test(message))
+  return "La caméra arrière n’a pas pu être sélectionnée. Réessaie : le site tentera une autre caméra.";
+ return "Impossible d’ouvrir la caméra ("+(name||"erreur caméra")+"). Ferme puis rouvre le scanner et réessaie.";
+}
+
+async function chooseBarcodeCamera(){
+ // getCameras() déclenche/valide l'accès puis fournit les vraies caméras du téléphone.
+ let cameras=[];
+ try{ cameras=await Html5Qrcode.getCameras(); }catch(e){ console.warn("Liste caméras:",e); }
+ if(!cameras || !cameras.length) return null;
+
+ // Privilégier explicitement une caméra arrière quand son libellé est disponible.
+ const rear=cameras.find(c=>/back|rear|environment|arrière|arriere|world/i.test(c.label||""));
+ return (rear||cameras[cameras.length-1]||cameras[0]).id;
+}
+
+async function openBarcodeScanner(){
+ const modal=document.getElementById("barcodeModal"),status=document.getElementById("barcodeStatus");
+ modal.classList.add("open");modal.setAttribute("aria-hidden","false");document.body.style.overflow="hidden";
+ status.textContent="Recherche de la caméra arrière…";barcodeDetected=false;
+
+ if(typeof Html5Qrcode==="undefined"){
+  status.textContent="Le module de scan n’a pas pu être chargé. Vérifie la connexion Internet puis recharge la page.";
+  return;
+ }
+ if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+  status.textContent="Ce navigateur ne permet pas l’accès à la caméra depuis cette page.";
+  return;
+ }
+ if(barcodeStarting)return;
+ barcodeStarting=true;
+
+ try{
+  // Nettoyer une éventuelle ancienne instance avant de redémarrer.
+  if(barcodeScanner){
+   try{if(barcodeScanner.isScanning)await barcodeScanner.stop()}catch(e){}
+   try{barcodeScanner.clear()}catch(e){}
+   barcodeScanner=null;
+  }
+  document.getElementById("barcodeReader").innerHTML="";
+
+  const cameraId=await chooseBarcodeCamera();
+  barcodeScanner=new Html5Qrcode("barcodeReader",{formatsToSupport:BARCODE_FORMATS(),verbose:false});
+
+  const config={
+   fps:10,
+   qrbox:(vw,vh)=>{
+    const w=Math.min(Math.floor(vw*.88),420);
+    const h=Math.min(Math.floor(vh*.38),150);
+    return {width:Math.max(180,w),height:Math.max(90,h)};
+   }
+  };
+
+  const onSuccess=async decodedText=>{
+   if(barcodeDetected)return;
+   barcodeDetected=true;
+   status.textContent="Code détecté : "+decodedText;
+   const code=String(decodedText||"").trim();
+   await closeBarcodeScanner();
+   if(code){
+    pq.value=code;
+    pq.dispatchEvent(new Event("input",{bubbles:true}));
+    pq.focus();
+   }
+  };
+
+  // Si getCameras() a trouvé une caméra, utiliser son deviceId.
+  // Sinon fallback sur facingMode exact puis ideal.
+  if(cameraId){
+   await barcodeScanner.start(cameraId,config,onSuccess,()=>{});
+  }else{
+   try{
+    await barcodeScanner.start({facingMode:"environment"},config,onSuccess,()=>{});
+   }catch(firstErr){
+    console.warn("Caméra arrière directe:",firstErr);
+    await barcodeScanner.start({facingMode:{ideal:"environment"}},config,onSuccess,()=>{});
+   }
+  }
+  status.textContent="Caméra ouverte. Place le code-barres dans le cadre.";
+ }catch(err){
+  console.error("Scanner code-barres:",err);
+  try{if(barcodeScanner)barcodeScanner.clear()}catch(e){}
+  barcodeScanner=null;
+  status.textContent=barcodeErrorMessage(err);
+ }finally{
+  barcodeStarting=false;
+ }
+}
+
+async function closeBarcodeScanner(){
+ const modal=document.getElementById("barcodeModal");
+ modal.classList.remove("open");modal.setAttribute("aria-hidden","true");document.body.style.overflow="";
+ const scanner=barcodeScanner;barcodeScanner=null;barcodeStarting=false;
+ if(scanner){
+  try{if(scanner.isScanning)await scanner.stop()}catch(e){console.warn(e)}
+  try{scanner.clear()}catch(e){}
+ }
+ const reader=document.getElementById("barcodeReader");
+ if(reader)reader.innerHTML="";
+}
+
+document.getElementById("barcodeModal").addEventListener("click",e=>{
+ if(e.target.id==="barcodeModal")closeBarcodeScanner();
+});
+document.addEventListener("keydown",e=>{
+ if(e.key==="Escape"&&document.getElementById("barcodeModal").classList.contains("open"))closeBarcodeScanner();
+});
+
+/* Export Excel XLSX autonome : aucune bibliothèque externe nécessaire. */
+function xXml(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;")}
+function xCol(n){let s="";for(n++;n;n=Math.floor((n-1)/26))s=String.fromCharCode(65+(n-1)%26)+s;return s}
+function xCrc(bytes){let c=0^(-1);for(let i=0;i<bytes.length;i++){c=(c>>>8)^XCRC[(c^bytes[i])&255]}return(c^(-1))>>>0}
+const XCRC=(()=>{let t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function xU16(n){return [n&255,(n>>>8)&255]}
+function xU32(n){return [n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255]}
+function xZip(files,mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"){
+ const enc=new TextEncoder(), parts=[], central=[]; let offset=0;
+ const push=a=>{parts.push(new Uint8Array(a));offset+=a.length};
+ Object.entries(files).forEach(([name,content])=>{
+   const nb=enc.encode(name),db=content instanceof Uint8Array?content:enc.encode(content),crc=xCrc(db),start=offset;
+   const local=[0x50,0x4b,0x03,0x04,20,0,0,0,0,0,0,0,0,0,...xU32(crc),...xU32(db.length),...xU32(db.length),...xU16(nb.length),0,0];
+   push(local);push(nb);push(db);
+   central.push({nb,crc,size:db.length,start});
+ });
+ const cdStart=offset;
+ central.forEach(f=>{
+   const h=[0x50,0x4b,0x01,0x02,20,0,20,0,0,0,0,0,0,0,0,0,...xU32(f.crc),...xU32(f.size),...xU32(f.size),...xU16(f.nb.length),0,0,0,0,0,0,0,0,0,0,0,0,...xU32(f.start)];
+   push(h);push(f.nb);
+ });
+ const cdSize=offset-cdStart;
+ push([0x50,0x4b,0x05,0x06,0,0,0,0,...xU16(central.length),...xU16(central.length),...xU32(cdSize),...xU32(cdStart),0,0]);
+ return new Blob(parts,{type:mime});
+}
+function xlsxBlob(headers,rows,sheetName="Données"){
+ const safeSheet=String(sheetName).replace(/[\\\/?*\[\]:]/g," ").slice(0,31)||"Données";
+ const all=[headers,...rows];
+ const widths=headers.map((_,j)=>Math.min(55,Math.max(10,...all.slice(0,Math.min(all.length,1500)).map(r=>String(r[j]??"").length+2))));
+ let sheet='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>'+widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join("")+'</cols><sheetData>';
+ all.forEach((r,ri)=>{
+   sheet+=`<row r="${ri+1}">`;
+   headers.forEach((_,ci)=>{
+     const v=r[ci]??"",ref=xCol(ci)+(ri+1),style=ri===0?' s="1"':'';
+     sheet+=`<c r="${ref}" t="inlineStr"${style}><is><t xml:space="preserve">${xXml(v)}</t></is></c>`;
+   });
+   sheet+='</row>';
+ });
+ const end=xCol(headers.length-1)+(all.length||1);
+ sheet+=`</sheetData><autoFilter ref="A1:${end}"/></worksheet>`;
+ const files={
+  "[Content_Types].xml":'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>',
+  "_rels/.rels":'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',
+  "xl/workbook.xml":`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${xXml(safeSheet)}" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+  "xl/_rels/workbook.xml.rels":'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
+  "xl/styles.xml":'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1F4E78"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment vertical="center"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>',
+  "xl/worksheets/sheet1.xml":sheet
+ };
+ return xZip(files);
+}
+function xlsxMultiBlob(sheets){
+ const used=new Set();
+ const cleanName=(name,idx)=>{let base=String(name||("Feuille "+(idx+1))).replace(/[\\\/?*\[\]:]/g," ").slice(0,31)||("Feuille "+(idx+1));let n=base,k=2;while(used.has(n)){const suf=" "+k++;n=base.slice(0,31-suf.length)+suf}used.add(n);return n};
+ const normalized=sheets.map((sh,idx)=>({name:cleanName(sh.name,idx),headers:sh.headers||[],rows:sh.rows||[]}));
+ const files={};
+ let overrides='';
+ let workbookSheets='';
+ let rels='';
+ normalized.forEach((sh,si)=>{
+   const headers=sh.headers,all=[headers,...sh.rows];
+   const widths=headers.map((_,j)=>Math.min(55,Math.max(10,...all.slice(0,Math.min(all.length,1500)).map(r=>String(r[j]??"").length+2))));
+   let sheet='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>'+widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join("")+'</cols><sheetData>';
+   all.forEach((r,ri)=>{sheet+=`<row r="${ri+1}">`;headers.forEach((_,ci)=>{const v=r[ci]??"",ref=xCol(ci)+(ri+1),style=ri===0?' s="1"':'';sheet+=`<c r="${ref}" t="inlineStr"${style}><is><t xml:space="preserve">${xXml(v)}</t></is></c>`});sheet+='</row>'});
+   const end=xCol(Math.max(0,headers.length-1))+(all.length||1);sheet+=`</sheetData><autoFilter ref="A1:${end}"/></worksheet>`;
+   files[`xl/worksheets/sheet${si+1}.xml`]=sheet;
+   overrides+=`<Override PartName="/xl/worksheets/sheet${si+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`;
+   workbookSheets+=`<sheet name="${xXml(sh.name)}" sheetId="${si+1}" r:id="rId${si+1}"/>`;
+   rels+=`<Relationship Id="rId${si+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${si+1}.xml"/>`;
+ });
+ const styleRid=normalized.length+1;
+ files["[Content_Types].xml"]='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+overrides+'<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>';
+ files["_rels/.rels"]='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
+ files["xl/workbook.xml"]='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+workbookSheets+'</sheets></workbook>';
+ files["xl/_rels/workbook.xml.rels"]='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+rels+`<Relationship Id="rId${styleRid}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+ files["xl/styles.xml"]='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1F4E78"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment vertical="center"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+ return xZip(files);
+}
+
+function downloadBlob(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+function safeFileName(s){return String(s||"export").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^\w.-]+/g,"_").replace(/^_+|_+$/g,"").slice(0,90)||"export"}
+function supplierStatusText(x){return statusLabel(x)}
+async function d1Get(path){
+ const res=await fetch(API_BASE+path);
+ const data=await res.json().catch(()=>({}));
+ if(!res.ok||!data.ok)throw new Error(data.erreur||("Erreur HTTP "+res.status));
+ return data;
+}
+
+function tariffObjectToRow(t){
+ return [
+  t.ref_fournisseur||"",
+  t.code_braconnier||"",
+  t.code_ean||"",
+  t.ref_fournisseur_2||"",
+  t.condition_achat||"",
+  t.description_fr||"",
+  t.poids_brut||"",
+  t.prix_achat_htva??"",
+  t.prix_vente_htva??"",
+  t.id_fournisseur_tarif||"",
+  t.ref_fournisseur_3||"",
+  t.description_nl||"",
+  t.code_remise_article||"",
+  t.principal??1,
+  t.prix_brut_achat??"",
+  t.remise_achat??""
+ ];
+}
+
+function articleObjectToRow(a){
+ return [
+  a.numero_article||"",
+  a.num_fournisseur||"",
+  a.nom_fournisseur||"",
+  a.denomination||"",
+  a.unite||"",
+  a.emballage||"",
+  a.groupe_principal||"",
+  a.sous_groupe||"",
+  a.ean||"",
+  Number(a.prix_achat_htva??0)||0,
+  Number(a.prix_vente_htva??0)||0,
+  Number(a.prix_vente_tvac??0)||0
+ ];
+}
+
+async function exportSuppliersExcel(){
+ try{
+  const data=await d1Get("/fournisseurs");
+  const suppliers=data.fournisseurs||[];
+  const emailFields=["email","email1","email2","email3","email4","email5","email6","email7"];
+  const h=["Code fournisseur","Fournisseur","Nom actuel","Statut","Type d'inactif","N° TVA / entreprise","Pays","Adresse","Code postal","Ville","Téléphone","Fax","Franco (€)","E-mail 1","E-mail 2","E-mail 3","E-mail 4","E-mail 5","E-mail 6","E-mail 7","E-mail 8","Nombre d'articles","Nombre de catégories","Nombre de lignes tarif","Source","Existence","Note"];
+  const rows=suppliers.map(f=>{
+   const x=supplierFromD1(f),c=supplierContact(x)||{},emails=Array.isArray(c.emails)?c.emails:[];
+   return [c.code||f.code||"",f.nom||"",f.nom_actuel||"",f.statut||"",f.type_inactif||"",f.tva||c.tva||"",f.pays||c.pays||"",c.adresse||f.adresse||"",c.cp||f.code_postal||"",c.ville||f.ville||"",c.tel||f.telephone||"",c.fax||f.fax||"",c.franco||f.franco||"",...Array.from({length:8},(_,i)=>emails[i]||f[emailFields[i]]||""),String(f.nb_articles??0),String(f.nb_categories??0),String(f.nb_tarifs??0),f.source||"",f.existence||"",f.note||""];
+  });
+  downloadBlob(xlsxBlob(h,rows,"Fournisseurs"),"Base_fournisseurs_complete_Outilsud.xlsx");
+ }catch(err){console.error(err);alert("Export fournisseurs impossible depuis Cloudflare D1 : "+err.message)}
+}
+
+async function exportCurrentArticlesExcel(){
+ if(currentArticleSupplier<0)return;
+ try{
+  const x=DATA[currentArticleSupplier],fid=Number(x._d1_id);
+  if(!Number.isInteger(fid)||fid<=0)throw new Error("Identifiant D1 du fournisseur introuvable");
+  const data=await d1Get("/articles?fournisseur_id="+encodeURIComponent(fid));
+  const h=["N° d'article","Num fournisseur","Nomfour","Dénomination","Unité","Emballage","Groupe principal","Sous-groupe","Code EAN","Prix d’achat HTVA","Prix de vente HTVA","Prix de vente TVAC"];
+  downloadBlob(xlsxBlob(h,(data.articles||[]).map(articleObjectToRow),"Articles"),"Articles_"+safeFileName(x.fournisseur_source)+".xlsx");
+ }catch(err){console.error(err);alert("Export articles impossible depuis Cloudflare D1 : "+err.message)}
+}
+
+async function exportArticlesZip(){
+ try{
+  const files={},toBytes=async blob=>new Uint8Array(await blob.arrayBuffer());
+  const suppliers=(await d1Get("/fournisseurs")).fournisseurs||[];
+  const h=["N° d'article","Num fournisseur","Nomfour","Dénomination","Unité","Emballage","Groupe principal","Sous-groupe","Code EAN","Prix d’achat HTVA","Prix de vente HTVA","Prix de vente TVAC"];
+  for(const f of suppliers){
+   if(Number(f.nb_articles||0)<=0)continue;
+   const rows=((await d1Get("/articles?fournisseur_id="+encodeURIComponent(f.id))).articles||[]).map(articleObjectToRow);
+   if(rows.length)files[`Articles_${safeFileName(f.nom||("Fournisseur_"+f.id))}.xlsx`]=await toBytes(xlsxBlob(h,rows,"Articles"));
+  }
+  if(!Object.keys(files).length){alert("Aucun article à exporter.");return}
+  downloadBlob(xZip(files,"application/zip"),"Base_articles_Outilsud.zip");
+ }catch(err){console.error(err);alert("Export de la base articles impossible depuis Cloudflare D1 : "+err.message)}
+}
+
+const TARIF_TECH_HEADERS=["S_CLE3","S_CLE1","S_CLE2","S_CLE3","S_CONDIT_A","S_MODELE","S_POIDSBRU","S_DPA","S_PRIX_HT","ID_FOU","REF_FOU","S_MODELEN","S_CAT1","PRINCIPAL","PRIX","REMISE"];
+const TARIF_LABELS=["Ref fournisseur","Code braconnier","Code EAN","Ref fournisseur","Condit, Achat","Description FR","Poids brut","Prix d'achat HTVA","Prix de vente HTVA","ID Fournisseur","Ref fournisseur","Description Neerlandais","Code remise article","TOUJOURS 1 (permet de cocher la case qui dit que c'est le fournisseur principal)","PRIX BRUT d'achat","REMISE achat"];
+const LS_TARIFF_PREFIX="braconnier_tarif_v1_",LS_SUPPLIERS="braconnier_supplier_overrides_v1",LS_ARTICLES_PREFIX="braconnier_articles_v1_";
+let currentTariffSupplier=-1,currentTariffRows=[],tariffSortCol=-1,tariffSortAsc=true;
+function supplierKey(ix){const x=DATA[ix];return String(x.tva||x.fournisseur_source||ix).trim().toLowerCase()}
+function readStoredJson(key,fallback){try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback}catch(e){return fallback}}
+function writeStoredJson(key,v){localStorage.setItem(key,JSON.stringify(v))}
+function tariffStorageKey(ix){return LS_TARIFF_PREFIX+supplierKey(ix)}
+function articleStorageKey(ix){return LS_ARTICLES_PREFIX+supplierKey(ix)}
+function tariffCount(ix){return readStoredJson(tariffStorageKey(ix),[]).length}
+
+function ensureXlsx(){if(typeof XLSX==="undefined"){alert("Le module Excel n'a pas pu être chargé. Vérifie la connexion Internet puis recharge la page.");return false}return true}
+function readExcelFile(file,cb){if(!ensureXlsx())return;const fr=new FileReader();fr.onload=e=>{try{const wb=XLSX.read(e.target.result,{type:"array",cellText:true,cellDates:false});const ws=wb.Sheets[wb.SheetNames[0]];const a=XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:false});cb(a)}catch(err){console.error(err);alert("Impossible de lire ce fichier Excel.")}};fr.readAsArrayBuffer(file)}
+function cleanRows(rows,width){return rows.map(r=>Array.from({length:width},(_,i)=>r[i]??"")).filter(r=>r.some(v=>String(v).trim()!==""))}
+function normHeader(s){return n(String(s||"")).replace(/[^a-z0-9]+/g,"")}
+function parsePriceValue(v){
+ const raw=String(v??"").trim().replace(/\s/g,"").replace(/€/g,"");
+ if(!raw)return 0;
+ let normalized=raw;
+ if(raw.includes(",")&&raw.includes(".")){normalized=raw.lastIndexOf(",")>raw.lastIndexOf(".")?raw.replace(/\./g,"").replace(",","."):raw.replace(/,/g,"");}
+ else if(raw.includes(",")){normalized=raw.replace(",",".");}
+ const x=Number(normalized);return Number.isFinite(x)?x:0;
+}
+
+
+supplierImportInput.addEventListener("change",e=>{
+ const file=e.target.files[0];
+ if(!file)return;
+
+ readExcelFile(file,async a=>{
+  try{
+   if(a.length<2)throw new Error("Le fichier ne contient aucune donnée.");
+   const h=a[0].map(normHeader);
+   const idx=name=>h.indexOf(normHeader(name));
+   const isMercator=idx("F_ID")>=0&&idx("F_NOM")>=0;
+   if(!isMercator)throw new Error("Ce fichier ne ressemble pas à l'export fournisseurs Mercator Outilsud (F_ID / F_NOM introuvables).");
+
+   const c={id:idx("F_ID"),nom:idx("F_NOM"),contact:idx("F_CONTACT"),adresse:idx("F_ADRESSE"),adresse2:idx("F_ADRESSE2"),cp:idx("F_CODEP"),ville:idx("F_VILLE"),iso:idx("F_ISOPAYS"),pays:idx("F_PAYS"),tel:idx("F_NUM_TEL"),gsm:idx("F_NUM_GSM"),email:idx("F_EMAIL"),tva:idx("F_NUM_TVA")};
+   const fournisseurs=a.slice(1).filter(r=>String(r[c.nom]||"").trim()).map(r=>{
+    const fid=String(r[c.id]??"").trim(),nom=String(r[c.nom]??"").trim();
+    const adr=[c.adresse>=0?r[c.adresse]:"",c.adresse2>=0?r[c.adresse2]:""].map(v=>String(v||"").trim()).filter(Boolean).join(" — ");
+    const tel=[c.tel>=0?r[c.tel]:"",c.gsm>=0?r[c.gsm]:""].map(v=>String(v||"").trim()).filter(Boolean).join(" / ");
+    const emails=c.email>=0?String(r[c.email]||"").split(/[;,\s]+/).map(v=>v.trim()).filter(v=>v.includes("@")):[];
+    const contact=c.contact>=0?String(r[c.contact]||"").trim():"";
+    return {mercator_f_id:fid,contact,nom,nom_actuel:nom,tva:c.tva>=0?String(r[c.tva]||"").trim():"",pays:(c.iso>=0?String(r[c.iso]||"").trim():"")||(c.pays>=0?String(r[c.pays]||"").trim():""),adresse:adr,code_postal:c.cp>=0?String(r[c.cp]||"").trim():"",ville:c.ville>=0?String(r[c.ville]||"").trim():"",telephone:tel,email:emails[0]||"",email1:emails[1]||"",email2:emails[2]||"",email3:emails[3]||"",email4:emails[4]||"",email5:emails[5]||"",email6:emails[6]||"",email7:emails[7]||"",note:[fid?"MERCATOR_F_ID="+fid:"",contact?"Contact Mercator: "+contact:""].filter(Boolean).join(" | "),statut:"Actif",statut_source:"Présence trouvée",categories:[]};
+   });
+   if(!fournisseurs.length)throw new Error("Aucun fournisseur Mercator à importer.");
+   if(!confirm("Import Mercator Outilsud\n\n"+fournisseurs.length+" fournisseur(s) seront synchronisés dans outilsud-db.\nLe F_ID Mercator sera conservé pour relier automatiquement les articles.\n\nContinuer ?"))return;
+   const password=prompt("Mot de passe administrateur pour importer les fournisseurs Mercator dans Outilsud :");
+   if(password===null)return;if(!password)throw new Error("Mot de passe administrateur requis.");
+   let recus=0,ajoutes=0,modifies=0,inchanges=0,ignores=0;const batchSize=50;
+   for(let start=0;start<fournisseurs.length;start+=batchSize){
+    const lot=fournisseurs.slice(start,start+batchSize);
+    const response=await fetch(API_BASE+"/admin/outilsud/fournisseurs/import",{method:"POST",headers:{"Content-Type":"application/json","X-Admin-Password":password},body:JSON.stringify({fournisseurs:lot})});
+    const result=await response.json().catch(()=>({}));if(!response.ok||!result.ok)throw new Error(result.erreur||("Erreur HTTP "+response.status));
+    recus+=Number(result.recus||0);ajoutes+=Number(result.ajoutes||0);modifies+=Number(result.modifies||0);inchanges+=Number(result.inchanges||0);ignores+=Number(result.ignores||0);
+   }
+   await loadD1Data();
+   alert("Import Mercator terminé.\n\n"+recus+" ligne(s) traitée(s)\n"+inchanges+" inchangée(s)\n"+modifies+" modifiée(s)\n"+ajoutes+" ajoutée(s)\n"+ignores+" ignorée(s)");
+  }catch(err){console.error(err);alert("Import impossible : "+err.message);}
+  finally{supplierImportInput.value="";}
+ });
+});
+
+function supplierIdentity(v){
+ return n(String(v||"")).replace(/[^a-z0-9]+/g,"");
+}
+
+// Normalisation renforcée des noms fournisseurs pour les mises à jour globales.
+// Elle tolère notamment SA/NV/BV/SRL/BVBA, ponctuation, accents et quelques variantes usuelles.
+function supplierWords(v){
+ const aliases={licht:"light",belgie:"belgium",belgië:"belgium"};
+ const legal=new Set(["sa","nv","bv","bvba","sprl","srl","sc","scrl","snc","sas","sasu","gmbh","ag","ltd","limited","inc","spa","srls"]);
+ const generic=new Set(["ets","etablissement","etablissements","company","compagnie","group","groupe"]);
+ return n(String(v||""))
+  .replace(/&/g," et ")
+  .replace(/[^a-z0-9]+/g," ")
+  .trim().split(/\s+/).filter(Boolean)
+  .map(w=>aliases[w]||w)
+  .filter(w=>!legal.has(w)&&!generic.has(w));
+}
+function supplierCanonical(v){ return supplierWords(v).join(""); }
+function supplierDistinctiveWords(v){
+ const weak=new Set(["belgium","belgique","belgie","benelux","europe","international","distribution","industrie","industries","trading","service","services"]);
+ return supplierWords(v).filter(w=>!weak.has(w)&&w.length>=3);
+}
+function buildSmartSupplierMatcher(data){
+ const exact=new Map(), candidates=[];
+ for(const x of data){
+  const id=Number(x._d1_id);
+  if(!Number.isInteger(id)||id<=0)continue;
+  const labels=[x.fournisseur_source,x.nom_actuel].filter(Boolean);
+  const item={id,name:x.fournisseur_source||x.nom_actuel||("Fournisseur "+id),labels};
+  candidates.push(item);
+  for(const label of labels){
+   for(const key of [supplierIdentity(label),supplierCanonical(label)]){
+    if(key&&!exact.has(key))exact.set(key,item);
+   }
+  }
+ }
+ return function(value){
+  const raw=String(value||"").trim();
+  if(!raw)return null;
+  const direct=exact.get(supplierIdentity(raw))||exact.get(supplierCanonical(raw));
+  if(direct)return direct;
+
+  const src=supplierDistinctiveWords(raw);
+  if(!src.length)return null;
+  const srcSet=new Set(src);
+  const scored=[];
+  for(const item of candidates){
+   let best=0;
+   for(const label of item.labels){
+    const dst=supplierDistinctiveWords(label);
+    if(!dst.length)continue;
+    const common=dst.filter(w=>srcSet.has(w));
+    const dstInSrc=common.length===dst.length;
+    const srcInDst=common.length===src.length;
+    const strong=common.some(w=>w.length>=5);
+    if((dstInSrc||srcInDst)&&strong){
+     best=Math.max(best,0.96-(Math.abs(src.length-dst.length)*0.01));
+     continue;
+    }
+    const union=new Set([...src,...dst]).size;
+    const j=union?common.length/union:0;
+    if(strong&&common.length>=1)best=Math.max(best,j);
+   }
+   if(best>0)scored.push({item,score:best});
+  }
+  scored.sort((a,b)=>b.score-a.score);
+  if(!scored.length)return null;
+  const first=scored[0], second=scored[1];
+  // Match automatique uniquement s'il est suffisamment fort et non ambigu.
+  if(first.score>=0.80&&(!second||first.score-second.score>=0.08))return first.item;
+  return null;
+ };
+}
+
+
+function editDistance(a,b){
+ a=supplierCanonical(a); b=supplierCanonical(b);
+ if(!a)return b.length;if(!b)return a.length;
+ const prev=Array.from({length:b.length+1},(_,i)=>i),cur=new Array(b.length+1);
+ for(let i=1;i<=a.length;i++){cur[0]=i;for(let j=1;j<=b.length;j++)cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));for(let j=0;j<=b.length;j++)prev[j]=cur[j];}
+ return prev[b.length];
+}
+function supplierSuggestionScore(source,label){
+ const a=supplierDistinctiveWords(source),b=supplierDistinctiveWords(label);
+ const sa=new Set(a),sb=new Set(b),common=a.filter(w=>sb.has(w));
+ const union=new Set([...a,...b]).size||1;
+ let score=common.length/union;
+ const ca=supplierCanonical(source),cb=supplierCanonical(label);
+ if(ca&&cb){
+  if(ca.includes(cb)||cb.includes(ca))score=Math.max(score,.86);
+  const d=editDistance(source,label),mx=Math.max(ca.length,cb.length)||1;
+  score=Math.max(score,1-d/mx);
+ }
+ return score;
+}
+function getSupplierSuggestions(source,limit=5){
+ const out=[];
+ for(const x of DATA){
+  const id=Number(x._d1_id); if(!Number.isInteger(id)||id<=0)continue;
+  const labels=[x.fournisseur_source,x.nom_actuel].filter(Boolean);
+  let best=0;for(const label of labels)best=Math.max(best,supplierSuggestionScore(source,label));
+  out.push({id,name:x.fournisseur_source||x.nom_actuel||("Fournisseur "+id),score:best});
+ }
+ out.sort((a,b)=>b.score-a.score);
+ return out.slice(0,limit);
+}
+const LS_SUPPLIER_ALIASES="braconnier_supplier_aliases_v1";
+function loadSupplierAliases(){return readStoredJson(LS_SUPPLIER_ALIASES,{})||{}}
+function saveSupplierAliases(v){writeStoredJson(LS_SUPPLIER_ALIASES,v)}
+function supplierAliasKey(v){return supplierIdentity(v)||supplierCanonical(v)}
+function supplierById(id){return DATA.find(x=>Number(x._d1_id)===Number(id))||null}
+function supplierDisplayName(x){return x?(x.fournisseur_source||x.nom_actuel||("Fournisseur "+x._d1_id)):""}
+
+function chooseUnknownSupplierMappings(unknown){
+ return new Promise(resolve=>{
+  const dlg=document.getElementById("supplierMatchDialog"),list=document.getElementById("supplierMatchList"),info=document.getElementById("supplierMatchInfo");
+  const entries=[...unknown.entries()].sort((a,b)=>b[1]-a[1]);
+  info.textContent=entries.reduce((s,x)=>s+x[1],0)+" article(s) / "+entries.length+" nom(s) à contrôler. Recherche possible dans toute la base fournisseurs Cloudflare.";
+  list.innerHTML="";
+
+  const dl=document.createElement("datalist");dl.id="allCloudflareSuppliers";
+  const all=DATA.filter(x=>Number(x._d1_id)>0).map(x=>({id:Number(x._d1_id),name:supplierDisplayName(x)})).sort((a,b)=>a.name.localeCompare(b.name,"fr"));
+  all.forEach(x=>{const o=document.createElement("option");o.value=x.name;o.dataset.id=String(x.id);dl.append(o)});
+  list.append(dl);
+  const aliases=loadSupplierAliases();
+
+  entries.forEach(([name,count])=>{
+   const row=document.createElement("div");row.className="match-row";
+   const lab=document.createElement("div");lab.textContent=name||"(sans fournisseur)";
+   const cnt=document.createElement("div");cnt.className="match-count";cnt.textContent=count+" art.";
+   const input=document.createElement("input");input.dataset.source=name;input.setAttribute("list","allCloudflareSuppliers");input.placeholder=name?"Rechercher un fournisseur Cloudflare…":"Sans fournisseur — laisser vide";
+   if(name){
+    const savedId=aliases[supplierAliasKey(name)];
+    const saved=supplierById(savedId);
+    if(saved){input.value=supplierDisplayName(saved);input.dataset.selectedId=String(savedId)}
+    else{
+     const suggestions=getSupplierSuggestions(name,1);
+     if(suggestions[0]&&suggestions[0].score>=.72){input.value=suggestions[0].name;input.dataset.selectedId=String(suggestions[0].id)}
+    }
+   }
+   const createLab=document.createElement("label");createLab.className="match-create";
+   const createBox=document.createElement("input");createBox.type="checkbox";createBox.dataset.createSource=name;createBox.disabled=!name;
+   createBox.addEventListener("change",()=>{if(createBox.checked){input.value="";input.dataset.selectedId="";}});
+   createLab.append(createBox,document.createTextNode("Créer"));
+   input.addEventListener("input",()=>{
+    const val=input.value.trim();const hit=all.find(x=>x.name.toLowerCase()===val.toLowerCase());
+    input.dataset.selectedId=hit?String(hit.id):"";if(val)createBox.checked=false;
+   });
+   row.append(lab,cnt,input,createLab);list.append(row);
+  });
+
+  const cleanup=()=>{document.getElementById("supplierMatchApply").onclick=null;document.getElementById("supplierMatchCancel").onclick=null;};
+  document.getElementById("supplierMatchCancel").onclick=()=>{cleanup();dlg.close();resolve(null)};
+  document.getElementById("supplierMatchApply").onclick=()=>{
+   const map=new Map(),createNames=new Set(),updatedAliases=loadSupplierAliases();let invalid=[];
+   list.querySelectorAll("input[data-create-source]").forEach(box=>{if(box.checked&&box.dataset.createSource)createNames.add(box.dataset.createSource)});
+   list.querySelectorAll("input[data-source]").forEach(input=>{
+    const source=input.dataset.source,val=input.value.trim();if(createNames.has(source)||!val)return;
+    let id=Number(input.dataset.selectedId||0);
+    if(!id){const hit=all.find(x=>x.name.toLowerCase()===val.toLowerCase());if(hit)id=hit.id}
+    if(!id){invalid.push(source+" → "+val);return}
+    map.set(source,id);if(source)updatedAliases[supplierAliasKey(source)]=id;
+   });
+   if(invalid.length){alert("Certaines valeurs ne correspondent pas exactement à un fournisseur Cloudflare. Choisis un nom dans la liste proposée :\n\n"+invalid.slice(0,8).join("\n"));return}
+   saveSupplierAliases(updatedAliases);cleanup();dlg.close();resolve({map,createNames});
+  };
+  dlg.showModal();
+ });
+}
+
+
+async function importArticleBatchWithRetry(fournisseurId,articles,password,supplierName,onRetry){
+ const maxAttempts=5;
+ for(let attempt=1;attempt<=maxAttempts;attempt++){
+  try{
+   const response=await fetch(API_BASE+"/admin/articles/import",{
+    method:"POST",
+    headers:{
+     "Content-Type":"application/json",
+     "X-Admin-Password":password
+    },
+    body:JSON.stringify({fournisseur_id:Number(fournisseurId),articles})
+   });
+
+   const result=await response.json().catch(()=>({}));
+   if(response.ok&&result.ok)return result;
+
+   const message=result.erreur||("Erreur HTTP "+response.status);
+   const retryable=response.status===408||response.status===429||response.status>=500||
+    /network|connection|lost|timeout|temporar|d1_error/i.test(message);
+
+   if(!retryable||attempt===maxAttempts)throw new Error(supplierName+" : "+message);
+  }catch(err){
+   const message=String(err&&err.message||err);
+   const retryable=/network|fetch|connection|lost|timeout|temporar|d1_error|http 5\d\d|http 429|http 408/i.test(message);
+   if(!retryable||attempt===maxAttempts){
+    if(message.startsWith(supplierName+" :"))throw err;
+    throw new Error(supplierName+" : "+message);
+   }
+  }
+
+  const delay=Math.min(15000,1500*Math.pow(2,attempt-1));
+  if(typeof onRetry==="function")onRetry(attempt,maxAttempts,delay);
+  await new Promise(resolve=>setTimeout(resolve,delay));
+ }
+ throw new Error(supplierName+" : échec de l'import après plusieurs tentatives.");
+}
+
+async function importOutilsudArticleBatchWithRetry(articles,password,onRetry){
+ const maxAttempts=5;
+ for(let attempt=1;attempt<=maxAttempts;attempt++){
+  try{
+   const response=await fetch(API_BASE+"/admin/outilsud/articles/import",{
+    method:"POST",
+    headers:{
+     "Content-Type":"application/json",
+     "X-Admin-Password":password
+    },
+    body:JSON.stringify({articles})
+   });
+
+   const result=await response.json().catch(()=>({}));
+   if(response.ok&&result.ok)return result;
+
+   const message=result.erreur||("Erreur HTTP "+response.status);
+   const retryable=response.status===408||response.status===429||response.status>=500||
+    /network|connection|lost|timeout|temporar|d1_error/i.test(message);
+
+   if(!retryable||attempt===maxAttempts)throw new Error(message);
+  }catch(err){
+   const message=String(err&&err.message||err);
+   const retryable=/network|fetch|connection|lost|timeout|temporar|d1_error|http 5\d\d|http 429|http 408/i.test(message);
+   if(!retryable||attempt===maxAttempts)throw err;
+  }
+
+  const delay=Math.min(15000,1500*Math.pow(2,attempt-1));
+  if(typeof onRetry==="function")onRetry(attempt,maxAttempts,delay);
+  await new Promise(resolve=>setTimeout(resolve,delay));
+ }
+ throw new Error("Échec de l'import après plusieurs tentatives.");
+}
+
+globalArticleImportInput.addEventListener("change",e=>{
+ const file=e.target.files[0];
+ if(!file)return;
+
+ readExcelFile(file,async a=>{
+  const oldText=globalArticleImportBtn.textContent;
+  try{
+   if(a.length<2)throw new Error("Le fichier ne contient aucun article.");
+
+   const h=a[0].map(normHeader);
+   const find=(...names)=>{
+    for(const z of names){
+     const i=h.indexOf(normHeader(z));
+     if(i>=0)return i;
+    }
+    return -1;
+   };
+
+   const c={
+    sid:find("S_ID"),
+    fid:find("ID_FOU"),
+    ref:find("REF_FOU"),
+    designation:find("S_MODELE"),
+    ean:find("S_CLE2"),
+    dpa:find("S_DPA"),
+    ht:find("S_PRIX_HT"),
+    prix:find("PRIX"),
+    remise:find("REMISE"),
+    principal:find("PRINCIPAL"),
+    dispo:find("DISPO"),
+    stockmin:find("STOCKMIN","S_STOCKMIN"),
+    stockmax:find("STOCKMAX","S_STOCKMAX")
+   };
+
+   if(c.sid<0||c.fid<0||c.ht<0){
+    throw new Error("Export Mercator Outilsud invalide : S_ID, ID_FOU ou S_PRIX_HT introuvable.");
+   }
+
+   const articles=a.slice(1).map(r=>({
+    mercator_s_id:String(r[c.sid]??"").trim(),
+    mercator_id_fou:String(r[c.fid]??"").trim(),
+    num_fournisseur:c.ref>=0?String(r[c.ref]??"").trim():"",
+    denomination:c.designation>=0?String(r[c.designation]??"").trim():"",
+    ean:c.ean>=0?String(r[c.ean]??"").trim():"",
+    prix_achat_htva:c.dpa>=0?parsePriceValue(r[c.dpa]):0,
+    prix_vente_htva:parsePriceValue(r[c.ht]),
+    prix_brut_achat:c.prix>=0?parsePriceValue(r[c.prix]):0,
+    remise_achat:c.remise>=0?parsePriceValue(r[c.remise]):0,
+    principal:c.principal>=0?Number(parsePriceValue(r[c.principal])||0):0,
+    dispo:c.dispo>=0?parsePriceValue(r[c.dispo]):0,
+    stockmin:c.stockmin>=0?parsePriceValue(r[c.stockmin]):0,
+    stockmax:c.stockmax>=0?parsePriceValue(r[c.stockmax]):0
+   })).filter(x=>x.mercator_s_id&&x.mercator_id_fou);
+
+   if(!articles.length)throw new Error("Aucun article Mercator exploitable.");
+
+   if(!confirm(
+    "Import Mercator Outilsud\n\n"+
+    articles.length+" article(s) seront synchronisés dans outilsud-db.\n"+
+    "S_ID est l'identifiant stable et ID_FOU est relié au F_ID fournisseur.\n"+
+    "Le prix TVAC sera calculé automatiquement à 21 %.\n\n"+
+    "L'import utilise la même mécanique par lots et reprises que Braconnier.\n\nContinuer ?"
+   ))return;
+
+   const password=prompt("Mot de passe administrateur pour importer les articles Mercator dans Outilsud :");
+   if(password===null)return;
+   if(!password)throw new Error("Mot de passe administrateur requis.");
+
+   globalArticleImportBtn.disabled=true;
+
+   let recus=0,ajoutes=0,modifies=0,inchanges=0,ignores=0;
+   let done=0;
+   const total=articles.length;
+   const batchSize=50;
+   const failedBatches=[];
+
+   const addImportResult=result=>{
+    recus+=Number(result.recus||0);
+    ajoutes+=Number(result.ajoutes||0);
+    modifies+=Number(result.modifies||0);
+    inchanges+=Number(result.inchanges||0);
+    ignores+=Number(result.ignores||0);
+   };
+
+   // Même logique que Braconnier :
+   // premier passage complet sans bloquer tout l'import si un lot tombe.
+   for(let pos=0;pos<articles.length;pos+=batchSize){
+    const lot=articles.slice(pos,pos+batchSize);
+    globalArticleImportBtn.textContent=
+     "Import Mercator… "+Math.min(done+lot.length,total)+" / "+total;
+
+    try{
+     const result=await importOutilsudArticleBatchWithRetry(
+      lot,
+      password,
+      (attempt,maxAttempts,delay)=>{
+       globalArticleImportBtn.textContent=
+        "Connexion interrompue — nouvelle tentative "+attempt+"/"+maxAttempts+
+        " dans "+Math.round(delay/1000)+" s… "+done+" / "+total;
+      }
+     );
+     addImportResult(result);
+    }catch(err){
+     console.warn("Lot Mercator reporté :",pos,err);
+     failedBatches.push({
+      articles:lot,
+      start:pos,
+      error:String(err&&err.message||err)
+     });
+    }
+
+    done+=lot.length;
+   }
+
+   // Deuxième passage : uniquement les lots qui ont échoué.
+   const finalFailures=[];
+   if(failedBatches.length){
+    for(let i=0;i<failedBatches.length;i++){
+     const failed=failedBatches[i];
+     globalArticleImportBtn.textContent=
+      "Nouvelle tentative des échecs… "+(i+1)+" / "+failedBatches.length;
+
+     try{
+      const result=await importOutilsudArticleBatchWithRetry(
+       failed.articles,
+       password,
+       (attempt,maxAttempts,delay)=>{
+        globalArticleImportBtn.textContent=
+         "Nouvelle tentative "+attempt+"/"+maxAttempts+
+         " dans "+Math.round(delay/1000)+" s…";
+       }
+      );
+      addImportResult(result);
+     }catch(err){
+      console.error("Lot Mercator définitivement en échec :",failed.start,err);
+      finalFailures.push({...failed,error:String(err&&err.message||err)});
+     }
+    }
+   }
+
+   // Comme Braconnier : l'échec d'actualisation après import ne transforme
+   // pas un import réussi en "Import impossible".
+   let refreshWarning="";
+   try{
+    await loadD1Data();
+   }catch(refreshErr){
+    console.warn("Actualisation après import impossible :",refreshErr);
+    refreshWarning="\n\nLes données ont été importées, mais l'affichage n'a pas pu être actualisé automatiquement. Recharge la page.";
+   }
+
+   let finalMessage=
+    (finalFailures.length?"Import Mercator terminé avec quelques échecs.":"Import articles Mercator terminé.")+"\n\n"+
+    recus+" ligne(s) traitée(s)\n"+
+    ajoutes+" article(s) ajouté(s)\n"+
+    modifies+" article(s) modifié(s)\n"+
+    inchanges+" article(s) inchangé(s)\n"+
+    ignores+" ligne(s) ignorée(s)";
+
+   if(failedBatches.length){
+    finalMessage+="\n\n"+failedBatches.length+
+     " lot(s) ont rencontré une erreur temporaire et ont été retentés à la fin.";
+   }
+
+   if(finalFailures.length){
+    const failedArticles=finalFailures.reduce((sum,x)=>sum+x.articles.length,0);
+    finalMessage+="\n\n⚠ "+failedArticles+
+     " article(s) restent à réessayer dans "+finalFailures.length+
+     " lot(s). Tous les autres articles ont quand même été traités.";
+   }
+
+   finalMessage+=refreshWarning;
+   alert(finalMessage);
+
+  }catch(err){
+   console.error(err);
+   alert("Import articles impossible : "+err.message);
+  }finally{
+   globalArticleImportBtn.disabled=false;
+   globalArticleImportBtn.textContent=oldText;
+   globalArticleImportInput.value="";
+  }
+ });
+});
+
+
+const FILE_API="https://braconnier-auth.sebastien-025.workers.dev";
+let currentSupplierFiles=[];
+
+function portalToken(){return sessionStorage.getItem("braconnier_portal_token_v3")||""}
+let storageBlocked=false;
+async function loadStorageIndicator(){
+ try{
+  const r=await fetch(FILE_API+"/files/storage",{headers:{"Authorization":"Bearer "+portalToken()}});
+  if(r.status===401){sessionStorage.removeItem("braconnier_portal_token_v3");location.replace("index.html");return}
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok||!j.ok)throw new Error(j.error||"Stockage indisponible");
+  const pct=Math.max(0,Math.min(100,Number(j.percent||0)));
+  storageBlocked=Boolean(j.blocked);
+  storageText.textContent=(Number(j.usedGB||0)).toFixed(2).replace(".",",")+" Go / "+Number(j.limitGB||9.5).toFixed(1).replace(".",",")+" Go — "+pct.toFixed(1).replace(".",",")+" %";
+  storageFill.style.width=pct+"%";
+  storagePanel.classList.remove("warning","danger","blocked");
+  if(storageBlocked)storagePanel.classList.add("blocked");
+  else if(j.status==="danger")storagePanel.classList.add("danger");
+  else if(j.status==="warning")storagePanel.classList.add("warning");
+  storageNote.textContent=storageBlocked
+   ? "Limite atteinte : les nouveaux imports sont bloqués. Supprimez des documents pour libérer de l’espace."
+   : "Espace restant : "+(Number(j.remainingGB||0)).toFixed(2).replace(".",",")+" Go · Blocage automatique à 9,5 Go";
+  if(window.supplierFileInput)supplierFileInput.disabled=storageBlocked;
+ }catch(err){
+  console.error("Stockage R2:",err);
+  storageText.textContent="Indicateur indisponible";
+  storageNote.textContent="Le contrôle serveur à 9,5 Go reste actif.";
+ }
+}
+function fileSizeLabel(n){
+ n=Number(n||0); if(n<1024)return n+" o";
+ if(n<1024*1024)return (n/1024).toFixed(n<10240?1:0)+" Ko";
+ if(n<1024*1024*1024)return (n/1024/1024).toFixed(n<10*1024*1024?1:0)+" Mo";
+ return (n/1024/1024/1024).toFixed(1)+" Go";
+}
+function fileTypeLabel(name){
+ const ext=String(name||"").split(".").pop().toLowerCase();
+ const map={xlsx:"XLSX",xls:"XLS",pdf:"PDF",doc:"DOC",docx:"DOCX",png:"PNG",jpg:"JPG",jpeg:"JPG",webp:"IMG",gif:"GIF",csv:"CSV",zip:"ZIP",txt:"TXT"};
+ return map[ext]||ext.toUpperCase().slice(0,5)||"FILE";
+}
+function safeText(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+
+async function openTariffs(ix){
+ currentTariffSupplier=ix;
+ const x=DATA[ix];
+ tariffTitle.textContent="Documents — "+x.fournisseur_source;
+ tariffSupplierInfo.textContent="TVA / entreprise : "+(x.tva||"Non renseigné");
+ tariffModal.classList.add("open");
+ tariffModal.setAttribute("aria-hidden","false");
+ document.body.style.overflow="hidden";
+ supplierFileSearch.value="";
+ await Promise.all([loadSupplierFiles(),loadStorageIndicator()]);
+}
+function closeTariffs(){
+ tariffModal.classList.remove("open");
+ tariffModal.setAttribute("aria-hidden","true");
+ document.body.style.overflow="";
+}
+async function loadSupplierFiles(){
+ if(currentTariffSupplier<0)return;
+ const x=DATA[currentTariffSupplier];
+ const fid=Number(x._d1_id);
+ supplierFileInfo.textContent="Chargement…";
+ supplierFileList.innerHTML='<div class="file-empty">Chargement des fichiers…</div>';
+ if(!Number.isInteger(fid)||fid<=0){
+  supplierFileInfo.textContent="";
+  supplierFileList.innerHTML='<div class="file-empty">Identifiant fournisseur Cloudflare introuvable.</div>';
+  return;
+ }
+ try{
+  const r=await fetch(FILE_API+"/files?fournisseur_id="+encodeURIComponent(fid),{
+   headers:{"Authorization":"Bearer "+portalToken()}
+  });
+  if(r.status===401){sessionStorage.removeItem("braconnier_portal_token_v3");location.replace("index.html");return}
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok||!j.ok)throw new Error(j.error||"Erreur de chargement");
+  currentSupplierFiles=Array.isArray(j.files)?j.files:[];
+  renderSupplierFiles();
+ }catch(err){
+  console.error(err);
+  supplierFileInfo.textContent="";
+  supplierFileList.innerHTML='<div class="file-empty">Impossible de charger les fichiers : '+safeText(err.message)+'</div>';
+ }
+}
+function canPreviewSupplierFile(file){
+ const name=String(file?.name||"").toLowerCase();
+ const type=String(file?.contentType||"").toLowerCase();
+ if(type.startsWith("image/"))return true;
+ if(type==="application/pdf"||type.startsWith("text/"))return true;
+ return /\.(pdf|png|jpe?g|gif|webp|svg|bmp|txt|csv|log|json|xml)$/i.test(name);
+}
+function supplierFileDisplayName(name){
+ return String(name||"").replace(/^\d{13}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-(?=.)/i,"");
+}
+function renderSupplierFiles(){
+ const q=String(supplierFileSearch.value||"").trim().toLowerCase();
+ const rows=currentSupplierFiles.filter(f=>!q||String(f.name||"").toLowerCase().includes(q));
+ supplierFileInfo.textContent=rows.length+" fichier(s)";
+ if(!rows.length){
+  supplierFileList.innerHTML='<div class="file-empty">Aucun fichier pour ce fournisseur.<br>Glissez un document ici pour l’ajouter.</div>';
+  return;
+ }
+ supplierFileList.innerHTML=rows.map(file=>{
+  const f={...file,name:supplierFileDisplayName(file.name)};
+  const d=f.uploadedAt?new Date(f.uploadedAt).toLocaleString("fr-BE"):"";
+  const key=encodeURIComponent(f.key);
+  return `<div class="file-card">
+    <div class="file-icon">${safeText(fileTypeLabel(f.name))}</div>
+    <div><div class="file-name" title="${safeText(f.name)}">${safeText(f.name)}</div>
+    <div class="file-meta">${safeText(fileSizeLabel(f.size))}${d?" · "+safeText(d):""}</div></div>
+    <div class="file-buttons">
+      <button class="file-open" type="button" onclick="openSupplierFile('${key}', '${safeText(String(f.name||"").replace(/'/g,"&#39;"))}')">Ouvrir</button>
+      <button class="file-download" type="button" onclick="downloadSupplierFile('${key}')">Télécharger</button>
+      <button class="file-delete" type="button" onclick="deleteSupplierFile('${key}', '${safeText(String(f.name||"").replace(/'/g,"&#39;"))}')">Supprimer</button>
+    </div>
+  </div>`;
+ }).join("");
+}
+async function uploadSupplierFiles(files){
+ if(currentTariffSupplier<0||!files||!files.length)return;
+ if(storageBlocked){alert("Limite de stockage atteinte. Supprimez des documents avant d’en ajouter de nouveaux.");return;}
+ const x=DATA[currentTariffSupplier],fid=Number(x._d1_id);
+ if(!Number.isInteger(fid)||fid<=0){alert("Identifiant fournisseur Cloudflare introuvable.");return}
+ let done=0;
+ for(const file of Array.from(files)){
+  uploadProgress.textContent=`Import de ${file.name}… (${done+1}/${files.length})`;
+  try{
+   const r=await fetch(FILE_API+"/files/upload",{
+    method:"POST",
+    headers:{
+     "Authorization":"Bearer "+portalToken(),
+     "X-Supplier-Id":String(fid),
+     "X-Filename":encodeURIComponent(file.name),
+     "Content-Type":file.type||"application/octet-stream"
+    },
+    body:file
+   });
+   if(r.status===401){sessionStorage.removeItem("braconnier_portal_token_v3");location.replace("index.html");return}
+   const j=await r.json().catch(()=>({}));
+   if(!r.ok||!j.ok)throw new Error(j.message||j.error||("Erreur HTTP "+r.status));
+   done++;
+  }catch(err){
+   alert("Import impossible pour "+file.name+" : "+err.message);
+  }
+ }
+ uploadProgress.textContent=done+" fichier(s) importé(s).";
+ await Promise.all([loadSupplierFiles(),loadStorageIndicator()]);
+ setTimeout(()=>{uploadProgress.textContent=""},2500);
+}
+function isExcelSupplierFile(fileName){
+ return /\.(xlsx|xls|xlsm|xlsb)$/i.test(String(fileName||""));
+}
+function renderExcelPreviewWindow(win,blob,fileName){
+ return blob.arrayBuffer().then(buffer=>{
+  const wb=XLSX.read(buffer,{type:"array",cellDates:true});
+  const doc=win.document;
+  doc.open();
+  doc.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safeText(fileName)}</title><style>
+  *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f5f6;color:#222}header{position:sticky;top:0;z-index:20;background:#29343d;color:#fff;padding:12px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 2px 10px rgba(0,0,0,.12)}.title{font-weight:800;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px;background:#fff;border-bottom:1px solid #ddd;position:sticky;top:48px;z-index:15}.tab{border:1px solid #cfd6dc;background:#f7f8f9;color:#29343d;border-radius:6px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer}.tab.active{background:#f47b00;color:#fff;border-color:#f47b00}.sheet{display:none;padding:12px}.sheet.active{display:block}.table-wrap{overflow:auto;background:#fff;border:1px solid #dfe4e8;border-radius:8px;max-height:calc(100vh - 115px)}table{border-collapse:collapse;min-width:100%;width:max-content}th,td{border:1px solid #e3e7ea;padding:6px 8px;font-size:11px;white-space:nowrap;vertical-align:top}tr:first-child td,tr:first-child th{background:#eef1f3;font-weight:800;position:sticky;top:0;z-index:2}tr:nth-child(even) td{background:#fafbfc}.empty{padding:30px;color:#667085;text-align:center}</style></head><body><header><div class="title">${safeText(fileName)}</div><div style="font-size:10px;color:#cbd3d9">Aperçu Excel</div></header><div id="tabs" class="tabs"></div><div id="sheets"></div></body></html>`);
+  doc.close();
+  const tabs=doc.getElementById("tabs");
+  const sheets=doc.getElementById("sheets");
+  wb.SheetNames.forEach((sheetName,idx)=>{
+   const btn=doc.createElement("button");
+   btn.className="tab"+(idx===0?" active":"");
+   btn.textContent=sheetName;
+   const panel=doc.createElement("div");
+   panel.className="sheet"+(idx===0?" active":"");
+   const ws=wb.Sheets[sheetName];
+   let html=XLSX.utils.sheet_to_html(ws,{id:"excelTable"+idx,editable:false});
+   panel.innerHTML='<div class="table-wrap">'+html+'</div>';
+   btn.addEventListener("click",()=>{
+    tabs.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    sheets.querySelectorAll(".sheet").forEach(x=>x.classList.remove("active"));
+    btn.classList.add("active");panel.classList.add("active");
+   });
+   tabs.appendChild(btn);sheets.appendChild(panel);
+  });
+  if(!wb.SheetNames.length)sheets.innerHTML='<div class="empty">Aucune feuille dans ce classeur.</div>';
+ });
+}
+async function openSupplierFile(encodedKey,fileName){
+ const previewWindow=window.open("about:blank","_blank");
+ if(!previewWindow){alert("Le navigateur a bloqué l’ouverture du nouvel onglet. Autorisez les fenêtres pop-up pour ce site.");return}
+ try{
+  previewWindow.document.title="Chargement du document…";
+  previewWindow.document.body.innerHTML='<div style="font-family:Arial,sans-serif;padding:24px">Chargement du document…</div>';
+  const key=decodeURIComponent(encodedKey);
+  const r=await fetch(FILE_API+"/files/object?key="+encodeURIComponent(key),{
+   headers:{"Authorization":"Bearer "+portalToken()}
+  });
+  if(r.status===401){previewWindow.close();sessionStorage.removeItem("braconnier_portal_token_v3");location.replace("index.html");return}
+  if(!r.ok){const j=await r.json().catch(()=>({}));previewWindow.close();alert(j.error||"Ouverture impossible.");return}
+  const blob=await r.blob();
+  if(isExcelSupplierFile(fileName)){
+   await renderExcelPreviewWindow(previewWindow,blob,fileName);
+   return;
+  }
+  const url=URL.createObjectURL(blob);
+  previewWindow.location.href=url;
+  setTimeout(()=>URL.revokeObjectURL(url),5*60*1000);
+ }catch(err){
+  previewWindow.close();
+  alert("Ouverture impossible : "+err.message);
+ }
+}
+
+async function downloadSupplierFile(encodedKey){
+ const key=decodeURIComponent(encodedKey);
+ const r=await fetch(FILE_API+"/files/object?key="+encodeURIComponent(key),{
+  headers:{"Authorization":"Bearer "+portalToken()}
+ });
+ if(r.status===401){sessionStorage.removeItem("braconnier_portal_token_v3");location.replace("index.html");return}
+ if(!r.ok){const j=await r.json().catch(()=>({}));alert(j.error||"Téléchargement impossible.");return}
+ const blob=await r.blob();
+ const cd=r.headers.get("Content-Disposition")||"";
+ const m=cd.match(/filename\*=UTF-8''([^;]+)/i)||cd.match(/filename="?([^"]+)"?/i);
+ const listedFile=currentSupplierFiles.find(f=>f.key===key);
+ const name=supplierFileDisplayName(m?decodeURIComponent(m[1]):listedFile?.name||"document");
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+ setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+}
+async function deleteSupplierFile(encodedKey,name){
+ if(!confirm("Supprimer définitivement « "+name+" » ?"))return;
+ const key=decodeURIComponent(encodedKey);
+ const r=await fetch(FILE_API+"/files/object?key="+encodeURIComponent(key),{
+  method:"DELETE",headers:{"Authorization":"Bearer "+portalToken()}
+ });
+ if(r.status===401){sessionStorage.removeItem("braconnier_portal_token_v3");location.replace("index.html");return}
+ const j=await r.json().catch(()=>({}));
+ if(!r.ok||!j.ok){alert(j.error||"Suppression impossible.");return}
+ await Promise.all([loadSupplierFiles(),loadStorageIndicator()]);
+}
+
+supplierFileInput.addEventListener("change",e=>{uploadSupplierFiles(e.target.files);e.target.value=""});
+supplierFileSearch.addEventListener("input",renderSupplierFiles);
+fileDropZone.addEventListener("click",()=>supplierFileInput.click());
+["dragenter","dragover"].forEach(ev=>fileDropZone.addEventListener(ev,e=>{e.preventDefault();fileDropZone.classList.add("drag")}));
+["dragleave","drop"].forEach(ev=>fileDropZone.addEventListener(ev,e=>{e.preventDefault();fileDropZone.classList.remove("drag")}));
+fileDropZone.addEventListener("drop",e=>uploadSupplierFiles(e.dataTransfer.files));
+
+let currentArticleSupplier=-1,currentArticleRows=[],articleSortCol=-1,articleSortAsc=true;const ARTICLE_COLS=[0,1,2,4,5,6,7,8,9,10,11,12];
+
+function closeArticles(){articleModal.classList.remove("open");articleModal.setAttribute("aria-hidden","true");document.body.style.overflow=""}
+function articleCellValue(r,c){if(c>=10&&c<=12){const v=Number(r[c]??0);return (Number.isFinite(v)?v:0).toLocaleString("fr-BE",{minimumFractionDigits:2,maximumFractionDigits:2})+" €"}return r[c]??""}
+function renderArticles(){const raw=String(articleSearch.value||"").trim();const q=n(raw);let rows;if(q){const exactRows=currentArticleRows.filter(r=>[0,1,9].some(c=>n(r[c]||"")===q));rows=exactRows.length?exactRows:currentArticleRows.filter(r=>smartMatch(raw,ARTICLE_COLS.map(c=>r[c]??"").join(" ")));}else{rows=currentArticleRows.slice();}if(articleSortCol>=0)rows.sort((a,b)=>String(a[articleSortCol]??"").localeCompare(String(b[articleSortCol]??""),"fr",{numeric:true,sensitivity:"base"})*(articleSortAsc?1:-1));articleInfo.textContent=rows.length+" article(s) affiché(s) sur "+currentArticleRows.length;articleBody.innerHTML=rows.length?rows.map(r=>`<tr>${ARTICLE_COLS.map(c=>`<td>${esc(articleCellValue(r,c))}</td>`).join("")}</tr>`).join(""):`<tr><td class="article-empty" colspan="12">Aucun article trouvé.</td></tr>`}
+articleSearch.addEventListener("input",()=>{const clean=articleSearch.value.replace(/#/g,"");if(clean!==articleSearch.value)articleSearch.value=clean;renderArticles()});document.querySelectorAll(".article-table th").forEach(th=>th.addEventListener("click",()=>{const c=Number(th.dataset.col);if(articleSortCol===c)articleSortAsc=!articleSortAsc;else{articleSortCol=c;articleSortAsc=true}renderArticles()}));document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(tariffModal.classList.contains("open"))closeTariffs();else closeArticles()}});
+const API_BASE="https://braconnier-api.sebastien-025.workers.dev";
+// Les accès normaux utilisent automatiquement la session déjà ouverte sur le portail.
+// X-Admin-Password reste réservé aux imports et aux opérations administratives.
+const nativeFetchForPrivateApi=window.fetch.bind(window);
+window.fetch=function(input,init={}){
+  const target=typeof input==="string"?input:(input&&input.url)||"";
+  if(target.startsWith(API_BASE)){
+    const headers=new Headers(init.headers||(typeof input!=="string"&&input.headers)||{});
+    if(!headers.has("Authorization")){
+      const token=sessionStorage.getItem(PORTAL_TOKEN_KEY)||"";
+      if(token)headers.set("Authorization","Bearer "+token);
+    }
+    init={...init,headers};
+  }
+  return nativeFetchForPrivateApi(input,init);
+};
+
+let API_CONNECTED=false;
+function rebuildProductSearchUnits(){PRODUCT_SEARCH_UNITS=DATA.map((x,ix)=>{const units=[];for(const c of (x.categories||[]))if(c)units.push(c);for(const r of (ARTICLES[String(ix)]||[])){const u=ARTICLE_SEARCH_COLS.map(c=>r[c]||"").join(" ");if(u.trim())units.push(u)}return units})}
+let supplierLoadPromise=null,dataGeneration=0;
+let articleRequests=new Map(),productLoadPromise=null,productSearchError=false;
+function safeSourceUrl(value){try{const u=new URL(value);return /^https?:$/.test(u.protocol)?u.href:""}catch{return ""}}
+function supplierFromD1(f){
+ const emails=[f.email,f.email1,f.email2,f.email3,f.email4,f.email5,f.email6,f.email7].map(v=>String(v||"").trim()).filter(Boolean);
+ return {...f,
+  code_postal:f.code_postal||"",cp:f.code_postal||"",
+  telephone:f.telephone||"",tel:f.telephone||"",
+  ville:f.ville||"",fax:f.fax||"",franco:f.franco||"",
+  emails,
+  _d1_id:Number(f.id),fournisseur_source:f.nom,nom_actuel:f.nom_actuel||f.nom,
+  categories:Array.isArray(f.categories)?f.categories:[],
+  statut_source:f.statut_source||(f.statut==="Inactif"?"Inactif confirmé / signalé":f.statut==="Actif"?"Présence trouvée":f.statut||"À vérifier"),
+  _d1_nb_articles:Number(f.nb_articles||0),nb_articles_excel:Number(f.nb_articles||0),nb:Number(f.nb_articles||0)};
+}
+async function loadSuppliersFromD1(){
+ if(supplierLoadPromise)return supplierLoadPromise;
+ supplierLoadPromise=(async()=>{
+  stats.textContent="Chargement des fournisseurs…";
+  document.getElementById("addSupplier").disabled=true;
+  try{
+   const result=await d1Get("/fournisseurs");
+   if(!Array.isArray(result.fournisseurs)||result.fournisseurs.some(f=>!Number.isInteger(Number(f.id))||Number(f.id)<=0||!f.nom||!Array.isArray(f.categories)))throw Error("Réponse fournisseurs incomplète.");
+   dataGeneration++;
+   DATA.splice(0,DATA.length,...result.fournisseurs.map(supplierFromD1));
+   for(const key of Object.keys(ARTICLES))delete ARTICLES[key];
+   articleRequests=new Map();productLoadPromise=null;productSearchError=false;SERVER_PRODUCT_SUPPLIER_IDS=new Set();SERVER_PRODUCT_RESULTS=[];SERVER_PRODUCT_SEARCHING=false;SERVER_PRODUCT_SEARCH_ERROR=false;
+   API_CONNECTED=true;rebuildProductSearchUnits();updateKpis();render();
+   document.getElementById("addSupplier").disabled=false;
+   if(pq.value.trim())scheduleServerProductSearch(true);
+   return true;
+  }catch(err){
+   API_CONNECTED=false;
+   stats.textContent="Chargement impossible : "+err.message;
+   cards.innerHTML='<div class="file-empty">Impossible de charger les fournisseurs. <button type="button" onclick="loadSuppliersFromD1()">Réessayer</button></div>';
+   return false;
+  }
+ })();
+ try{return await supplierLoadPromise}finally{supplierLoadPromise=null}
+}
+async function loadD1Data(){if(!await loadSuppliersFromD1())throw Error("Actualisation impossible. Rechargez la page.")}
+async function getSupplierArticles(ix){
+ const x=DATA[ix],generation=dataGeneration;
+ if(Object.prototype.hasOwnProperty.call(ARTICLES,String(ix)))return ARTICLES[String(ix)];
+ if(articleRequests.has(x._d1_id))return articleRequests.get(x._d1_id);
+ const pending=(async()=>{
+  const j=await d1Get("/articles?fournisseur_id="+x._d1_id);
+  const rows=(j.articles||[]).map(a=>[a.numero_article||"",a.num_fournisseur||"",a.nom_fournisseur||"","",a.denomination||"",a.unite||"",a.emballage||"",a.groupe_principal||"",a.sous_groupe||"",a.ean||"",Number(a.prix_achat_htva??0)||0,Number(a.prix_vente_htva??0)||0,Number(a.prix_vente_tvac??0)||0]);
+  if(generation===dataGeneration){ARTICLES[String(ix)]=rows;DATA[ix]._d1_nb_articles=rows.length;DATA[ix].nb_articles_excel=rows.length;DATA[ix].nb=rows.length;rebuildProductSearchUnits()}
+  return rows;
+ })();
+ const requests=articleRequests;requests.set(x._d1_id,pending);
+ try{return await pending}finally{requests.delete(x._d1_id)}
+}
+async function ensureProductArticles(){
+ if(!API_CONNECTED||productLoadPromise)return productLoadPromise;
+ const generation=dataGeneration;
+ const remaining=DATA.map((x,ix)=>ix).filter(ix=>!Object.prototype.hasOwnProperty.call(ARTICLES,String(ix)));
+ if(!remaining.length)return;
+ productSearchError=false;
+ productLoadPromise=(async()=>{
+  let pos=0;
+  async function consume(){while(pos<remaining.length&&generation===dataGeneration){const ix=remaining[pos++];try{await getSupplierArticles(ix)}catch{productSearchError=true}}}
+  await Promise.all(Array.from({length:4},consume));
+ })();
+ render();
+ try{await productLoadPromise}finally{if(generation===dataGeneration){productLoadPromise=null;render()}}
+}
+async function openArticles(ix){
+ currentArticleSupplier=ix;articleSearch.value="";articleSortCol=-1;articleSortAsc=true;
+ articleTitle.textContent="Articles — "+DATA[ix].fournisseur_source;
+ articleModal.classList.add("open");articleModal.setAttribute("aria-hidden","false");document.body.style.overflow="hidden";
+ currentArticleRows=[];articleInfo.textContent="Chargement des articles…";
+ articleBody.innerHTML='<tr><td class="article-empty" colspan="12">Chargement…</td></tr>';
+ try{const rows=await getSupplierArticles(ix);if(currentArticleSupplier!==ix)return;currentArticleRows=rows.slice();renderArticles()}
+ catch(err){if(currentArticleSupplier!==ix)return;articleInfo.textContent="Chargement impossible : "+err.message;articleBody.innerHTML='<tr><td colspan="12">Fermez puis rouvrez cette fenêtre pour réessayer.</td></tr>'}
+ articleSearch.focus();
+}
+const supplierEditor=document.getElementById("supplierEditor"),supplierForm=document.getElementById("supplierForm");
+let editedSupplierId=null;
+function openSupplierEditor(ix=-1){
+ if(!API_CONNECTED)return;
+ supplierForm.reset();document.getElementById("supplierSaveMessage").textContent="";
+ const x=ix>=0?DATA[ix]:null;editedSupplierId=x?x._d1_id:null;
+ document.getElementById("supplierEditorTitle").textContent=x?"Modifier le fournisseur":"Ajouter un fournisseur";
+ const c=x?supplierContact(x):null;
+ const values=x?{...x,...(c||{}),nom:x.fournisseur_source,categories:x.categories.join("\n"),emails:(c&&Array.isArray(c.emails)?c.emails:[]).join("\n")}:{pays:"Belgique",statut_source:"À vérifier",emails:""};
+ for(const key of ["nom","nom_actuel","tva","pays","adresse","cp","ville","tel","fax","franco","emails","statut_source","type_inactif","source","existence","note","categories"]){
+  const field=supplierForm.elements.namedItem(key);field.value=values[key]||"";
+  if(key==="statut_source"&&!field.value){const option=new Option(values[key]||"À vérifier",values[key]||"À vérifier");field.add(option);field.value=option.value}
+ }
+ supplierEditor.showModal();supplierForm.elements.namedItem("nom").focus();
+}
+supplierForm.addEventListener("submit",async event=>{
+ event.preventDefault();const button=document.getElementById("saveSupplier"),message=document.getElementById("supplierSaveMessage");
+ const fields=new FormData(supplierForm),supplier={};
+ for(const key of ["nom","nom_actuel","tva","pays","adresse","ville","fax","franco","statut_source","type_inactif","source","existence","note"])supplier[key]=String(fields.get(key)||"").trim();
+ supplier.code_postal=String(fields.get("cp")||"").trim();
+ supplier.telephone=String(fields.get("tel")||"").trim();
+ supplier.emails=[...new Set(String(fields.get("emails")||"").split(/\r?\n|[,;]/).map(s=>s.trim()).filter(Boolean))].slice(0,8);
+ ["email","email1","email2","email3","email4","email5","email6","email7"].forEach((key,i)=>supplier[key]=supplier.emails[i]||"");
+ supplier.categories=[...new Set(String(fields.get("categories")||"").split(/\r?\n/).map(s=>s.trim()).filter(Boolean))];
+ if(editedSupplierId!==null)supplier.id=editedSupplierId;
+ if(!supplier.nom)return;
+ if(supplier.source&&!safeSourceUrl(supplier.source)){message.textContent="La source doit être une adresse http ou https.";return}
+ const identity=s=>n(s).replace(/[^a-z0-9]/g,"");
+ if(DATA.some(x=>x._d1_id!==editedSupplierId&&identity(x.fournisseur_source)===identity(supplier.nom))){message.textContent="Ce nom existe déjà. Modifiez la fiche existante.";return}
+ supplier.statut=supplier.statut_source==="Inactif confirmé / signalé"?"Inactif":supplier.statut_source==="À vérifier"?"À vérifier":"Actif";
+ const password=String(fields.get("password")||"");
+ button.disabled=true;message.textContent="Enregistrement…";
+ try{
+  const response=await fetch(API_BASE+"/admin/fournisseurs/import",{method:"POST",headers:{"Content-Type":"application/json","X-Admin-Password":password},body:JSON.stringify({fournisseurs:[supplier]})});
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok||!result.ok)throw Error(result.erreur||"Enregistrement impossible.");
+  saveContactOverride(editedSupplierId!==null?editedSupplierId:(supplier.id||"new"),{adresse:supplier.adresse,cp:supplier.code_postal,ville:supplier.ville,tel:supplier.telephone,fax:supplier.fax,franco:supplier.franco,emails:supplier.emails,pays:supplier.pays,tva:supplier.tva});
+  supplierForm.elements.namedItem("password").value="";supplierEditor.close();
+  if(!await loadSuppliersFromD1())alert("Fournisseur enregistré. Rechargez la page pour actualiser la liste.");
+ }catch(err){message.textContent=err.message}finally{button.disabled=false}
+});
+supplierEditor.addEventListener("close",()=>{supplierForm.elements.namedItem("password").value=""});
+let lastMainExactEan="";
+async function runServerProductSearch(){
+ const raw=String(pq.value||"").replace(/#/g,"").trim();
+ const seq=++SERVER_PRODUCT_SEARCH_SEQ;
+ if(!raw){
+  SERVER_PRODUCT_SUPPLIER_IDS=new Set();SERVER_PRODUCT_RESULTS=[];SERVER_PRODUCT_SEARCHING=false;SERVER_PRODUCT_SEARCH_ERROR=false;lastMainExactEan="";render();return;
+ }
+ SERVER_PRODUCT_SEARCHING=true;SERVER_PRODUCT_SEARCH_ERROR=false;render();
+ try{
+  const j=await d1Get("/articles/recherche?q="+encodeURIComponent(raw)+"&limit=300");
+  if(seq!==SERVER_PRODUCT_SEARCH_SEQ || String(pq.value||"").replace(/#/g,"").trim()!==raw)return;
+  SERVER_PRODUCT_RESULTS=Array.isArray(j.articles)?j.articles:[];
+  SERVER_PRODUCT_SUPPLIER_IDS=new Set(SERVER_PRODUCT_RESULTS.map(a=>Number(a.fournisseur_id)).filter(Number.isFinite));
+  SERVER_PRODUCT_SEARCH_ERROR=false;
+  const exactMatches=serverArticleExactMatches(raw);
+  if(exactMatches.length===1 && lastMainExactEan!==raw){
+   const exact=exactMatches[0];
+   const ix=DATA.findIndex(x=>Number(x._d1_id)===Number(exact.fournisseur_id));
+   if(ix>=0){
+    lastMainExactEan=raw;
+    await openArticles(ix);
+    articleSearch.value=raw;renderArticles();
+   }
+  }else if(exactMatches.length!==1){lastMainExactEan="";}
+ }catch(err){
+  if(seq===SERVER_PRODUCT_SEARCH_SEQ){console.error("Recherche articles Cloudflare:",err);SERVER_PRODUCT_SEARCH_ERROR=true;SERVER_PRODUCT_RESULTS=[];SERVER_PRODUCT_SUPPLIER_IDS=new Set();}
+ }finally{
+  if(seq===SERVER_PRODUCT_SEARCH_SEQ){SERVER_PRODUCT_SEARCHING=false;render();}
+ }
+}
+function scheduleServerProductSearch(immediate=false){
+ clearTimeout(SERVER_PRODUCT_TIMER);
+ if(!pq.value.trim()){runServerProductSearch();return;}
+ SERVER_PRODUCT_TIMER=setTimeout(runServerProductSearch,immediate?0:220);
+}
+pq.addEventListener("input",()=>scheduleServerProductSearch(false));
+
+loadSuppliersFromD1();
+loadStorageIndicator();
+
+</script><script id="unified-menu-script">(function(){const b=document.getElementById('unifiedMenuBtn'),m=document.getElementById('unifiedMenu');if(!b||!m)return;function close(){m.classList.remove('open');b.setAttribute('aria-expanded','false')}b.addEventListener('click',function(e){e.stopPropagation();const o=m.classList.toggle('open');b.setAttribute('aria-expanded',o?'true':'false')});m.addEventListener('click',e=>e.stopPropagation());document.addEventListener('click',close);document.addEventListener('keydown',e=>{if(e.key==='Escape')close()})})();</script></body></html>

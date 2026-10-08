@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+
+<html lang="fr"><head>
+<script id="portal-access-guard">
+(function(){
+  const TOKEN_KEY="braconnier_portal_token_v3";
+  const AUTH_API="https://braconnier-auth.sebastien-025.workers.dev";
+  document.documentElement.style.visibility="hidden";
+  const token=sessionStorage.getItem(TOKEN_KEY);
+  if(!token){ location.replace(new URL("/base/index.html",location.origin).href); return; }
+  fetch(AUTH_API+"/auth/check",{headers:{Authorization:"Bearer "+token},cache:"no-store"})
+    .then(r=>{if(!r.ok)throw new Error("unauthorized"); document.documentElement.style.visibility="";})
+    .catch(()=>{sessionStorage.removeItem(TOKEN_KEY);location.replace(new URL("/base/index.html",location.origin).href);});
+})();
+</script>
+
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Fournisseurs en ligne</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f5f6f7;font-family:Arial,Helvetica,sans-serif;color:#111827}
+.top{height:50px;background:#27323c;color:#fff;display:flex;align-items:center;gap:13px;padding:0 16px}
+.title{font-size:17px;font-weight:800;white-space:nowrap} .title span{font-weight:400}
+.search{margin-left:auto;width:250px;height:30px;border:0;border-radius:6px;padding:0 10px;font-size:10px;outline:none}
+.wrap{max-width:1180px;margin:auto;padding:10px 12px 18px}
+.section{margin-bottom:10px}
+.category{height:28px;border-radius:6px;color:white;display:flex;align-items:center;padding:0 10px;margin-bottom:5px}
+.category strong{font-size:10px;letter-spacing:.02em}
+.c0 .category{background:#1677d2} .c1 .category{background:#15944f} .c2 .category{background:#ee7600}
+.c3 .category{background:#d92e2e} .c4 .category{background:#6944a5} .c5 .category{background:#637381}
+.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.card{height:108px;background:#fff;border:1px solid #d9dee3;border-radius:8px;padding:8px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 1px 2px rgba(0,0,0,.02)}
+.card:hover{border-color:#c9cfd5;box-shadow:0 2px 5px rgba(0,0,0,.05)}
+.supplier-head{display:flex;align-items:center;gap:10px;min-width:0}
+.logo-box{width:48px;height:48px;flex:0 0 48px;border:1px solid #e2e6ea;border-radius:7px;background:#fff;display:grid;place-items:center;overflow:hidden}
+.logo-box img{max-width:38px;max-height:38px;object-fit:contain}
+.logo-box span{display:none;width:100%;height:100%;place-items:center;font-size:12px;font-weight:800;color:#315b50;background:#e9f2ef}
+.supplier-name{font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.actions{display:grid;grid-template-columns:82px 88px;gap:5px;justify-content:center}
+.actions a,.actions button{height:23px;border-radius:6px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;text-decoration:none;cursor:pointer}
+.actions a{border:1px solid #d9dee3;background:#fff;color:#20252b}
+.actions a:hover{background:#f7f8f9}
+.actions button{border:0;background:#f47b00;color:#fff}
+.actions button:hover{background:#dd7000}
+.hidden{display:none!important}
+@media(max-width:950px){.grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:760px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.grid{grid-template-columns:repeat(2,1fr)}.search{width:160px}}
+@media(max-width:370px){.grid{grid-template-columns:1fr}}
+
+.top-nav{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.nav-btn{height:30px;padding:0 13px;border-radius:6px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);color:#fff;font-size:10px;font-weight:700;cursor:pointer}
+.nav-btn:hover{background:rgba(255,255,255,.16)}
+.nav-btn.active{background:#f47b00;border-color:#f47b00}
+.db-overlay{position:fixed;left:0;right:0;top:50px;bottom:0;background:#fff;z-index:9999;display:none;padding:0}
+.db-overlay.open{display:block}
+.db-window{width:100%;height:100%;background:#fff;overflow:hidden;display:flex;flex-direction:column}
+.db-bar{display:none}
+.db-bar strong{font-size:12px}
+.db-bar .spacer{flex:1}
+.db-bar a,.db-close{height:26px;padding:0 10px;border-radius:5px;border:0;font-size:9px;font-weight:700;cursor:pointer;text-decoration:none;display:flex;align-items:center}
+.db-bar a{background:#f47b00;color:#fff}
+.db-close{background:#e9eef2;color:#27323c}
+.db-frame{width:100%;height:100%;border:0;background:#fff}
+@media(max-width:560px){.nav-btn{padding:0 8px;font-size:9px}.search{width:135px}}
+
+.wrap{max-width:1600px;padding:18px}.portal-header{background:#29343d;color:white;border-radius:14px;padding:20px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:16px}.portal-brand{display:flex;align-items:center;gap:12px}.portal-logo{width:44px;height:44px;border-radius:10px;background:#f47b00;display:grid;place-items:center;font-size:24px;font-weight:bold}.portal-brand h1{font-size:23px;margin:0}.portal-brand p{font-size:12px;margin:5px 0 0;color:#d5dde1}.portal-nav{display:flex;gap:8px;flex-wrap:wrap}.portal-nav a,.portal-nav button{background:#f47b00;color:white;border:0;border-radius:7px;padding:10px 12px;font:700 12px Arial;text-decoration:none;cursor:pointer}.portal-nav a:hover,.portal-nav button:hover{background:#dc6f00}.search-bar{margin-bottom:16px}.search-bar .search{margin:0;width:100%;height:40px;border:1px solid #dde2e6;font-size:13px;background:white}.portal-nav :focus-visible{outline:3px solid white;outline-offset:2px}@media(max-width:750px){.wrap{padding:10px}.portal-header{padding:16px}}
+.card{min-width:0}.actions{grid-template-columns:minmax(0,82px) minmax(0,88px)}.portal-brand{min-width:0}.portal-brand>div:last-child{min-width:0}.portal-logo{flex-shrink:0}@media(max-width:560px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:370px){.grid{grid-template-columns:1fr}}
+.add-supplier-btn{background:#fff!important;color:#f47b00!important;border:1px solid #f47b00!important}.add-supplier-btn:hover{background:#fff6ed!important}
+.modal-overlay{position:fixed;inset:0;background:rgba(20,27,33,.58);z-index:20000;display:none;align-items:center;justify-content:center;padding:18px}.modal-overlay.open{display:flex}.supplier-modal{width:min(620px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.25);padding:20px}.supplier-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}.supplier-modal-head h2{font-size:18px;margin:0}.modal-x{border:0;background:#eef1f3;border-radius:7px;width:32px;height:32px;cursor:pointer;font-size:18px}.supplier-form{display:grid;grid-template-columns:1fr 1fr;gap:12px}.supplier-form label{font-size:11px;font-weight:700;color:#34404a;display:flex;flex-direction:column;gap:5px}.supplier-form .full{grid-column:1/-1}.supplier-form input,.supplier-form select{height:38px;border:1px solid #d9dee3;border-radius:7px;padding:0 10px;font:12px Arial;background:#fff}.supplier-form input:focus,.supplier-form select:focus{outline:2px solid #f47b00;outline-offset:1px}.form-note{grid-column:1/-1;font-size:10px;color:#69757e;margin-top:-3px}.form-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px;margin-top:5px}.form-actions button{height:36px;border-radius:7px;padding:0 15px;font:700 11px Arial;cursor:pointer}.cancel-btn{background:#eef1f3;border:0;color:#27323c}.save-btn{background:#f47b00;border:0;color:#fff}.save-btn:disabled{opacity:.55;cursor:wait}.dynamic-badge{font-size:8px;color:#6b7280;margin-top:2px}.card .actions{grid-template-columns:repeat(3,minmax(0,72px))}.edit-supplier-btn{border:1px solid #d9dee3!important;background:#eef1f3!important;color:#29343d!important}.edit-supplier-btn:hover{background:#dde3e7!important}@media(max-width:560px){.supplier-form{grid-template-columns:1fr}.supplier-form .full,.form-note,.form-actions{grid-column:1}}
+
+.delete-supplier-btn{background:#fff!important;color:#b42318!important;border:1px solid #f0b7b2!important}
+.delete-supplier-btn:hover{background:#fff1f0!important}
+.category-manager-list{display:grid;gap:8px;margin-top:12px}
+.category-manager-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid #dfe4ea;border-radius:8px;background:#f8fafc}
+.category-manager-row button{border:1px solid #f0b7b2;background:#fff;color:#b42318;border-radius:7px;padding:6px 9px;font-weight:700;cursor:pointer}
+
+.delete-modal-btn{background:#fff1f0!important;border:1px solid #e7a6a0!important;color:#b42318!important;font-weight:700}
+.delete-modal-btn:hover{background:#ffe5e2!important}
+.form-actions-spacer{flex:1}
+</style><div aria-modal="true" class="modal-overlay" id="categoryModal" onclick="if(event.target===this)closeCategoryModal()" role="dialog">
+<div class="supplier-modal">
+<div class="supplier-modal-head"><h2>Gérer les catégories</h2><button aria-label="Fermer" class="modal-x" onclick="closeCategoryModal()" type="button">×</button></div>
+<form class="supplier-form" onsubmit="saveCategory(event)">
+<label class="full">Nouvelle catégorie<input autocomplete="off" id="newCategoryName" maxlength="100" placeholder="Ex. Peinture" required=""/></label>
+<div class="form-actions"><button class="cancel-btn" onclick="closeCategoryModal()" type="button">Fermer</button><button class="save-btn" type="submit">Ajouter</button></div>
+</form>
+<div class="category-manager-list" id="categoryManagerList"></div>
+</div></div>
+<script>
+(() => {
+ const tokenKey="braconnier_portal_token_v3",logoutKey="braconnier_portal_logout";
+ const home=new URL("index.html",window.location.href).href;
+ window.portalLogout=function(){
+  sessionStorage.removeItem(tokenKey);
+  try{localStorage.setItem(logoutKey,Date.now()+":"+Math.random())}catch{}
+  window.location.replace(home);
+ };
+ window.addEventListener("storage",event=>{
+  if(event.key===logoutKey){sessionStorage.removeItem(tokenKey);window.location.replace(home)}
+ });
+ window.addEventListener("pageshow",event=>{
+  if(event.persisted&&!sessionStorage.getItem(tokenKey))window.location.replace(home);
+ });
+})();
+
+</script>
+<style id="unified-portal-header-style">
+.unified-header{background:#29343d!important;color:#fff!important;border-radius:13px!important;padding:14px 16px!important;min-height:70px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;position:relative!important;top:auto!important;box-shadow:0 3px 12px rgba(20,27,32,.08)!important;z-index:1000!important}
+.unified-brand{display:flex!important;align-items:center!important;gap:11px!important;min-width:0!important;flex:1 1 auto!important}.unified-logo{width:42px!important;height:42px!important;min-width:42px!important;border-radius:9px!important;background:#f47b00!important;color:#fff!important;display:grid!important;place-items:center!important;font-weight:900!important;font-size:20px!important}.unified-brand h1{font-family:Arial,Helvetica,sans-serif!important;font-size:19px!important;line-height:1.1!important;margin:0!important;color:#fff!important}.unified-brand p{font-family:Arial,Helvetica,sans-serif!important;font-size:10px!important;line-height:1.35!important;color:#d4dce1!important;margin:4px 0 0!important}
+.unified-tools{display:flex!important;align-items:center!important;gap:7px!important;flex:0 0 auto!important}.unified-menu-wrap{position:relative!important}.unified-menu-btn,.unified-logout{height:36px!important;border:0!important;border-radius:8px!important;padding:0 13px!important;color:#fff!important;font:800 10px Arial,Helvetica,sans-serif!important;cursor:pointer!important;display:inline-flex!important;align-items:center!important;gap:7px!important}.unified-menu-btn{background:#f47b00!important}.unified-menu-btn:hover{background:#dc6f00!important}.unified-logout{background:#46515a!important}.unified-logout:hover{background:#56636d!important}.unified-menu-icon{font-size:15px!important;line-height:1!important}
+.unified-menu{display:none!important;position:absolute!important;right:0!important;top:44px!important;width:255px!important;background:#fff!important;border:1px solid #dfe4e8!important;border-radius:12px!important;padding:7px!important;box-shadow:0 18px 45px rgba(20,27,32,.2)!important;z-index:99999!important}.unified-menu.open{display:block!important}.unified-menu a{box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:space-between!important;width:100%!important;padding:10px 11px!important;border-radius:8px!important;color:#29343d!important;text-decoration:none!important;font:700 11px Arial,Helvetica,sans-serif!important;background:transparent!important}.unified-menu a:hover{background:#f4f6f7!important}.unified-menu a.active{background:#fff1e4!important;color:#c86200!important}.unified-menu a.active:after{content:'•';font-size:17px;color:#f47b00}.unified-page-actions{display:flex!important;gap:6px!important;align-items:center!important;margin-left:auto!important}.unified-page-actions button{height:36px!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:8px!important;color:#fff!important;font:800 10px Arial,Helvetica,sans-serif!important;padding:0 11px!important;cursor:pointer!important;background:#3d4851!important}.unified-page-actions button:hover{background:#4a5660!important}
+@media(max-width:760px){.unified-header{border-radius:9px!important;padding:11px 12px!important;gap:9px!important;flex-wrap:wrap!important}.unified-brand{min-width:calc(100% - 120px)!important}.unified-brand h1{font-size:17px!important}.unified-brand p{display:none!important}.unified-tools{margin-left:auto!important}.unified-page-actions{order:3!important;width:100%!important;margin-left:0!important;overflow-x:auto!important}.unified-page-actions button{white-space:nowrap!important}.unified-logout{width:36px!important;padding:0!important;justify-content:center!important;font-size:0!important}.unified-logout:before{content:'↪';font-size:17px!important}.unified-menu{position:fixed!important;left:10px!important;right:10px!important;top:78px!important;width:auto!important;max-height:calc(100vh - 95px)!important;overflow:auto!important}}
+</style>
+<style id="brand-theme">
+:root{--orange:#f47b00!important}
+body{background:#f7f7f7!important}
+.unified-header{background:#fff!important;color:#29343d!important;border:1px solid #e5e7eb!important;border-top:4px solid #f47b00!important;box-shadow:0 4px 16px rgba(20,27,32,.07)!important}
+.unified-brand h1{color:#29343d!important}.unified-brand p{color:#6b7280!important}
+.unified-menu-btn{background:#f47b00!important}.unified-logout{background:#f1f3f5!important;color:#29343d!important;border:1px solid #dde2e6!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="unified-header"><div class="unified-brand"><div class="unified-logo">B</div><div><h1>NetStore</h1><p>Ets Braconnier · fournisseurs en ligne et accès sécurisés</p></div></div><div class="unified-tools"><button class="unified-menu-btn add-supplier-btn" onclick="openSupplierModal()" type="button">＋ Ajouter un fournisseur</button><button class="unified-menu-btn add-supplier-btn" onclick="openCategoryModal()" type="button">＋ Catégorie</button><div class="unified-menu-wrap"><button aria-controls="unifiedMenu" aria-expanded="false" class="unified-menu-btn" id="unifiedMenuBtn" type="button"><span class="unified-menu-icon">☰</span> Menu</button><nav aria-label="Navigation principale" class="unified-menu" id="unifiedMenu"><a href="index.html">Accueil</a><a href="calculs.html">Calculs</a><a class="active" href="netstore.html">NetStore</a><a href="fournisseurs.html">Base fournisseurs</a><a href="inventaire.html">Inventaire</a><a href="commandes.html">Commandes</a><a href="notes.html">Notes</a><a href="electricite.html">Électricité</a></nav></div><button class="unified-logout" onclick="portalLogout()" type="button">Déconnexion</button></div></header>
+<div class="search-bar"><input aria-label="Rechercher un fournisseur" class="search" id="q" oninput="filterAll()" placeholder="Rechercher un fournisseur…" type="search"/></div>
+<section class="section c0">
+<div class="category"><strong>⚡  ÉLECTRICITÉ</strong></div>
+<div class="grid">
+<article class="card" data-name="cebeo">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="CEBEO" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=cebeo.be&amp;sz=128"/>
+<span>C</span>
+</div>
+<div class="supplier-name">CEBEO</div>
+</div>
+<div class="actions">
+<a href="https://www.cebeo.be/fr-be" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(3)">Accès</button>
+</div>
+</article>
+<article class="card" data-name="rexel">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="REXEL" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=rexel.be&amp;sz=128"/>
+<span>R</span>
+</div>
+<div class="supplier-name">REXEL</div>
+</div>
+<div class="actions">
+<a href="https://netstore.rexel.be/" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(8)">Accès</button>
+</div>
+</article>
+<article class="card" data-name="elektramat">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="Elektramat" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=elektramat.be&amp;sz=128"/>
+<span>E</span>
+</div>
+<div class="supplier-name">Elektramat</div>
+</div>
+<div class="actions">
+<a href="https://www.elektramat.be/customer/account/login/referer/aHR0cHM6Ly93d3cuZWxla3RyYW1hdC5iZS9jdXN0b21lci9hY2NvdW50L2luZGV4Lw~~/" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(17)">Accès</button>
+</div>
+</article>
+<article class="card" data-name="gigatek">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="Gigatek" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=gigatek.be&amp;sz=128"/>
+<span>G</span>
+</div>
+<div class="supplier-name">Gigatek</div>
+</div>
+<div class="actions">
+<a href="https://gigatek.be/fr/connexion" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(18)">Accès</button>
+</div>
+</article>
+<article class="card" data-name="lightelec">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="LIGHTELEC" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=lightelec.eu&amp;sz=128"/>
+<span>L</span>
+</div>
+<div class="supplier-name">LIGHTELEC</div>
+</div>
+<div class="actions">
+<a href="https://www.lightelec.eu/" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(19)">Accès</button>
+</div>
+</article></div>
+</section>
+<section class="section c1">
+<div class="category"><strong>●  SANITAIRE &amp; CHAUFFAGE</strong></div>
+<div class="grid">
+<article class="card" data-name="desco">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="DESCO" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=desco.be&amp;sz=128"/>
+<span>D</span>
+</div>
+<div class="supplier-name">DESCO</div>
+</div>
+<div class="actions">
+<a href="https://www.desco.be/fr-be" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(7)">Accès</button>
+</div>
+</article>
+<article class="card" data-name="facq">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="FACQ" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=facq.be&amp;sz=128"/>
+<span>F</span>
+</div>
+<div class="supplier-name">FACQ</div>
+</div>
+<div class="actions">
+<a href="https://extranet.facq.be/login" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(10)">Accès</button>
+</div>
+</article>
+<article class="card" data-name="van marcke">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="VAN MARCKE" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=vanmarcke.com&amp;sz=128"/>
+<span>VM</span>
+</div>
+<div class="supplier-name">VAN MARCKE</div>
+</div>
+<div class="actions">
+<a href="https://blue.vanmarcke.com/diy/fr_BE/" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(6)">Accès</button>
+</div>
+</article>
+<article class="card" data-name="sanidel">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="SANIDEL" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=sanidel.eu&amp;sz=128"/>
+<span>S</span>
+</div>
+<div class="supplier-name">SANIDEL</div>
+</div>
+<div class="actions">
+<a href="https://sanidel.eu/index.php" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(11)">Accès</button>
+</div>
+</article>
+<article class="card" data-name="grohe">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="GROHE" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=grohe.be&amp;sz=128"/>
+<span>G</span>
+</div>
+<div class="supplier-name">GROHE</div>
+</div>
+<div class="actions">
+<a href="https://idp2-apigw.cloud.grohe.com/v1/sso/auth/realms/idm-apigw/protocol/openid-connect/auth?response_type=code&amp;scope=openid&amp;client_id=website&amp;state=PEv2pnyOJvqU&amp;redirect_uri=https%3A%2F%2Fwww.grohe.be%2Fdo.login%3Flogin_ok_url%3Dhttps%3A%2F%2Fwww.grohe.be%2Ffr_be%2F%26wrong_login_url%3D%2Ffr_be%2Fadministration%2Flogin%2F%26partial_registration_url%3D%2Ffr_be%2Fadministration%2Fregistration%2Faccount-partial-registration-smart.html" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(16)">Accès</button>
+</div>
+</article></div>
+</section>
+<section class="section c2">
+<div class="category"><strong>🔧  OUTILLAGE &amp; FIXATIONS</strong></div>
+<div class="grid">
+<article class="card" data-name="dewalt tool commerce">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="DEWALT TOOL COMMERCE" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=dewalt.com&amp;sz=128"/>
+<span>DT</span>
+</div>
+<div class="supplier-name">DEWALT TOOL COMMERCE</div>
+</div>
+<div class="actions">
+<a href="https://www.toolcommerce.com/" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(20)">Accès</button>
+</div>
+</article>
+<article class="card" data-name="domspro">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="DOMSPRO" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=domspro.eu&amp;sz=128"/>
+<span>D</span>
+</div>
+<div class="supplier-name">DOMSPRO</div>
+</div>
+<div class="actions">
+<a href="https://shop.domspro.eu/fr-fr/logon?returnUrl=%2Ffr-fr" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(0)">Accès</button>
+</div>
+</article>
+<article class="card" data-name="pgb">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="PGB" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=pgb-europe.com&amp;sz=128"/>
+<span>P</span>
+</div>
+<div class="supplier-name">PGB</div>
+</div>
+<div class="actions">
+<a href="https://www.pgb-europe.com/" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(5)">Accès</button>
+</div>
+</article>
+<article class="card" data-name="feeder one">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="FEEDER ONE" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=feederone.eu&amp;sz=128"/>
+<span>FO</span>
+</div>
+<div class="supplier-name">FEEDER ONE</div>
+</div>
+<div class="actions">
+<a href="https://shop.feederone.eu/fr-be/" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(14)">Accès</button>
+</div>
+</article></div>
+</section>
+<section class="section c3">
+<div class="category"><strong>▦  MATÉRIAUX DE CONSTRUCTION</strong></div>
+<div class="grid">
+<article class="card" data-name="rector">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="RECTOR" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=rector.be&amp;sz=128"/>
+<span>R</span>
+</div>
+<div class="supplier-name">RECTOR</div>
+</div>
+<div class="actions">
+<a href="https://www.rector.be/" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(4)">Accès</button>
+</div>
+</article>
+<article class="card" data-name="deschacht">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="DESCHACHT" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=deschacht.eu&amp;sz=128"/>
+<span>D</span>
+</div>
+<div class="supplier-name">DESCHACHT</div>
+</div>
+<div class="actions">
+<a href="https://www.deschacht.eu/" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(9)">Accès</button>
+</div>
+</article>
+<article class="card" data-name="aco pasavant">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="ACO PASAVANT" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=aco.be&amp;sz=128"/>
+<span>AP</span>
+</div>
+<div class="supplier-name">ACO PASAVANT</div>
+</div>
+<div class="actions">
+<a href="https://www.aco.be/fr/myaco" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(15)">Accès</button>
+</div>
+</article>
+<article class="card" data-name="ceramco">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="CERAMCO" src="data:image/png;base64,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"/>
+<span>C</span>
+</div>
+<div class="supplier-name">CERAMCO</div>
+</div>
+<div class="actions">
+<a href="https://ceramco.catbuilder.info/catalogs/cat.asp" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(12)">Accès</button>
+</div>
+</article></div>
+</section>
+<section class="section c4">
+<div class="category"><strong>▣  MENUISERIE &amp; AMÉNAGEMENT</strong></div>
+<div class="grid">
+<article class="card" data-name="velux">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="VELUX" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=velux.be&amp;sz=128"/>
+<span>V</span>
+</div>
+<div class="supplier-name">VELUX</div>
+</div>
+<div class="actions">
+<a href="https://www.dealerextranet3.velux.be/" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(2)">Accès</button>
+</div>
+</article>
+<article class="card" data-name="deli home">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="DELI HOME" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=deli-home.com&amp;sz=128"/>
+<span>DH</span>
+</div>
+<div class="supplier-name">DELI HOME</div>
+</div>
+<div class="actions">
+<a href="https://flpnwc-nq9qmvrylh.dispatcher.hana.ondemand.com/sites/delihome#Shell-home" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(1)">Accès</button>
+</div>
+</article>
+<article class="card" data-name="unilin flooring">
+<div class="supplier-head">
+<div class="logo-box">
+<img alt="UNILIN FLOORING" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" src="https://www.google.com/s2/favicons?domain=unilin.com&amp;sz=128"/>
+<span>UF</span>
+</div>
+<div class="supplier-name">UNILIN FLOORING</div>
+</div>
+<div class="actions">
+<a href="https://my.unilin.be/nl-be/login" rel="noopener" target="_blank">Ouvrir</a>
+<button onclick="showCredentials(13)">Accès</button>
+</div>
+</article></div>
+</section>
+<div id="dynamicSuppliers"></div>
+</div>
+<div aria-labelledby="supplierModalTitle" aria-modal="true" class="modal-overlay" id="supplierModal" onclick="if(event.target===this)closeSupplierModal()" role="dialog">
+<div class="supplier-modal">
+<div class="supplier-modal-head"><h2 id="supplierModalTitle">Ajouter un fournisseur</h2><button aria-label="Fermer" class="modal-x" onclick="closeSupplierModal()" type="button">×</button></div>
+<form class="supplier-form" id="supplierForm" onsubmit="saveSupplier(event)"><input id="supplierEditId" type="hidden" value=""/><input id="supplierLegacyName" type="hidden" value=""/>
+<label>Nom du fournisseur<input autocomplete="off" id="supplierName" maxlength="160" required=""/></label>
+<label>Catégorie<select id="supplierCategory" required="">
+<option value="ÉLECTRICITÉ">⚡ ÉLECTRICITÉ</option><option value="SANITAIRE &amp; CHAUFFAGE">● SANITAIRE &amp; CHAUFFAGE</option><option value="OUTILLAGE &amp; FIXATIONS">🔧 OUTILLAGE &amp; FIXATIONS</option><option value="MATÉRIAUX DE CONSTRUCTION">▦ MATÉRIAUX DE CONSTRUCTION</option><option value="MENUISERIE &amp; AMÉNAGEMENT">▤ MENUISERIE &amp; AMÉNAGEMENT</option><option value="AUTRES">• AUTRES</option>
+</select></label>
+<label class="full">Adresse du site / NetStore<input id="supplierUrl" placeholder="https://..." required="" type="url"/></label>
+<label class="full">URL du logo <span style="font-weight:400">(facultatif)</span><input id="supplierLogo" placeholder="https://..." type="url"/></label>
+<label>Identifiant<input autocomplete="off" id="supplierUsername"/></label>
+<label>Mot de passe<input autocomplete="new-password" id="supplierPassword" type="password"/></label>
+<div class="form-note">L’identifiant et le mot de passe sont envoyés uniquement au Worker puis chiffrés avant leur enregistrement dans D1.</div>
+<div class="form-actions"><button class="delete-modal-btn" id="deleteSupplierModalBtn" onclick="deleteSupplierFromModal()" type="button" style="display:none">Supprimer le fournisseur</button><span class="form-actions-spacer"></span><button class="cancel-btn" onclick="closeSupplierModal()" type="button">Annuler</button><button class="save-btn" id="saveSupplierBtn" type="submit">Enregistrer</button></div>
+</form>
+</div>
+</div>
+<script>
+const AUTH_API="https://braconnier-auth.sebastien-025.workers.dev";
+const PORTAL_TOKEN_KEY="braconnier_portal_token_v3";
+
+async function requirePortalSession(){
+  const token=sessionStorage.getItem(PORTAL_TOKEN_KEY);
+  if(!token){window.location.replace("index.html");return false;}
+  try{
+    const r=await fetch(AUTH_API+"/auth/check",{headers:{"Authorization":"Bearer "+token}});
+    if(!r.ok)throw new Error();
+    return true;
+  }catch(e){
+    sessionStorage.removeItem(PORTAL_TOKEN_KEY);
+    window.location.replace("index.html");
+    return false;
+  }
+}
+requirePortalSession();
+
+async function showCredentials(i){
+  const token=sessionStorage.getItem(PORTAL_TOKEN_KEY);
+  if(!token){window.location.replace("index.html");return;}
+  try{
+    const r=await fetch(AUTH_API+"/credentials/"+i,{headers:{"Authorization":"Bearer "+token}});
+    const c=await r.json().catch(()=>({}));
+    if(r.status===401){sessionStorage.removeItem(PORTAL_TOKEN_KEY);window.location.replace("index.html");return;}
+    if(!r.ok)throw new Error(c.error||"Accès impossible.");
+    alert(`Fournisseur: ${c.n}
+Identifiant: ${c.i}
+Mot de passe: ${c.p}`);
+  }catch(err){
+    alert(err.message||"Impossible de récupérer les accès.");
+  }
+}
+function filterAll(){
+ const q=document.getElementById('q').value.trim().toLowerCase();
+ document.querySelectorAll('.section').forEach(s=>{let n=0;
+  s.querySelectorAll('.card').forEach(c=>{const ok=c.dataset.name.includes(q);c.classList.toggle('hidden',!ok);if(ok)n++;});
+  s.classList.toggle('hidden',n===0);
+ });
+}
+
+
+const CATEGORY_META={
+ "ÉLECTRICITÉ":{cls:"c0",label:"⚡ &nbsp;ÉLECTRICITÉ"},
+ "SANITAIRE & CHAUFFAGE":{cls:"c1",label:"● &nbsp;SANITAIRE & CHAUFFAGE"},
+ "OUTILLAGE & FIXATIONS":{cls:"c2",label:"🔧 &nbsp;OUTILLAGE & FIXATIONS"},
+ "MATÉRIAUX DE CONSTRUCTION":{cls:"c3",label:"▦ &nbsp;MATÉRIAUX DE CONSTRUCTION"},
+ "MENUISERIE & AMÉNAGEMENT":{cls:"c4",label:"▤ &nbsp;MENUISERIE & AMÉNAGEMENT"},
+ "AUTRES":{cls:"c5",label:"• &nbsp;AUTRES"}
+};
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+function initials(name){return String(name||"?").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();}
+function fallbackLogo(url){try{return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(new URL(url).hostname)}&sz=128`;}catch{return "";}}
+function authHeaders(jsonBody=false){const t=sessionStorage.getItem(PORTAL_TOKEN_KEY);const h={"Authorization":"Bearer "+t};if(jsonBody)h["Content-Type"]="application/json";return h;}
+
+let customCategories=[];
+async function loadCategories(){
+ try{
+  const r=await fetch(AUTH_API+"/categories",{headers:authHeaders()});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(d.error||"Chargement des catégories impossible.");
+  customCategories=d.categories||[];
+  refreshCategorySelect();
+  renderCategoryManager();
+ }catch(e){console.error(e);}
+}
+function refreshCategorySelect(){
+ const sel=document.getElementById("supplierCategory"); if(!sel)return;
+ const current=sel.value;
+ const base=["ÉLECTRICITÉ","SANITAIRE & CHAUFFAGE","OUTILLAGE & FIXATIONS","MATÉRIAUX DE CONSTRUCTION","MENUISERIE & AMÉNAGEMENT","AUTRES"];
+ const names=[...base,...customCategories.map(x=>x.name)];
+ sel.innerHTML=names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+ if(names.includes(current))sel.value=current;
+}
+function openCategoryModal(){document.getElementById("categoryModal").classList.add("open");loadCategories();setTimeout(()=>document.getElementById("newCategoryName").focus(),0);}
+function closeCategoryModal(){document.getElementById("categoryModal").classList.remove("open");}
+async function saveCategory(e){
+ e.preventDefault(); const name=document.getElementById("newCategoryName").value.trim(); if(!name)return;
+ const r=await fetch(AUTH_API+"/categories",{method:"POST",headers:authHeaders(true),body:JSON.stringify({name})});
+ const d=await r.json().catch(()=>({})); if(!r.ok){alert(d.error||"Impossible d'ajouter la catégorie.");return;}
+ document.getElementById("newCategoryName").value=""; await loadCategories(); await loadCategories();hideDeletedLegacy();loadDynamicSuppliers();
+}
+function renderCategoryManager(){
+ const host=document.getElementById("categoryManagerList"); if(!host)return;
+ host.innerHTML=customCategories.length?"":"<div class=\"form-note\">Aucune catégorie personnalisée.</div>";
+ customCategories.forEach(c=>{
+  const row=document.createElement("div"); row.className="category-manager-row";
+  row.innerHTML=`<strong>${esc(c.name)}</strong><button type="button">Supprimer</button>`;
+  row.querySelector("button").onclick=()=>deleteCategory(c.id,c.name);
+  host.appendChild(row);
+ });
+}
+async function deleteCategory(id,name){
+ if(!confirm(`Supprimer la catégorie « ${name} » ?`))return;
+ const r=await fetch(AUTH_API+"/categories/"+encodeURIComponent(id),{method:"DELETE",headers:authHeaders()});
+ const d=await r.json().catch(()=>({})); if(!r.ok){alert(d.error||"Suppression impossible.");return;}
+ await loadCategories(); await loadDynamicSuppliers();
+}
+async function deleteSupplierFromModal(){
+ const id=document.getElementById("supplierEditId").value;
+ const name=document.getElementById("supplierName").value.trim();
+ if(id){
+  if(!confirm(`Supprimer définitivement le fournisseur « ${name} » ?`))return;
+  const r=await fetch(AUTH_API+"/suppliers/"+encodeURIComponent(id),{method:"DELETE",headers:authHeaders()});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok){alert(d.error||"Suppression impossible.");return;}
+  closeSupplierModal();resetSupplierForm();await loadDynamicSuppliers();return;
+ }
+ if(editingLegacyCard){
+  const card=editingLegacyCard;
+  const legacyName=card.querySelector(".supplier-name")?.textContent?.trim()||name;
+  if(!legacyName||!confirm(`Retirer le fournisseur « ${legacyName} » du NetStore ?`))return;
+  const r=await fetch(AUTH_API+"/legacy-hidden",{method:"POST",headers:authHeaders(true),body:JSON.stringify({name:legacyName})});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok){alert(d.error||"Suppression impossible.");return;}
+  closeSupplierModal();card.remove();resetSupplierForm();
+ }
+}
+async function deleteSupplier(id,name){
+ if(!confirm(`Supprimer définitivement le fournisseur « ${name} » ?`))return;
+ const r=await fetch(AUTH_API+"/suppliers/"+encodeURIComponent(id),{method:"DELETE",headers:authHeaders()});
+ const d=await r.json().catch(()=>({})); if(!r.ok){alert(d.error||"Suppression impossible.");return;}
+ await loadDynamicSuppliers();
+}
+async function deleteLegacySupplier(card){
+ const name=card.querySelector(".supplier-name")?.textContent?.trim()||"";
+ if(!name||!confirm(`Retirer le fournisseur « ${name} » du NetStore ?`))return;
+ const r=await fetch(AUTH_API+"/legacy-hidden",{method:"POST",headers:authHeaders(true),body:JSON.stringify({name})});
+ const d=await r.json().catch(()=>({})); if(!r.ok){alert(d.error||"Suppression impossible.");return;}
+ card.remove();
+}
+async function hideDeletedLegacy(){
+ try{
+  const r=await fetch(AUTH_API+"/legacy-hidden",{headers:authHeaders()}); if(!r.ok)return;
+  const d=await r.json(); const hidden=new Set((d.names||[]).map(x=>String(x).toLowerCase()));
+  document.querySelectorAll('.card:not([data-dynamic-card="1"])').forEach(c=>{
+   const n=c.querySelector(".supplier-name")?.textContent?.trim().toLowerCase()||"";
+   if(hidden.has(n))c.remove();
+  });
+ }catch{}
+}
+
+let editingLegacyCard=null;
+let dynamicSupplierCache=[];
+function resetSupplierForm(){document.getElementById("supplierForm").reset();document.getElementById("supplierEditId").value="";document.getElementById("supplierLegacyName").value="";editingLegacyCard=null;document.getElementById("supplierModalTitle").textContent="Ajouter un fournisseur";document.getElementById("saveSupplierBtn").textContent="Enregistrer";document.getElementById("deleteSupplierModalBtn").style.display="none";}
+function openSupplierModal(){resetSupplierForm();document.getElementById("supplierModal").classList.add("open");setTimeout(()=>document.getElementById("supplierName").focus(),0);}
+function closeSupplierModal(){document.getElementById("supplierModal").classList.remove("open");}
+async function editSupplier(id){
+ const x=dynamicSupplierCache.find(s=>String(s.id)===String(id));if(!x){alert("Fournisseur introuvable.");return;}
+ document.getElementById("supplierEditId").value=x.id;
+ document.getElementById("supplierName").value=x.name||"";document.getElementById("supplierCategory").value=x.category||"AUTRES";document.getElementById("supplierUrl").value=x.url||"";document.getElementById("supplierLogo").value=x.logo_url||"";
+ try{const r=await fetch(AUTH_API+"/suppliers/"+encodeURIComponent(id)+"/credentials",{headers:authHeaders()});if(r.ok){const c=await r.json();document.getElementById("supplierUsername").value=c.i||"";document.getElementById("supplierPassword").value=c.p||"";}}catch{}
+ document.getElementById("supplierModalTitle").textContent="Modifier le fournisseur";document.getElementById("saveSupplierBtn").textContent="Enregistrer les modifications";document.getElementById("deleteSupplierModalBtn").style.display="inline-flex";document.getElementById("supplierModal").classList.add("open");setTimeout(()=>document.getElementById("supplierName").focus(),0);
+}
+
+function categoryFromSection(section){
+ const hit=Object.entries(CATEGORY_META).find(([,m])=>section?.classList.contains(m.cls));
+ return hit?hit[0]:"AUTRES";
+}
+async function editLegacySupplier(card){
+ const name=card.querySelector('.supplier-name')?.textContent?.trim()||"";
+ const link=card.querySelector('.actions a');
+ const img=card.querySelector('.logo-box img');
+ const access=card.querySelector('.actions button:not(.edit-supplier-btn)');
+ const onclick=access?.getAttribute('onclick')||"";
+ const m=onclick.match(/showCredentials\((\d+)\)/);
+ resetSupplierForm();
+ editingLegacyCard=card;
+ document.getElementById("supplierLegacyName").value=name;
+ document.getElementById("supplierName").value=name;
+ document.getElementById("supplierCategory").value=categoryFromSection(card.closest('.section'));
+ document.getElementById("supplierUrl").value=link?.href||"";
+ const src=img?.getAttribute('src')||"";
+ document.getElementById("supplierLogo").value=src.startsWith('data:')||src.includes('google.com/s2/favicons')?"":src;
+ if(m){try{const r=await fetch(AUTH_API+"/credentials/"+m[1],{headers:authHeaders()});if(r.ok){const c=await r.json();document.getElementById("supplierUsername").value=c.i||"";document.getElementById("supplierPassword").value=c.p||"";}}catch{}}
+ document.getElementById("supplierModalTitle").textContent="Modifier le fournisseur";
+ document.getElementById("saveSupplierBtn").textContent="Enregistrer les modifications";
+ document.getElementById("deleteSupplierModalBtn").style.display="inline-flex";
+ document.getElementById("supplierModal").classList.add("open");
+}
+function enableLegacyEditing(){
+ document.querySelectorAll('.card:not([data-dynamic-card="1"])').forEach(card=>{
+  const actions=card.querySelector('.actions'); if(!actions||actions.querySelector('.edit-supplier-btn'))return;
+  const b=document.createElement('button'); b.type='button';b.className='edit-supplier-btn';b.textContent='Modifier';
+  const access=actions.querySelector('button');actions.insertBefore(b,access);b.addEventListener('click',()=>editLegacySupplier(card));
+ });
+}
+function legacyMap(){try{return JSON.parse(localStorage.getItem('netstore_legacy_migrated_v1')||'{}')}catch{return {}}}
+function rememberLegacy(oldName,id){const m=legacyMap();m[String(oldName).toLowerCase()]=String(id||'1');localStorage.setItem('netstore_legacy_migrated_v1',JSON.stringify(m));}
+function hideMigratedLegacy(){const m=legacyMap();document.querySelectorAll('.card:not([data-dynamic-card="1"])').forEach(c=>{if(m[c.dataset.name])c.style.display='none';});}
+
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSupplierModal();});
+
+async function saveSupplier(e){
+ e.preventDefault();
+ const btn=document.getElementById("saveSupplierBtn"),id=document.getElementById("supplierEditId").value,legacyName=document.getElementById("supplierLegacyName").value;btn.disabled=true;btn.textContent="Enregistrement…";
+ const body={name:document.getElementById("supplierName").value.trim(),category:document.getElementById("supplierCategory").value,url:document.getElementById("supplierUrl").value.trim(),logo_url:document.getElementById("supplierLogo").value.trim(),username:document.getElementById("supplierUsername").value,password:document.getElementById("supplierPassword").value,display_order:0,active:1};
+ try{
+  let r,data;
+  if(id){
+   r=await fetch(AUTH_API+"/suppliers/"+encodeURIComponent(id),{method:"PUT",headers:authHeaders(true),body:JSON.stringify(body)});
+   if(r.status===404||r.status===405){r=await fetch(AUTH_API+"/suppliers/"+encodeURIComponent(id),{method:"PATCH",headers:authHeaders(true),body:JSON.stringify(body)});}
+  }else r=await fetch(AUTH_API+"/suppliers",{method:"POST",headers:authHeaders(true),body:JSON.stringify(body)});
+  data=await r.json().catch(()=>({}));
+  if(r.status===401){sessionStorage.removeItem(PORTAL_TOKEN_KEY);window.location.replace("index.html");return;}
+  if(!r.ok)throw new Error(data.error||(id?"La modification n’est pas encore acceptée par l’API.":"Impossible d’enregistrer le fournisseur."));
+  if(legacyName) rememberLegacy(legacyName,data.id||data.supplier?.id||data.supplier_id||"1");
+  resetSupplierForm();closeSupplierModal();await loadDynamicSuppliers();alert((id||legacyName)?"Fournisseur modifié.":"Fournisseur ajouté.");
+ }catch(err){alert(err.message||"Erreur lors de l’enregistrement.");}
+ finally{btn.disabled=false;btn.textContent=id?"Enregistrer les modifications":"Enregistrer";}
+}
+
+async function showDynamicCredentials(id){
+ try{
+  const r=await fetch(AUTH_API+"/suppliers/"+encodeURIComponent(id)+"/credentials",{headers:authHeaders()});
+  const c=await r.json().catch(()=>({}));
+  if(r.status===401){sessionStorage.removeItem(PORTAL_TOKEN_KEY);window.location.replace("index.html");return;}
+  if(!r.ok)throw new Error(c.error||"Accès impossible.");
+  alert(`Fournisseur: ${c.n}\nIdentifiant: ${c.i}\nMot de passe: ${c.p}`);
+ }catch(err){alert(err.message||"Impossible de récupérer les accès.");}
+}
+
+async function loadDynamicSuppliers(){
+ const host=document.getElementById("dynamicSuppliers");
+ try{
+  const r=await fetch(AUTH_API+"/suppliers",{headers:authHeaders()});
+  const data=await r.json().catch(()=>({}));
+  if(r.status===401){sessionStorage.removeItem(PORTAL_TOKEN_KEY);window.location.replace("index.html");return;}
+  if(!r.ok)throw new Error(data.error||"Chargement impossible.");
+  dynamicSupplierCache=data.suppliers||[];
+  hideMigratedLegacy();
+
+  // Nettoie uniquement les fournisseurs ajoutés dynamiquement lors du chargement précédent.
+  document.querySelectorAll('.card[data-dynamic-card="1"]').forEach(card=>card.remove());
+  host.innerHTML="";
+
+  const groups={};
+  for(const x of (data.suppliers||[])){(groups[x.category]??=[]).push(x);}
+
+  Object.entries(groups).forEach(([cat,items])=>{
+   const meta=CATEGORY_META[cat]||{cls:"c5",label:"• &nbsp;"+esc(cat)};
+
+   // Réutilise en priorité la section déjà présente dans la page (c0, c1, c2...).
+   let section=[...document.querySelectorAll('.section')].find(s=>s.classList.contains(meta.cls) && s.dataset.dynamic!=="1");
+   let grid=section?.querySelector('.grid');
+
+   // Seulement si la catégorie n'existe réellement pas (ex. AUTRES), on en crée une nouvelle.
+   if(!grid){
+    section=document.createElement("section");
+    section.className="section "+meta.cls;
+    section.dataset.dynamic="1";
+    section.innerHTML=`<div class="category"><strong>${meta.label}</strong></div><div class="grid"></div>`;
+    host.appendChild(section);
+    grid=section.querySelector('.grid');
+   }
+
+   items.forEach(x=>{
+    const logo=x.logo_url||fallbackLogo(x.url), name=esc(x.name), url=esc(x.url), img=esc(logo), init=esc(initials(x.name));
+    const card=document.createElement("article");
+    card.className="card";
+    card.dataset.name=String(x.name||"").toLowerCase();
+    card.dataset.dynamicCard="1";
+    card.innerHTML=`<div class="supplier-head"><div class="logo-box"><img src="${img}" alt="${name}" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><span>${init}</span></div><div style="min-width:0"><div class="supplier-name">${name}</div><div class="dynamic-badge">Ajouté depuis NetStore</div></div></div><div class="actions"><a href="${url}" target="_blank" rel="noopener">Ouvrir</a><button class="edit-supplier-btn" type="button">Modifier</button><button class="access-supplier-btn" type="button">Accès</button></div>`;
+    card.querySelector(".edit-supplier-btn").addEventListener("click",()=>editSupplier(x.id));
+    card.querySelector(".access-supplier-btn").addEventListener("click",()=>showDynamicCredentials(x.id));
+    grid.appendChild(card);
+   });
+  });
+  filterAll();
+ }catch(err){console.error("NetStore D1:",err);}
+}
+enableLegacyEditing();
+hideMigratedLegacy();
+loadDynamicSuppliers();
+
+function showNetStore(){
+  document.querySelectorAll('.nav-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+  const q=document.getElementById('q'); if(q){q.style.display='';q.focus();}
+}
+
+</script>
+<script id="unified-menu-script">(function(){const b=document.getElementById('unifiedMenuBtn'),m=document.getElementById('unifiedMenu');if(!b||!m)return;function close(){m.classList.remove('open');b.setAttribute('aria-expanded','false')}b.addEventListener('click',function(e){e.stopPropagation();const o=m.classList.toggle('open');b.setAttribute('aria-expanded',o?'true':'false')});m.addEventListener('click',e=>e.stopPropagation());document.addEventListener('click',close);document.addEventListener('keydown',e=>{if(e.key==='Escape')close()})})();</script></body></html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+<script id="portal-access-guard">
+(function(){
+  const TOKEN_KEY="braconnier_portal_token_v3";
+  const AUTH_API="https://braconnier-auth.sebastien-025.workers.dev";
+  document.documentElement.style.visibility="hidden";
+  const token=sessionStorage.getItem(TOKEN_KEY);
+  if(!token){ location.replace(new URL("/base/index.html",location.origin).href); return; }
+  fetch(AUTH_API+"/auth/check",{headers:{Authorization:"Bearer "+token},cache:"no-store"})
+    .then(r=>{if(!r.ok)throw new Error("unauthorized"); document.documentElement.style.visibility="";})
+    .catch(()=>{sessionStorage.removeItem(TOKEN_KEY);location.replace(new URL("/base/index.html",location.origin).href);});
+})();
+</script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="icon" type="image/png" href="../favicon.png">
+
+  <title>Poids des bordures Béton</title>
+  <style>
+    :root {
+      --anth: #2b2f33;
+      /* gris anthracite pour les titres */
+      --line: #e5e7eb;
+      --muted: #6b7280;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      color: #333;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 18px;
+      margin: 10px 0 15px;
+      color: var(--anth);
+      font-weight: 600
+    }
+
+    .table-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 650px;
+      width: 100%;
+      margin: 5px auto 10px;
+      background: transparent
+    }
+
+    .input-container {
+      margin-bottom: 10px
+    }
+
+    label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-right: 6px
+    }
+
+    input,
+    select {
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      font-size: 14px;
+      text-align: center;
+      background: #fff;
+      color: #333
+    }
+
+    input {
+      width: 90px
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 90%;
+      margin: auto;
+      background: transparent;
+      border: 1px solid var(--line);
+      font-size: 14px;
+      color: #333
+    }
+
+    th,
+    td {
+      padding: 10px;
+      border: 1px solid var(--line);
+      text-align: center
+    }
+
+    /* ✅ En-têtes transparents + texte anthracite */
+    th {
+      background: transparent;
+      /* fond d’en-tête transparent */
+      color: var(--anth);
+      /* texte anthracite */
+      font-weight: 600;
+    }
+
+    td span {
+      white-space: nowrap
+    }
+
+    @media (max-width:480px) {
+      table {
+        font-size: 12px;
+        border: none
+      }
+
+      thead {
+        display: none
+      }
+
+      tbody,
+      tr,
+      td {
+        display: block;
+        width: 100%;
+        background: transparent
+      }
+
+      tr {
+        margin-bottom: 10px;
+        border-bottom: 1px solid var(--line)
+      }
+
+      td {
+        text-align: left;
+        padding: 6px 0;
+        border: none
+      }
+
+      td::before {
+        content: attr(data-label);
+        display: block;
+        font-weight: 600;
+        color: var(--anth);
+        margin-bottom: 3px
+      }
+    }
+  </style>
+
+  <!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2QRJ0PMDLZ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+
+gtag('config', 'G-2QRJ0PMDLZ');
+</script>
+
+<!-- Microsoft Clarity -->
+<script type="text/javascript">
+(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "xe4e4n7ndi");
+</script>
+
+</head>
+
+<body>
+  <h1>Poids des dordures Béton</h1>
+
+  <div class="table-container">
+    <div class="input-container">
+      <label for="border-quantity">Quantité :</label>
+      <input type="number" id="border-quantity" value="1" min="1" step="1" oninput="calculateBorders()">
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th colspan="4">Bordures Béton</th>
+        </tr>
+        <tr>
+          <th>Dénomination</th>
+          <th>Taille</th>
+          <th>Poids</th>
+          <th>Résultat</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td data-label="Dénomination">Bordures béton</td>
+          <td data-label="Taille">
+            <select id="border-select" onchange="calculateBorders()">
+              <option value="29">100x20x6</option>
+              <option value="43">100x30x6</option>
+              <option value="54">100x40x6</option>
+              <option value="48">100x20x10</option>
+              <option value="70">100x30x10</option>
+            </select>
+          </td>
+          <td data-label="Poids"><span id="border-weight">29 kg</span></td>
+          <td data-label="Résultat"><span id="border-result">29 kg</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    function calculateBorders() {
+      const weight = parseFloat(document.getElementById("border-select").value);
+      const qty = parseFloat(document.getElementById("border-quantity").value) || 0;
+      document.getElementById("border-weight").textContent = `${weight.toFixed(2)} kg`;
+      document.getElementById("border-result").textContent = `${(weight * qty).toFixed(2)} kg`;
+    }
+    window.onload = calculateBorders;
+  </script>
+</body>
+
+</html>

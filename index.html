@@ -25,7 +25,7 @@ body{margin:0;min-height:100vh;font-family:Arial,Helvetica,sans-serif;color:var(
 <div class="shell"><div class="dualbar"></div>
 <section id="loginWrap" class="login-wrap">
  <div class="brand-login"><img class="brac" src="logo-braconnier.png" alt="Braconnier"><img class="outil" src="logo-outilsud.png" alt="Outilsud"></div>
- <div class="login"><h1>Portail interne</h1><p>Accès sécurisé aux espaces Braconnier et Outilsud.</p><form id="loginForm"><div class="field"><label for="password">MOT DE PASSE</label><input id="password" type="password" autocomplete="current-password" required autofocus></div><button id="submit" class="submit" type="submit">Se connecter</button><div id="msg" class="msg"></div></form><div class="foot">Le mot de passe est vérifié par Cloudflare.</div></div>
+ <div class="login"><h1>Portail interne</h1><p>Accès sécurisé aux espaces Braconnier et Outilsud.</p><form id="loginForm"><div class="field"><label for="password">MOT DE PASSE</label><input id="password" type="password" autocomplete="current-password" required autofocus></div><button id="submit" class="submit" type="submit">Se connecter</button><div id="msg" class="msg"></div></form><div class="foot">Le mot de passe est vérifié par le serveur sécurisé Infomaniak.</div></div>
 </section>
 <section id="portal" class="portal">
  <div class="portal-head"><strong>Portail Braconnier & Outilsud</strong><div class="head-actions"><button id="changeBrand" class="head-btn" type="button" style="display:none">Changer d'enseigne</button><button id="logout" class="head-btn" type="button">Se déconnecter</button></div></div>
@@ -62,7 +62,7 @@ body{margin:0;min-height:100vh;font-family:Arial,Helvetica,sans-serif;color:var(
  </div></div>
 </section></div>
 <script>
-const AUTH_API="https://braconnier-auth.sebastien-025.workers.dev",TOKEN_KEY="braconnier_portal_token_v3",API_ACCESS_PASSWORD_KEY="braconnier_api_access_password_v1";
+const AUTH_API="https://portail.braconnier.be/api",TOKEN_KEY="braconnier_portal_token_v3",API_ACCESS_PASSWORD_KEY="braconnier_api_access_password_v1";
 const loginWrap=document.getElementById("loginWrap"),portal=document.getElementById("portal"),form=document.getElementById("loginForm"),password=document.getElementById("password"),submit=document.getElementById("submit"),msg=document.getElementById("msg"),choose=document.getElementById("choose"),brac=document.getElementById("bracDashboard"),outil=document.getElementById("outilDashboard"),changeBrand=document.getElementById("changeBrand");
 function showPortal(){loginWrap.style.display="none";portal.classList.add("open");showChoose()}
 function showChoose(){choose.style.display="block";brac.classList.remove("open");outil.classList.remove("open");changeBrand.style.display="none"}
